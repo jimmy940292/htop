@@ -1,0 +1,13 @@
+
+FEATURES:
+
+ * support $sysconfdir/htoprc
+ * integrate columns configuration in the main screen, like 'kill'
+ * display more information in the header (uptime, load, etc.)
+ * save columns and header setup in an .htoprc file
+ * make bars display refresh independent from list refresh
+ * auto-calibrate delay 
+ * add some more 'top' features
+ * add command-line parameters
+ * show 'process view'
+ * make colors and keybindings configurable, blah blah blah...

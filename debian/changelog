@@ -1,0 +1,36 @@
+htop (0.3.3-1) unstable; urgency=low
+
+  * New upstream version.
+  * Added debian/watch file.
+
+ -- Bartosz Fenski <fenio@o2.pl>  Sun, 20 Jun 2004 10:33:13 +0200
+
+htop (0.3.1-1) unstable; urgency=low
+
+  * New upstream version.
+  * Hopefully first official Debian release. (Closes: #248939)
+    Thanks for sponsoring goes to Cedric Delfosse.
+  * debian/rules:
+    - removed dh_installman, cause it's now included by upstream.
+
+ -- Bartosz Fenski <fenio@o2.pl>  Mon, 31 May 2004 05:37:15 +0200
+
+htop (0.3-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Bartosz Fenski <fenio@o2.pl>  Thu, 20 May 2004 01:15:05 +0200
+
+htop (0.2.1-1) unstable; urgency=low
+
+  * New upstream version.
+  * Some updates to manual page. 
+
+ -- Bartosz Fenski <fenio@o2.pl>  Sat, 15 May 2004 10:15:03 +0200
+
+htop (0.2-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Bartosz Fenski <fenio@o2.pl>  Fri, 14 May 2004 10:37:04 +0200
+

@@ -1,0 +1,62 @@
+
+htop
+by Hisham Muhammad <lode@gobolinux.org>
+
+May, 2004.
+
+Introduction
+~~~~~~~~~~~~
+
+This is htop, an interactive process viewer for Linux.
+It requires ncurses. Tested with Linux 2.4 and 2.6.
+
+This software is in its initial stages of development.
+Read the TODO file to see what's known to be missing.
+
+Comparison between 'htop' and 'top'
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ * In 'htop' you can scroll the list vertically and horizontally
+   to see all processes and full command lines.
+ * In 'top' you are subject to a delay for each unassigned
+   key you press (especially annoying when multi-key escape
+   sequences are triggered by accident).
+ * 'htop' starts faster ('top' seems to collect data for a while
+   before displaying anything).
+ * In 'htop' you don't need to type the process number to
+   kill a process, in 'top' you do.
+ * In 'htop' you don't need to type the process number or
+   the priority value to renice a process, in 'top' you do.
+ * In 'htop' you can kill multiple processes at once.
+ * 'top' is older, hence, more tested.
+
+Compilation instructions
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+This program is distributed as a standard autotools-based package.
+See the INSTALL file for detailed instructions, but you are
+probably used to the common "configure/make/make install" routine.
+
+Keys
+~~~~
+
+Arrows,
+[PgUp], [PgDn],
+[Home], [End] - scroll process list
+[F1], [h]     - help screen
+[F2]          - highlight follows process
+[F3], [/]     - incremental process search: type process name
+[F4]          - invert sort order
+[F5]          - select sorting by previous field 
+[F6]          - select sorting by next field
+[F7], []]     - increase process priority (superuser only)
+[F8], [[]     - decrease process priority
+[F9], [k]     - kill process (all tagged ones, or the current, if none is tagged)
+[F10],[q]     - quit
+[M]           - sort by memory usage
+[P]           - sort by processor usage
+[C]           - select columns
+[space]
+[Ctrl][L]     - refresh screen
+
+if not all keys work check your curses configuration.
