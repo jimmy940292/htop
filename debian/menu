@@ -1,0 +1,3 @@
+?package(htop):needs="text" section="Apps/System"\
+  title="htop" command="/usr/bin/htop"\
+  hints="Monitoring"

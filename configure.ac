@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([htop],[0.3.3],[loderunner@users.sourceforge.net])
+AC_INIT([htop],[0.5],[loderunner@users.sourceforge.net])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([htop.c])
 AC_CONFIG_HEADER([config.h])
@@ -17,7 +17,7 @@ AC_CHECK_LIB([m], [ceil])
 # Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stdlib.h string.h strings.h sys/param.h sys/time.h unistd.h])
+AC_CHECK_HEADERS([stdlib.h string.h strings.h sys/param.h sys/time.h unistd.h curses.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL

@@ -15,6 +15,8 @@ in the source distribution for its full text.
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include "String.h"
+
 #include "debug.h"
 
 #define WHITE_PAIR 0
@@ -24,16 +26,77 @@ in the source distribution for its full text.
 #define BROWN_PAIR 4
 #define CYAN_PAIR 5
 #define BLACK_PAIR 6
-
-#define HEADER_PAIR 7
-#define INVERSE_PAIR 8
-#define FUNCTIONBAR_PAIR 9
+#define BLACK_CYAN_PAIR 7
+#define RED_CYAN_PAIR 8
+#define BLACK_GREEN_PAIR 9
+#define BLACK_WHITE_PAIR 10
 
 #define MIN_UPDATE_SLICE 15
 
 //#link curses
 
 bool CRT_hasColors;
+
+
+typedef enum ColorElements_ {
+   RESET_COLOR,
+   DEFAULT_COLOR,
+   FUNCTION_BAR,
+   FUNCTION_KEY,
+   FAILED_SEARCH,
+   PANEL_HEADER_FOCUS,
+   PANEL_HEADER_UNFOCUS,
+   PANEL_HIGHLIGHT_FOCUS,
+   PANEL_HIGHLIGHT_UNFOCUS,
+   LARGE_NUMBER,
+   METER_TEXT,
+   METER_VALUE,
+   LED_COLOR,
+   UPTIME,
+   TASKS_TOTAL,
+   TASKS_RUNNING,
+   SWAP,
+   PROCESS,
+   PROCESS_SHADOW,
+   PROCESS_TAG,
+   PROCESS_MEGABYTES,
+   PROCESS_TREE,
+   PROCESS_R_STATE,
+   PROCESS_BASENAME,
+   PROCESS_HIGH_PRIORITY,
+   PROCESS_LOW_PRIORITY,
+   BAR_BORDER,
+   BAR_SHADOW,
+   GRAPH_1,
+   GRAPH_2,
+   GRAPH_3,
+   GRAPH_4,
+   GRAPH_5,
+   GRAPH_6,
+   GRAPH_7,
+   GRAPH_8,
+   GRAPH_9,
+   MEMORY_USED,
+   MEMORY_BUFFERS,
+   MEMORY_CACHE,
+   LOAD,
+   LOAD_AVERAGE_FIFTEEN,
+   LOAD_AVERAGE_FIVE,
+   LOAD_AVERAGE_ONE,
+   CHECK_BOX,
+   CHECK_MARK,
+   CHECK_TEXT,
+   CLOCK,
+   CPU_NICE,
+   CPU_NORMAL,
+   CPU_KERNEL,
+   HELP_BOLD,
+   LAST_COLORELEMENT
+} ColorElements;
+
+extern int CRT_colors[LAST_COLORELEMENT];
+
+
 
 void CRT_init();
 

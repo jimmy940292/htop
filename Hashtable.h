@@ -42,13 +42,13 @@ int Hashtable_hashAlgorithm(Hashtable* this, int key);
 
 void Hashtable_delete(Hashtable* this);
 
-int Hashtable_size(Hashtable* this);
+inline int Hashtable_size(Hashtable* this);
 
 void Hashtable_put(Hashtable* this, int key, void* value);
 
 void* Hashtable_remove(Hashtable* this, int key);
 
-void* Hashtable_get(Hashtable* this, int key);
+inline void* Hashtable_get(Hashtable* this, int key);
 
 void Hashtable_foreach(Hashtable* this, HashtablePairFunction f);
 

@@ -10,12 +10,9 @@ in the source distribution for its full text.
 */
 
 #include "Process.h"
-#include "ProcessFilter.h"
 #include "TypedVector.h"
 #include "UsersTable.h"
 #include "Hashtable.h"
-
-#include "debug.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -23,9 +20,12 @@ in the source distribution for its full text.
 #include <dirent.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <assert.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <sys/utsname.h>
+
+#include "debug.h"
+#include <assert.h>
 
 #ifndef PROCDIR
 #define PROCDIR "/proc"
@@ -39,22 +39,29 @@ in the source distribution for its full text.
 #define PROCMEMINFOFILE "/proc/meminfo"
 #endif
 
+
 typedef struct ProcessList_ {
    TypedVector* processes;
+   TypedVector* processes2;
    Hashtable* processTable;
-   ProcessFilter* filter;
    Process* prototype;
    UsersTable* usersTable;
-   long int totalTime;
-   long int userTime;
-   long int systemTime;
-   long int idleTime;
-   long int niceTime;
-   long int totalPeriod;
-   long int userPeriod;
-   long int systemPeriod;
-   long int idlePeriod;
-   long int nicePeriod;
+
+   int processorCount;
+   int totalTasks;
+   int runningTasks;
+
+   long int* totalTime;
+   long int* userTime;
+   long int* systemTime;
+   long int* idleTime;
+   long int* niceTime;
+   long int* totalPeriod;
+   long int* userPeriod;
+   long int* systemPeriod;
+   long int* idlePeriod;
+   long int* nicePeriod;
+
    long int totalMem;
    long int usedMem;
    long int freeMem;
@@ -64,11 +71,36 @@ typedef struct ProcessList_ {
    long int totalSwap;
    long int usedSwap;
    long int freeSwap;
+
+   int kernelMajor;
+   int kernelMiddle;
+   int kernelMinor;
+   int kernelTiny;
+
+   ProcessField* fields;
+   ProcessField sortKey;
+   int direction;
+   bool hideThreads;
+   bool shadowOtherUsers;
+   bool hideKernelThreads;
+   bool treeView;
+   bool highlightBaseName;
+   bool highlightMegabytes;
+
 } ProcessList;
 
-ProcessList* ProcessList_new(ProcessFilter* filter, UsersTable* usersTable);
+
+
+ProcessList* ProcessList_new(UsersTable* usersTable);
 
 void ProcessList_delete(ProcessList* this);
+
+void ProcessList_invertSortOrder(ProcessList* this);
+
+void ProcessList_sortKey(ProcessList* this, int delta);
+
+RichString ProcessList_printHeader(ProcessList* this);
+
 
 void ProcessList_prune(ProcessList* this);
 
@@ -80,10 +112,9 @@ Process* ProcessList_get(ProcessList* this, int index);
 
 int ProcessList_size(ProcessList* this);
 
+
 void ProcessList_sort(ProcessList* this);
 
-/* private */
-int ProcessList_readStatFile(Process *proc, FILE *f, char *command);
 
 void ProcessList_scan(ProcessList* this);
 

@@ -9,7 +9,7 @@ Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
-#include "ProcessFilter.h"
+#include "ProcessList.h"
 #include "Object.h"
 #include "CRT.h"
 #include "String.h"
@@ -35,17 +35,29 @@ int kill(pid_t pid, int signal);
 // the behavior is similar to have a hardcoded page size.
 #define PAGE_SIZE ( sysconf(_SC_PAGESIZE) / 1024 )
 
-#define PROCESS_COMM_LEN 512
+#define PROCESS_COMM_LEN 300
 #define PROCESS_USER_LEN 10
+
+
+typedef enum ProcessField_ {
+   PID, COMM, STATE, PPID, PGRP, SESSION, TTY_NR, TPGID, FLAGS, MINFLT, CMINFLT, MAJFLT, CMAJFLT, UTIME,
+   STIME, CUTIME, CSTIME, PRIORITY, NICE, ITREALVALUE, STARTTIME, VSIZE, RSS, RLIM, STARTCODE, ENDCODE,
+   STARTSTACK, KSTKESP, KSTKEIP, SIGNAL, BLOCKED, SIGIGNORE, SIGCATCH, WCHAN, NSWAP, CNSWAP, EXIT_SIGNAL,
+   PROCESSOR, M_SIZE, M_RESIDENT, M_SHARE, M_TRS, M_DRS, M_LRS, M_DT, ST_UID, PERCENT_CPU, PERCENT_MEM,
+   USER, TIME, LAST_PROCESSFIELD
+} ProcessField;
+
+struct ProcessList_;
 
 typedef struct Process_ {
    Object super;
 
-   ProcessFilter* filter;
+   struct ProcessList_ *pl;
    bool updated;
 
    int pid;
    char comm[PROCESS_COMM_LEN + 2];
+   int indent;
    char state;
    bool tag;
    int ppid;
@@ -98,8 +110,12 @@ typedef struct Process_ {
 
 extern char* PROCESS_CLASS;
 
+extern char* Process_fieldNames[];
 
-Process* Process_new(ProcessFilter* filter);
+
+
+
+Process* Process_new(struct ProcessList_ *pl);
 
 Process* Process_clone(Process* this);
 
@@ -119,15 +135,15 @@ void Process_sendSignal(Process* this, int signal);
 #define ONE_M (ONE_K * ONE_K)
 #define ONE_G (ONE_M * ONE_K)
 
-/* private */
-void Process_printLargeNumber(char *out, int len, unsigned int number);
 
 
-/* private */
-void Process_printTime(char *out, int len, unsigned long t);
 
-int Process_writeField(Process* this, char* out, ProcessField field);
+inline void Process_writeCommand(Process* this, int attr, RichString* str);
+
+void Process_writeField(Process* this, RichString* str, ProcessField field);
 
 int Process_compare(const Object* v1, const Object* v2);
+
+char* Process_printField(ProcessField field);
 
 #endif

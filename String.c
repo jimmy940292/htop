@@ -14,11 +14,11 @@ in the source distribution for its full text.
 
 #include "debug.h"
 
-void String_delete(char* s) {
+inline void String_delete(char* s) {
    free(s);
 }
 
-char* String_copy(char* orig) {
+inline char* String_copy(char* orig) {
    return strdup(orig);
 }
 
@@ -32,11 +32,11 @@ char* String_cat(char* s1, char* s2) {
 }
 
 char* String_trim(char* in) {
-   while (in[0] == ' ') {
+   while (in[0] == ' ' || in[0] == '\t' || in[0] == '\n') {
       in++;
    }
    int len = strlen(in);
-   while (in[len-1] == ' ') {
+   while (len > 0 && (in[len-1] == ' ' || in[len-1] == '\t' || in[len-1] == '\n')) {
       len--;
    }
    char* out = malloc(len+1);
@@ -49,7 +49,7 @@ char* String_copyUpTo(char* orig, char upTo) {
    int len;
    
    int origLen = strlen(orig);
-   char* at = index(orig, upTo);
+   char* at = strchr(orig, upTo);
    if (at != NULL)
       len = at - orig;
    else
@@ -92,7 +92,7 @@ void String_printPointer(void* p) {
    printf("%p", p);
 }
 
-int String_eq(char* s1, char* s2) {
+inline int String_eq(char* s1, char* s2) {
    if (s1 == NULL || s2 == NULL) {
       if (s1 == NULL && s2 == NULL)
          return 1;
@@ -102,7 +102,7 @@ int String_eq(char* s1, char* s2) {
    return (strcmp(s1, s2) == 0);
 }
 
-int String_startsWith(char* s, char* match) {
+inline int String_startsWith(char* s, char* match) {
    return (strstr(s, match) == s);
 }
 
@@ -112,7 +112,7 @@ char** String_split(char* s, char sep) {
    int ctr = 0;
    int blocks = rate;
    char* where;
-   while ((where = index(s, sep)) != NULL) {
+   while ((where = strchr(s, sep)) != NULL) {
       int size = where - s;
       char* token = (char*) malloc(size + 1);
       strncpy(token, s, size);

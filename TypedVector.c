@@ -9,12 +9,17 @@ in the source distribution for its full text.
 #include "Object.h"
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 #include <stdbool.h>
 
 #include "debug.h"
+#include <assert.h>
 
 /*{
+
+#ifndef DEFAULT_SIZE
+#define DEFAULT_SIZE -1
+#endif
+
 typedef void(*TypedVector_procedure)(void*);
 typedef int(*TypedVector_booleanFunction)(const Object*,const Object*);
 
@@ -30,15 +35,15 @@ typedef struct TypedVector_ {
 
 }*/
 
-TypedVector* TypedVector_new(char* vectorType_, bool owner) {
+TypedVector* TypedVector_new(char* vectorType_, bool owner, int size) {
    TypedVector* this;
-   int arraySize;
 
-   arraySize = 10;
+   if (size == DEFAULT_SIZE)
+      size = 10;
    this = (TypedVector*) malloc(sizeof(TypedVector));
-   this->growthRate = arraySize;
-   this->array = (Object**) calloc(arraySize, sizeof(Object*));
-   this->arraySize = arraySize;
+   this->growthRate = size;
+   this->array = (Object**) calloc(size, sizeof(Object*));
+   this->arraySize = size;
    this->compareFunction = TypedVector_compareFunction;
    this->items = 0;
    this->vectorType = vectorType_;
@@ -127,8 +132,12 @@ void TypedVector_checkArraySize(TypedVector* this) {
    assert(TypedVector_isConsistent(this));
 }
 
-void TypedVector_insert(TypedVector* this, int index, Object* data) {
-   assert(index >= 0 && index < this->items);
+void TypedVector_insert(TypedVector* this, int index, void* data_) {
+   assert(index >= 0);
+   assert(((Object*)data_)->class == this->vectorType);
+   Object* data = data_;
+   assert(TypedVector_isConsistent(this));
+   
    TypedVector_checkArraySize(this);
    assert(this->array[this->items] == NULL);
    for (int i = this->items; i >= index; i--) {
@@ -139,23 +148,46 @@ void TypedVector_insert(TypedVector* this, int index, Object* data) {
    assert(TypedVector_isConsistent(this));
 }
 
-Object* TypedVector_remove(TypedVector* this, int index) {
+Object* TypedVector_take(TypedVector* this, int index) {
    assert(index >= 0 && index < this->items);
    assert(TypedVector_isConsistent(this));
    Object* removed = this->array[index];
    assert (removed != NULL);
-   if (this->owner) {
-      removed->delete(removed);
-   }
    this->items--;
    for (int i = index; i < this->items; i++)
       this->array[i] = this->array[i+1];
    this->array[this->items] = NULL;
    assert(TypedVector_isConsistent(this));
-   if (this->owner)
+   return removed;
+}
+
+Object* TypedVector_remove(TypedVector* this, int index) {
+   Object* removed = TypedVector_take(this, index);
+   if (this->owner) {
+      removed->delete(removed);
       return NULL;
-   else
+   } else
       return removed;
+}
+
+void TypedVector_moveUp(TypedVector* this, int index) {
+   assert(index >= 0 && index < this->items);
+   assert(TypedVector_isConsistent(this));
+   if (index == 0)
+      return;
+   Object* temp = this->array[index];
+   this->array[index] = this->array[index - 1];
+   this->array[index - 1] = temp;
+}
+
+void TypedVector_moveDown(TypedVector* this, int index) {
+   assert(index >= 0 && index < this->items);
+   assert(TypedVector_isConsistent(this));
+   if (index == this->items - 1)
+      return;
+   Object* temp = this->array[index];
+   this->array[index] = this->array[index + 1];
+   this->array[index + 1] = temp;
 }
 
 void TypedVector_set(TypedVector* this, int index, void* data_) {
@@ -167,18 +199,26 @@ void TypedVector_set(TypedVector* this, int index, void* data_) {
    TypedVector_checkArraySize(this);
    if (index >= this->items) {
       this->items = index+1;
+   } else {
+      if (this->owner) {
+         Object* removed = this->array[index];
+         assert (removed != NULL);
+         if (this->owner) {
+            removed->delete(removed);
+         }
+      }
    }
    this->array[index] = data;
    assert(TypedVector_isConsistent(this));
 }
 
-Object* TypedVector_get(TypedVector* this, int index) {
+inline Object* TypedVector_get(TypedVector* this, int index) {
    assert(index < this->items);
    assert(TypedVector_isConsistent(this));
    return this->array[index];
 }
 
-int TypedVector_size(TypedVector* this) {
+inline int TypedVector_size(TypedVector* this) {
    assert(TypedVector_isConsistent(this));
    return this->items;
 }
@@ -203,7 +243,7 @@ void TypedVector_add(TypedVector* this, void* data_) {
    assert(TypedVector_isConsistent(this));
 }
 
-int TypedVector_indexOf(TypedVector* this, void* search_) {
+inline int TypedVector_indexOf(TypedVector* this, void* search_) {
    assert(((Object*)search_)->class == this->vectorType);
    Object* search = search_;
    assert(TypedVector_isConsistent(this));

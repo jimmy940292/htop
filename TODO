@@ -1,10 +1,10 @@
 
 FEATURES:
 
- * support $sysconfdir/htoprc
- * integrate columns configuration in the main screen, like 'kill'
- * display more information in the header (uptime, load, etc.)
- * save columns and header setup in an .htoprc file
+ * read SYSCONFDIR/htoprc (help, autoconf gurus!)
+ * integrate columns configuration in the setup screen
+ * handle saving of .htoprc more elegantly
+ * option to display only processes of a single user
  * make bars display refresh independent from list refresh
  * auto-calibrate delay 
  * add some more 'top' features

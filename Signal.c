@@ -42,11 +42,9 @@ Signal* Signal_new(char* name, int number) {
 void Signal_delete(Object* cast) {
    Signal* this = (Signal*)cast;
    assert (this != NULL);
-
-   // TODO: names are string constants, so we're not deleting them now.
+   // names are string constants, so we're not deleting them.
    free(this);
 }
-
 
 void Signal_display(Object* cast, RichString* out) {
    Signal* this = (Signal*)cast;
@@ -54,7 +52,7 @@ void Signal_display(Object* cast, RichString* out) {
    
    char buffer[31];
    snprintf(buffer, 30, "%2d %s", this->number, this->name);
-   RichString_write(out, A_NORMAL, buffer);
+   RichString_write(out, CRT_colors[DEFAULT_COLOR], buffer);
 }
 
 int Signal_getSignalCount() {

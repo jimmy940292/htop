@@ -1,3 +1,40 @@
+htop (0.5-1) unstable; urgency=low
+
+  * New upstream version.
+    - fixes problem with wrongly displayed CPU bar (Closes: #283212)
+
+ -- Bartosz Fenski <fenio@o2.pl>  Sat, 27 Nov 2004 10:10:17 +0100
+
+htop (0.4.1-3) unstable; urgency=low
+
+  * Fixed handling of non-alphanumeric chars during search.
+    Thanks to Gian Piero Carrubba for noticing it (Closes: #269060)
+  * Added description of recursive search of processes to the manpage.
+    Should be now clear how does it work so (Closes: #269061)
+
+ -- Bartosz Fenski <fenio@o2.pl>  Tue, 31 Aug 2004 21:40:15 +0200
+
+htop (0.4.1-2) unstable; urgency=low
+
+  * Included updated manpage. (Closes: #269064)
+    Thanks to Gian Piero Carrubba for provided patch.
+
+ -- Bartosz Fenski <fenio@o2.pl>  Tue, 31 Aug 2004 21:08:13 +0200
+
+htop (0.4.1-1) unstable; urgency=low
+
+  * New upstream version.
+    - fixes FTBFS on some archs (Closes: #268373)
+    
+ -- Bartosz Fenski <fenio@o2.pl>  Fri, 27 Aug 2004 14:01:11 +0200
+
+htop (0.4-1) unstable; urgency=low
+
+  * New upstream version.
+  * Added debian/menu file.
+
+ -- Bartosz Fenski <fenio@o2.pl>  Sun, 22 Aug 2004 13:09:12 +0200
+
 htop (0.3.3-1) unstable; urgency=low
 
   * New upstream version.

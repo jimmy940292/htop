@@ -1,10 +1,20 @@
 
 bin_PROGRAMS = htop
-htop_SOURCES = debug.h CRT.c CRT.h Hashtable.c Hashtable.h htop.c ListBox.c ListBox.h Object.c Object.h \
-Process.c ProcessFilter.c ProcessFilter.h Process.h ProcessList.c ProcessList.h String.c \
-String.h TypedVector.c TypedVector.h UsersTable.c UsersTable.h MemoryMonitor.c MemoryMonitor.h \
-RichString.c RichString.h Signal.c Signal.h Settings.c Settings.h
 dist_man_MANS = htop.1
 EXTRA_DIST = $(dist_man_MANS)
 
-AM_CFLAGS = -pedantic -Wall -Werror -std=c99
+AM_CFLAGS = -pedantic -Wall -std=c99
+
+htop_SOURCES = AvailableMetersListBox.c CategoriesListBox.c ClockMeter.c \
+CPUMeter.c CRT.c DebugMemory.c DisplayOptionsListBox.c FunctionBar.c \
+Hashtable.c Header.c htop.c ListBox.c ListItem.c LoadAverageMeter.c \
+LoadMeter.c MemoryMeter.c Meter.c MetersListBox.c Object.c Process.c \
+ProcessList.c RichString.c ScreenManager.c Settings.c Signal.c \
+SignalsListBox.c String.c SwapMeter.c TasksMeter.c TypedVector.c \
+UptimeMeter.c UsersTable.c AvailableMetersListBox.h CategoriesListBox.h \
+ClockMeter.h config.h CPUMeter.h CRT.h debug.h DebugMemory.h \
+DisplayOptionsListBox.h FunctionBar.h Hashtable.h Header.h htop.h ListBox.h \
+ListItem.h LoadAverageMeter.h LoadMeter.h MemoryMeter.h Meter.h \
+MetersListBox.h Object.h Process.h ProcessList.h RichString.h ScreenManager.h \
+Settings.h Signal.h SignalsListBox.h String.h SwapMeter.h TasksMeter.h \
+TypedVector.h UptimeMeter.h UsersTable.h CheckItem.c CheckItem.h

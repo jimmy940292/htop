@@ -4,12 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <curses.h>
-#include <assert.h>
 #include <sys/param.h>
 
 #include "debug.h"
+#include <assert.h>
 
-#define RICHSTRING_MAXLEN 512
+#define RICHSTRING_MAXLEN 300
 
 /*{
 
@@ -36,26 +36,21 @@ void RichString_prune(RichString* this) {
    this->len = 0;
 }
 
-void RichString_attrOn(int attrs) {
-   wattron(workArea, attrs);
-}
-
-void RichString_attrOff(int attrs) {
-   wattroff(workArea, attrs);
-}
-
 void RichString_write(RichString* this, int attrs, char* data) {
    this->len = 0;
    RichString_append(this, attrs, data);
 }
 
-void RichString_append(RichString* this, int attrs, char* data) {
+inline void RichString_append(RichString* this, int attrs, char* data) {
+   RichString_appendn(this, attrs, data, strlen(data));
+}
+
+inline void RichString_appendn(RichString* this, int attrs, char* data, int len) {
    if (!workArea) {
       workArea = newpad(1, RICHSTRING_MAXLEN);
    }
    assert(workArea);
-   wattron(workArea, attrs);
-   int len = strlen(data);
+   wattrset(workArea, attrs);
    int maxToWrite = (RICHSTRING_MAXLEN - 1) - this->len;
    int wrote = MIN(maxToWrite, len);
    mvwaddnstr(workArea, 0, 0, data, maxToWrite);
@@ -73,7 +68,13 @@ void RichString_setAttr(RichString *this, int attrs) {
 }
 
 void RichString_applyAttr(RichString *this, int attrs) {
-   for (int i = 0; i < this->len; i++) {
+   for (int i = 0; i < this->len - 1; i++) {
       this->chstr[i] |= attrs;
    }
+}
+
+RichString RichString_quickString(int attrs, char* data) {
+   RichString str = RichString_new();
+   RichString_write(&str, attrs, data);
+   return str;
 }

@@ -10,6 +10,7 @@ in the source distribution for its full text.
 */
 
 #include "RichString.h"
+#include "CRT.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>

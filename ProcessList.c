@@ -7,12 +7,9 @@ in the source distribution for its full text.
 
 #include "ProcessList.h"
 #include "Process.h"
-#include "ProcessFilter.h"
 #include "TypedVector.h"
 #include "UsersTable.h"
 #include "Hashtable.h"
-
-#include "debug.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -20,9 +17,12 @@ in the source distribution for its full text.
 #include <dirent.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <assert.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <sys/utsname.h>
+
+#include "debug.h"
+#include <assert.h>
 
 /*{
 #ifndef PROCDIR
@@ -39,22 +39,29 @@ in the source distribution for its full text.
 }*/
 
 /*{
+
 typedef struct ProcessList_ {
    TypedVector* processes;
+   TypedVector* processes2;
    Hashtable* processTable;
-   ProcessFilter* filter;
    Process* prototype;
    UsersTable* usersTable;
-   long int totalTime;
-   long int userTime;
-   long int systemTime;
-   long int idleTime;
-   long int niceTime;
-   long int totalPeriod;
-   long int userPeriod;
-   long int systemPeriod;
-   long int idlePeriod;
-   long int nicePeriod;
+
+   int processorCount;
+   int totalTasks;
+   int runningTasks;
+
+   long int* totalTime;
+   long int* userTime;
+   long int* systemTime;
+   long int* idleTime;
+   long int* niceTime;
+   long int* totalPeriod;
+   long int* userPeriod;
+   long int* systemPeriod;
+   long int* idlePeriod;
+   long int* nicePeriod;
+
    long int totalMem;
    long int usedMem;
    long int freeMem;
@@ -64,28 +71,158 @@ typedef struct ProcessList_ {
    long int totalSwap;
    long int usedSwap;
    long int freeSwap;
+
+   int kernelMajor;
+   int kernelMiddle;
+   int kernelMinor;
+   int kernelTiny;
+
+   ProcessField* fields;
+   ProcessField sortKey;
+   int direction;
+   bool hideThreads;
+   bool shadowOtherUsers;
+   bool hideKernelThreads;
+   bool treeView;
+   bool highlightBaseName;
+   bool highlightMegabytes;
+
 } ProcessList;
 }*/
 
-ProcessList* ProcessList_new(ProcessFilter* filter, UsersTable* usersTable) {
+/* private */
+void ProcessList_getKernelVersion(ProcessList* this) {
+   struct utsname uts;
+   (void) uname(&uts);
+   char** items = String_split(uts.release, '.');
+   this->kernelMajor = atoi(items[0]);
+   this->kernelMiddle = atoi(items[1]);
+   this->kernelMinor = atoi(items[2]);
+   this->kernelTiny = items[3] ? atoi(items[3]) : 0;
+   for (int i = 0; items[i] != NULL; i++) free(items[i]);
+   free(items);
+}
+
+/* private property */
+ProcessField defaultHeaders[LAST_PROCESSFIELD] = { PID, USER, PRIORITY, NICE, M_SIZE, M_RESIDENT, M_SHARE, STATE, PERCENT_CPU, PERCENT_MEM, TIME, COMM, LAST_PROCESSFIELD };
+
+ProcessList* ProcessList_new(UsersTable* usersTable) {
    ProcessList* this;
    this = malloc(sizeof(ProcessList));
-   this->processes = TypedVector_new(PROCESS_CLASS, true);
+   this->processes = TypedVector_new(PROCESS_CLASS, true, DEFAULT_SIZE);
    this->processTable = Hashtable_new(20, false);
    TypedVector_setCompareFunction(this->processes, Process_compare);
-   this->filter = filter;
-   this->prototype = Process_new(this->filter);
-   this->totalTime = 0;
+   this->prototype = Process_new(this);
    this->usersTable = usersTable;
+   
+   /* tree-view auxiliary buffers */
+   this->processes2 = TypedVector_new(PROCESS_CLASS, true, DEFAULT_SIZE);
+   TypedVector_setCompareFunction(this->processes2, Process_compare);
+
+   ProcessList_getKernelVersion(this);
+
+   FILE* status = fopen(PROCSTATFILE, "r");
+   assert(status != NULL);
+   char buffer[256];
+   int procs = -1;
+   do {
+      procs++;
+      fgets(buffer, 255, status);
+   } while (String_startsWith(buffer, "cpu"));
+   fclose(status);
+   this->processorCount = procs - 1;
+   this->totalTime = calloc(procs, sizeof(long int));
+   this->userTime = calloc(procs, sizeof(long int));
+   this->systemTime = calloc(procs, sizeof(long int));
+   this->niceTime = calloc(procs, sizeof(long int));
+   this->idleTime = calloc(procs, sizeof(long int));
+   this->totalPeriod = calloc(procs, sizeof(long int));
+   this->userPeriod = calloc(procs, sizeof(long int));
+   this->systemPeriod = calloc(procs, sizeof(long int));
+   this->nicePeriod = calloc(procs, sizeof(long int));
+   this->idlePeriod = calloc(procs, sizeof(long int));
+   for (int i = 0; i < procs; i++) {
+      this->totalTime[i] = 1;
+      this->totalPeriod[i] = 1;
+   }
+
+   this->fields = malloc(sizeof(ProcessField) * LAST_PROCESSFIELD);
+   // TODO: turn 'fields' into a TypedVector,
+   // (and ProcessFields into proper objects).
+   for (int i = 0; i < LAST_PROCESSFIELD; i++) {
+      this->fields[i] = defaultHeaders[i];
+   }
+   this->sortKey = PERCENT_CPU;
+   this->direction = 1;
+   this->hideThreads = false;
+   this->shadowOtherUsers = false;
+   this->hideKernelThreads = false;
+   this->treeView = false;
+   this->highlightBaseName = false;
+   this->highlightMegabytes = false;
+
    return this;
 }
 
 void ProcessList_delete(ProcessList* this) {
    Hashtable_delete(this->processTable);
    TypedVector_delete(this->processes);
+   TypedVector_delete(this->processes2);
    Process_delete((Object*)this->prototype);
+
+   free(this->totalTime);
+   free(this->userTime);
+   free(this->systemTime);
+   free(this->niceTime);
+   free(this->idleTime);
+   free(this->totalPeriod);
+   free(this->userPeriod);
+   free(this->systemPeriod);
+   free(this->nicePeriod);
+   free(this->idlePeriod);
+
+   free(this->fields);
    free(this);
 }
+
+void ProcessList_invertSortOrder(ProcessList* this) {
+   if (this->direction == 1)
+      this->direction = -1;
+   else
+      this->direction = 1;
+}
+
+void ProcessList_sortKey(ProcessList* this, int delta) {
+   assert(delta == 1 || delta == -1);
+   int i = 0;
+   while (this->fields[i] != this->sortKey)
+      i++;
+   i += delta;
+   if (i < 0) {
+      i = 0;
+      while (this->fields[i] != LAST_PROCESSFIELD)
+         i++;
+      i--;
+   } else if (this->fields[i] == LAST_PROCESSFIELD)
+      i = 0;
+   this->sortKey = this->fields[i];
+   this->direction = 1;
+   // Weird code...
+}
+
+RichString ProcessList_printHeader(ProcessList* this) {
+   RichString out = RichString_new();
+   ProcessField* fields = this->fields;
+   for (int i = 0; fields[i] != LAST_PROCESSFIELD; i++) {
+      char* field = Process_printField(fields[i]);
+      if (this->sortKey == fields[i])
+         RichString_append(&out, CRT_colors[PANEL_HIGHLIGHT_FOCUS], field);
+      else
+         RichString_append(&out, CRT_colors[PANEL_HEADER_FOCUS], field);
+   }
+   return out;
+}
+
 
 void ProcessList_prune(ProcessList* this) {
    TypedVector_prune(this->processes);
@@ -110,8 +247,54 @@ int ProcessList_size(ProcessList* this) {
    return (TypedVector_size(this->processes));
 }
 
+/* private */
+void ProcessList_buildTree(ProcessList* this, int pid, int level, int indent, int direction) {
+   TypedVector* children = TypedVector_new(PROCESS_CLASS, false, DEFAULT_SIZE);
+
+   for (int i = 0; i < TypedVector_size(this->processes); i++) {
+      Process* process = (Process*) (TypedVector_get(this->processes, i));
+      if (process->ppid == pid) {
+         Process* process = (Process*) (TypedVector_take(this->processes, i));
+         TypedVector_add(children, process);
+	 i--;
+      }
+   }
+   int size = TypedVector_size(children);
+   for (int i = 0; i < size; i++) {
+      Process* process = (Process*) (TypedVector_get(children, i));
+      if (direction == 1)
+         TypedVector_add(this->processes2, process);
+      else
+         TypedVector_insert(this->processes2, 0, process);
+      int nextIndent = indent;
+      if (i < size - 1)
+         nextIndent = indent | (1 << level);
+      ProcessList_buildTree(this, process->pid, level+1, nextIndent, direction);
+      process->indent = indent | (1 << level);
+   }
+   TypedVector_delete(children);
+}
+
 void ProcessList_sort(ProcessList* this) {
-   TypedVector_sort(this->processes);
+   if (!this->treeView) {
+      TypedVector_sort(this->processes);
+   } else {
+      int direction = this->direction;
+      int sortKey = this->sortKey;
+      this->sortKey = PID;
+      this->direction = 1;
+      TypedVector_sort(this->processes);
+      this->sortKey = sortKey;
+      this->direction = direction;
+      Process* init = (Process*) (TypedVector_take(this->processes, 0));
+      assert(init->pid == 1);
+      init->indent = 0;
+      TypedVector_add(this->processes2, init);
+      ProcessList_buildTree(this, init->pid, 0, 0, direction);
+      TypedVector* t = this->processes;
+      this->processes = this->processes2;
+      this->processes2 = t;
+   }
 }
 
 /* private */
@@ -152,7 +335,7 @@ int ProcessList_readStatFile(Process *proc, FILE *f, char *command) {
       &proc->sigcatch, &proc->wchan, &proc->nswap, &proc->cnswap, 
       &proc->exit_signal, &proc->processor);
    
-   // This assert is always valid on 2.4, but _not always valid_ on 2.6.
+   // This assert is always valid on 2.4, but reportedly not always valid on 2.6.
    // TODO: Check if the semantics of this field has changed.
    // assert(zero == 0);
    
@@ -168,7 +351,7 @@ void ProcessList_scan(ProcessList* this) {
 
    FILE* status;
    char buffer[128];
-   status = fopen(PROCMEMINFOFILE, "r");
+  status = fopen(PROCMEMINFOFILE, "r");
    assert(status != NULL);
    while (!feof(status)) {
       fgets(buffer, 128, status);
@@ -195,9 +378,44 @@ void ProcessList_scan(ProcessList* this) {
 
    status = fopen(PROCSTATFILE, "r");
    assert(status != NULL);
-   fscanf(status, "cpu  %ld %ld %ld %ld", &usertime, &nicetime, &systemtime, &idletime);
-   totaltime = usertime + nicetime + systemtime + idletime;
-   long int totalperiod = totaltime - this->totalTime;
+   for (int i = 0; i <= this->processorCount; i++) {
+      int cpuid;
+      if (this->kernelMajor == 2 && this->kernelMiddle <= 4) {
+         if (i == 0) {
+            fscanf(status, "cpu  %ld %ld %ld %ld\n", &usertime, &nicetime, &systemtime, &idletime);
+         } else {
+            fscanf(status, "cpu%d %ld %ld %ld %ld\n", &cpuid, &usertime, &nicetime, &systemtime, &idletime);
+            assert(cpuid == i - 1);
+         }
+         totaltime = usertime + nicetime + systemtime + idletime;
+      } else {
+         long int ioWait, irq, softIrq;
+         if (i == 0)
+            fscanf(status, "cpu  %ld %ld %ld %ld %ld %ld %ld\n", &usertime, &nicetime, &systemtime, &idletime, &ioWait, &irq, &softIrq);
+         else {
+            fscanf(status, "cpu%d %ld %ld %ld %ld %ld %ld %ld\n", &cpuid, &usertime, &nicetime, &systemtime, &idletime, &ioWait, &irq, &softIrq);
+            assert(cpuid == i - 1);
+         }
+         systemtime += ioWait + irq + softIrq;
+         totaltime = usertime + nicetime + systemtime + idletime;
+      }
+      assert (usertime >= this->userTime[i]);
+      assert (nicetime >= this->niceTime[i]);
+      assert (systemtime >= this->systemTime[i]);
+      assert (idletime >= this->idleTime[i]);
+      assert (totaltime >= this->totalTime[i]);
+      this->userPeriod[i] = usertime - this->userTime[i];
+      this->nicePeriod[i] = nicetime - this->niceTime[i];
+      this->systemPeriod[i] = systemtime - this->systemTime[i];
+      this->idlePeriod[i] = idletime - this->idleTime[i];
+      this->totalPeriod[i] = totaltime - this->totalTime[i];
+      this->userTime[i] = usertime;
+      this->niceTime[i] = nicetime;
+      this->systemTime[i] = systemtime;
+      this->idleTime[i] = idletime;
+      this->totalTime[i] = totaltime;
+   }
+   float period = (float)this->totalPeriod[0] / this->processorCount;
    fclose(status);
 
    // mark all process as "dirty"
@@ -205,6 +423,9 @@ void ProcessList_scan(ProcessList* this) {
       Process* p = (Process*) TypedVector_get(this->processes, i);
       p->updated = false;
    }
+   
+   this->totalTasks = 0;
+   this->runningTasks = 0;
 
    proc = opendir(PROCDIR);
    assert(proc != NULL);
@@ -218,7 +439,7 @@ void ProcessList_scan(ProcessList* this) {
       // The RedHat kernel hides threads with a dot.
       // I believe this is non-standard.
       bool isThread = false;
-      if (pid == 0 && name[0] == '.') {
+      if ((!this->hideThreads) && pid == 0 && name[0] == '.') {
          char* tname = name + 1;
          pid = atoi(tname);
          if (pid > 0)
@@ -244,7 +465,10 @@ void ProcessList_scan(ProcessList* this) {
 
          struct stat sstat;
          snprintf(statusfilename, MAX_NAME, "%s/%s/stat", PROCDIR, name);
-         stat(statusfilename, &sstat);
+         int statok = stat(statusfilename, &sstat);
+         if (statok == -1)
+            goto errorReadingProcess;
+         
          char* username = UsersTable_getRef(this->usersTable, sstat.st_uid);
          if (username) {
             strncpy(process->user, username, PROCESS_USER_LEN);
@@ -264,9 +488,9 @@ void ProcessList_scan(ProcessList* this) {
          if(!success) {
             goto errorReadingProcess;
          }
-         
+
          process->percent_cpu = (process->utime + process->stime - lasttimes) / 
-            (float)totalperiod * 100.0;
+            period * 100.0;
 
          if(!existingProcess) {
             snprintf(statusfilename, MAX_NAME, "%s/%s/cmdline", PROCDIR, name);
@@ -306,6 +530,15 @@ void ProcessList_scan(ProcessList* this) {
          process->percent_mem = process->m_resident / 
             (float)(this->usedMem - this->cachedMem - this->buffersMem) * 
             100.0;
+
+         this->totalTasks++;
+	 if (process->state == 'R') {
+	    this->runningTasks++;
+	 }
+
+         if (this->hideKernelThreads && process->m_size == 0)
+            ProcessList_remove(this, process);
+
          continue;
 
          // Exception handler.
@@ -325,23 +558,6 @@ void ProcessList_scan(ProcessList* this) {
          p->updated = false;
    }
 
-   totalperiod = totaltime - this->totalTime;
-   long int userperiod = usertime - this->userTime;
-   long int niceperiod = nicetime - this->niceTime;
-   long int systemperiod = systemtime - this->systemTime;
-   long int idleperiod = idletime - this->idleTime;
-
-   this->totalTime = totaltime;
-   this->userTime = usertime;
-   this->niceTime = nicetime;
-   this->systemTime = systemtime;
-   this->idleTime = idletime;
-
-   this->totalPeriod = totalperiod;
-   this->userPeriod = userperiod;
-   this->nicePeriod = niceperiod;
-   this->systemPeriod = systemperiod;
-   this->idlePeriod = idleperiod;
 }
 
 void ProcessList_dontCrash(int signal) {

@@ -73,7 +73,7 @@ void Hashtable_delete(Hashtable* this) {
    free(this);
 }
 
-int Hashtable_size(Hashtable* this) {
+inline int Hashtable_size(Hashtable* this) {
    return this->items;
 }
 
@@ -117,7 +117,7 @@ void* Hashtable_remove(Hashtable* this, int key) {
          bucketPtr = &((*bucketPtr)->next);
 }
 
-void* Hashtable_get(Hashtable* this, int key) {
+inline void* Hashtable_get(Hashtable* this, int key) {
    int index = this->hashAlgorithm(this, key);
    HashtableItem* bucketPtr = this->buckets[index];
    while (true)

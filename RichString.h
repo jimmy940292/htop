@@ -7,12 +7,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <curses.h>
-#include <assert.h>
 #include <sys/param.h>
 
 #include "debug.h"
+#include <assert.h>
 
-#define RICHSTRING_MAXLEN 512
+#define RICHSTRING_MAXLEN 300
 
 
 typedef struct RichString_ {
@@ -28,16 +28,16 @@ void RichString_delete(RichString this);
 
 void RichString_prune(RichString* this);
 
-void RichString_attrOn(int attrs);
-
-void RichString_attrOff(int attrs);
-
 void RichString_write(RichString* this, int attrs, char* data);
 
-void RichString_append(RichString* this, int attrs, char* data);
+inline void RichString_append(RichString* this, int attrs, char* data);
+
+inline void RichString_appendn(RichString* this, int attrs, char* data, int len);
 
 void RichString_setAttr(RichString *this, int attrs);
 
 void RichString_applyAttr(RichString *this, int attrs);
+
+RichString RichString_quickString(int attrs, char* data);
 
 #endif

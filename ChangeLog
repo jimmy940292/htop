@@ -1,4 +1,58 @@
 
+What's new in version 0.5
+
+* Tree view
+* New column, TIME (user + system time,
+  like in top, 'T' switches to "sort by time")
+* Major reorganization of the underlying code of the
+  setup screen, to manage setup pages
+* New setup page: Display options
+* Hide kernel threads ('K' key)
+* Colorized memory numbers
+* Vastly improved support for monochromatic terminals
+* Shadow processes that do not belong to user ('U' key)
+* Header margin configuration accessible via setup screen
+* Visual feedback on failing incremental search
+* BUGFIX: fixed keyboard input issues on 64-bit machines
+* BUGFIX: hopefully fixed the incorrect values
+  that show on status bars in some systems
+* BUGFIX: doesn't mess with fields list anymore when
+  canceling after changing the number of items
+* Uptime meter no longer says "1 days" ;)
+
+What's new in version 0.4.1
+
+* BUGFIX: compiles on 64-bit architectures again
+  (thanks to Bartosz Fenski for the report)
+* BUGFIX: multi-processor support fixed on kernels 2.6
+  (thanks to Wolfram Schlich for the report)
+
+What's new in version 0.4
+
+* Support for multiple processors!
+* Basic mouse support
+* Modular header based on configurable meters;
+  supports 4 view modes: bar, text, LED, graph
+* Uptime, load average meters
+  (thanks to Marc Calahan)
+* Meters setup screen; should eventually evolve into a
+  general setup screen, with column setup, keybindings, etc.
+* Thread hiding toggleable
+  (press 'T' to hide the nonstandard dotfiles in /proc)
+* BUGFIX: Do not flicker screen on column configuration screen
+* Clock and load average meters
+  (thanks to Marc Calahan)
+* BUGFIX: numeric swap indicator was printing bogus value
+* BUGFIX: internal fixes on ListBox widget
+* Clear the bottom line when exiting
+* Press "F3" during search to walk through the results
+* Improved navigation on column configuration screen
+* BUGFIX: fix segfault on kernels with restricted /proc
+  enabled
+* BUGFIX: a few last-minute bugfixes in the setup UI
+  (thanks to Gaspare Bruno for the reports)
+
+
 What's new in version 0.3.3
 
 * Saves column and sorting configuration in ~/.htoprc

@@ -14,17 +14,29 @@ in the source distribution for its full text.
 #include "CRT.h"
 #include "RichString.h"
 
-#include "debug.h"
-
-#include <assert.h>
 #include <math.h>
 #include <sys/param.h>
 #include <stdbool.h>
 
+#include "debug.h"
+#include <assert.h>
+
 #include <curses.h>
 //#link curses
 
-typedef struct ListBox_ {
+
+typedef struct ListBox_ ListBox;
+
+typedef enum HandlerResult_ {
+   HANDLED,
+   IGNORED,
+   BREAK_LOOP
+} HandlerResult;
+
+typedef HandlerResult(*ListBox_eventHandler)(ListBox*, int);
+
+struct ListBox_ {
+   Object super;
    int x, y, w, h;
    WINDOW* window;
    TypedVector* items;
@@ -33,13 +45,22 @@ typedef struct ListBox_ {
    int oldSelected;
    bool needsRedraw;
    RichString header;
-} ListBox;
+   ListBox_eventHandler eventHandler;
+};
 
-ListBox* ListBox_new(int x, int y, int w, int h, char* type);
+extern char* LISTBOX_CLASS;
+
+
+
+ListBox* ListBox_new(int x, int y, int w, int h, char* type, bool owner);
+
+void ListBox_delete(Object* cast);
+
+void ListBox_init(ListBox* this, int x, int y, int w, int h, char* type, bool owner);
+
+void ListBox_done(ListBox* this);
 
 void ListBox_setHeader(ListBox* this, RichString header);
-
-void ListBox_delete(ListBox* this);
 
 void ListBox_move(ListBox* this, int x, int y);
 
@@ -53,7 +74,13 @@ void ListBox_set(ListBox* this, int i, Object* o);
 
 Object* ListBox_get(ListBox* this, int i);
 
+Object* ListBox_remove(ListBox* this, int i);
+
 Object* ListBox_getSelected(ListBox* this);
+
+void ListBox_moveSelectedUp(ListBox* this);
+
+void ListBox_moveSelectedDown(ListBox* this);
 
 int ListBox_getSelectedIndex(ListBox* this);
 
@@ -61,7 +88,7 @@ int ListBox_getSize(ListBox* this);
 
 void ListBox_setSelected(ListBox* this, int selected);
 
-void ListBox_draw(ListBox* this);
+void ListBox_draw(ListBox* this, bool focus);
 
 void ListBox_onKey(ListBox* this, int key);
 

@@ -12,10 +12,15 @@ in the source distribution for its full text.
 #include "Object.h"
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 #include <stdbool.h>
 
 #include "debug.h"
+#include <assert.h>
+
+
+#ifndef DEFAULT_SIZE
+#define DEFAULT_SIZE -1
+#endif
 
 typedef void(*TypedVector_procedure)(void*);
 typedef int(*TypedVector_booleanFunction)(const Object*,const Object*);
@@ -31,12 +36,10 @@ typedef struct TypedVector_ {
 } TypedVector;
 
 
-TypedVector* TypedVector_new(char* vectorType_, bool owner);
+TypedVector* TypedVector_new(char* vectorType_, bool owner, int size);
 
 void TypedVector_delete(TypedVector* this);
 
-/* private */
-bool TypedVector_isConsistent(TypedVector* this);
 
 void TypedVector_prune(TypedVector* this);
 
@@ -46,24 +49,28 @@ void TypedVector_setCompareFunction(TypedVector* this, TypedVector_booleanFuncti
 
 void TypedVector_sort(TypedVector* this);
 
-/* private */
-void TypedVector_checkArraySize(TypedVector* this);
 
-void TypedVector_insert(TypedVector* this, int index, Object* data);
+void TypedVector_insert(TypedVector* this, int index, void* data_);
+
+Object* TypedVector_take(TypedVector* this, int index);
 
 Object* TypedVector_remove(TypedVector* this, int index);
 
+void TypedVector_moveUp(TypedVector* this, int index);
+
+void TypedVector_moveDown(TypedVector* this, int index);
+
 void TypedVector_set(TypedVector* this, int index, void* data_);
 
-Object* TypedVector_get(TypedVector* this, int index);
+inline Object* TypedVector_get(TypedVector* this, int index);
 
-int TypedVector_size(TypedVector* this);
+inline int TypedVector_size(TypedVector* this);
 
 void TypedVector_merge(TypedVector* this, TypedVector* v2);
 
 void TypedVector_add(TypedVector* this, void* data_);
 
-int TypedVector_indexOf(TypedVector* this, void* search_);
+inline int TypedVector_indexOf(TypedVector* this, void* search_);
 
 void TypedVector_foreach(TypedVector* this, TypedVector_procedure f);
 

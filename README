@@ -2,7 +2,7 @@
 htop
 by Hisham Muhammad <lode@gobolinux.org>
 
-May, 2004.
+May-Aug, 2004.
 
 Introduction
 ~~~~~~~~~~~~
@@ -10,8 +10,9 @@ Introduction
 This is htop, an interactive process viewer for Linux.
 It requires ncurses. Tested with Linux 2.4 and 2.6.
 
-This software is in its initial stages of development.
-Read the TODO file to see what's known to be missing.
+This software has evolved considerably during the last months,
+and is reasonably complete, but there is still room for
+improvement. Read the TODO file to see what's known to be missing.
 
 Comparison between 'htop' and 'top'
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -44,19 +45,20 @@ Arrows,
 [PgUp], [PgDn],
 [Home], [End] - scroll process list
 [F1], [h]     - help screen
-[F2]          - highlight follows process
+[F2], [S]     - setup: configure header meters
 [F3], [/]     - incremental process search: type process name
-[F4]          - invert sort order
-[F5]          - select sorting by previous field 
-[F6]          - select sorting by next field
+[F4], [I]     - invert sort order
+[F5], [<]     - select sorting by previous field 
+[F6], [>]     - select sorting by next field
 [F7], []]     - increase process priority (superuser only)
 [F8], [[]     - decrease process priority
 [F9], [k]     - kill process (all tagged ones, or the current, if none is tagged)
 [F10],[q]     - quit
+[F]           - highlight follows process
 [M]           - sort by memory usage
 [P]           - sort by processor usage
 [C]           - select columns
 [space]
-[Ctrl][L]     - refresh screen
+[Ctrl+L]      - refresh screen
 
 if not all keys work check your curses configuration.

@@ -10,18 +10,24 @@ in the source distribution for its full text.
 */
 
 #include "String.h"
-#include "ProcessFilter.h"
+#include "ProcessList.h"
+#include "Header.h"
+
+#include "debug.h"
 
 
 typedef struct Settings_ {
-   ProcessFilter* filter;
    char* userSettings;
+   ProcessList* pl;
+   Header* header;
 } Settings;
 
 
-Settings* Settings_new(ProcessFilter* pf);
+Settings* Settings_new(ProcessList* pl, Header* header);
 
 void Settings_delete(Settings* this);
+
+
 
 bool Settings_read(Settings* this, char* fileName);
 

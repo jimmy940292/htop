@@ -17,9 +17,9 @@ in the source distribution for its full text.
 
 #include "debug.h"
 
-void String_delete(char* s);
+inline void String_delete(char* s);
 
-char* String_copy(char* orig);
+inline char* String_copy(char* orig);
 
 char* String_cat(char* s1, char* s2);
 
@@ -37,9 +37,9 @@ void String_printInt(int i);
 
 void String_printPointer(void* p);
 
-int String_eq(char* s1, char* s2);
+inline int String_eq(char* s1, char* s2);
 
-int String_startsWith(char* s, char* match);
+inline int String_startsWith(char* s, char* match);
 
 char** String_split(char* s, char sep);
 

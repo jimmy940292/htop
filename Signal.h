@@ -32,7 +32,6 @@ Signal* Signal_new(char* name, int number);
 
 void Signal_delete(Object* cast);
 
-
 void Signal_display(Object* cast, RichString* out);
 
 int Signal_getSignalCount();
