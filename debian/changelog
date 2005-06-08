@@ -1,3 +1,23 @@
+htop (0.5.2-1) unstable; urgency=low
+
+  * New upstream bugfix release. 
+
+ -- Bartosz Fenski <fenio@debian.org>  Wed,  8 Jun 2005 20:02:19 +0200
+
+htop (0.5.1-1) unstable; urgency=low
+
+  * New upstream version.
+    - correctly honors limits for nice values (Closes: #291502)
+
+ -- Bartosz Fenski <fenio@debian.org>  Sun, 10 Apr 2005 17:49:12 +0200
+
+htop (0.5-2) unstable; urgency=low
+  
+  * watch file changed a little to handle weird upstream versions
+  * s/fenio@o2.pl/fenio@debian.org/
+
+ -- Bartosz Fenski <fenio@debian.org>  Thu,  7 Apr 2005 12:00:11 +0200
+ 
 htop (0.5-1) unstable; urgency=low
 
   * New upstream version.

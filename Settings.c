@@ -108,6 +108,9 @@ bool Settings_read(Settings* this, char* fileName) {
       // hide_kernel_threads
       } else if (String_eq(option[0], "hide_kernel_threads")) {
          this->pl->hideKernelThreads = atoi(option[1]);
+      // hide_kernel_threads
+      } else if (String_eq(option[0], "hide_userland_threads")) {
+         this->pl->hideUserlandThreads = atoi(option[1]);
       // shadow_other_users
       } else if (String_eq(option[0], "shadow_other_users")) {
          this->pl->shadowOtherUsers = atoi(option[1]);
@@ -166,6 +169,7 @@ bool Settings_write(Settings* this) {
    fprintf(fd, "sort_direction=%d\n", (int) this->pl->direction);
    fprintf(fd, "hide_threads=%d\n", (int) this->pl->hideThreads);
    fprintf(fd, "hide_kernel_threads=%d\n", (int) this->pl->hideKernelThreads);
+   fprintf(fd, "hide_userland_threads=%d\n", (int) this->pl->hideUserlandThreads);
    fprintf(fd, "shadow_other_users=%d\n", (int) this->pl->shadowOtherUsers);
    fprintf(fd, "highlight_base_name=%d\n", (int) this->pl->highlightBaseName);
    fprintf(fd, "highlight_megabytes=%d\n", (int) this->pl->highlightMegabytes);

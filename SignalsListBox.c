@@ -55,7 +55,8 @@ HandlerResult SignalsListBox_eventHandler(ListBox* super, int ch) {
    SignalsListBox* this = (SignalsListBox*) super;
 
    int size = ListBox_getSize(super);
-   if (isdigit(ch)) {
+   
+   if (ch <= 255 && isdigit(ch)) {
       int signal = ch-48 + this->state;
       for (int i = 0; i < size; i++)
          if (((Signal*) ListBox_get(super, i))->number == signal) {

@@ -36,6 +36,11 @@ in the source distribution for its full text.
 #ifndef PROCMEMINFOFILE
 #define PROCMEMINFOFILE "/proc/meminfo"
 #endif
+
+#ifndef MAX_NAME
+#define MAX_NAME 128;
+#endif
+
 }*/
 
 /*{
@@ -83,6 +88,7 @@ typedef struct ProcessList_ {
    bool hideThreads;
    bool shadowOtherUsers;
    bool hideKernelThreads;
+   bool hideUserlandThreads;
    bool treeView;
    bool highlightBaseName;
    bool highlightMegabytes;
@@ -157,6 +163,7 @@ ProcessList* ProcessList_new(UsersTable* usersTable) {
    this->hideThreads = false;
    this->shadowOtherUsers = false;
    this->hideKernelThreads = false;
+   this->hideUserlandThreads = false;
    this->treeView = false;
    this->highlightBaseName = false;
    this->highlightMegabytes = false;
@@ -343,37 +350,212 @@ int ProcessList_readStatFile(Process *proc, FILE *f, char *command) {
    return 1;
 }
 
-void ProcessList_scan(ProcessList* this) {
-   DIR* proc;
+bool ProcessList_readStatusFile(Process* proc, char* dirname, char* name) {
+   char statusfilename[MAX_NAME+1];
+   statusfilename[MAX_NAME] = '\0';
+   snprintf(statusfilename, MAX_NAME, "%s/%s/status", dirname, name);
+   FILE* status = fopen(statusfilename, "r");
+   bool success = false;
+   if (status) {
+      char buffer[1024];
+      buffer[1023] = '\0';
+      while (!feof(status)) {
+         char* ok = fgets(buffer, 1023, status);
+         if (!ok)
+            break;
+         if (String_startsWith(buffer, "Uid:")) {
+            int uid1, uid2, uid3, uid4;
+            // TODO: handle other uid's.
+            int ok = sscanf(buffer, "Uid:\t%d\t%d\t%d\t%d\n", &uid1, &uid2, &uid3, &uid4);
+            if (ok >= 1) {
+               proc->st_uid = uid1;
+               success = true;
+            }
+            break;
+         }
+      }
+      fclose(status);
+   }
+   if (!success) {
+      snprintf(statusfilename, MAX_NAME, "%s/%s/stat", dirname, name);
+      struct stat sstat;
+      int statok = stat(statusfilename, &sstat);
+      if (statok == -1)
+         return false;
+      proc->st_uid = sstat.st_uid;
+   }
+   return success;
+}
+
+void ProcessList_processEntries(ProcessList* this, char* dirname, int parent, float period) {
+   DIR* dir;
    struct dirent* entry;
    Process* prototype = this->prototype;
+
+   dir = opendir(dirname);
+   assert(dir != NULL);
+   while ((entry = readdir(dir)) != NULL) {
+      char* name = entry->d_name;
+      int pid;
+      // filename is a number: process directory
+      pid = atoi(name);
+
+      // The RedHat kernel hides threads with a dot.
+      // I believe this is non-standard.
+      bool isThread = false;
+      if ((!this->hideThreads) && pid == 0 && name[0] == '.') {
+         char* tname = name + 1;
+         pid = atoi(tname);
+         if (pid > 0)
+            isThread = true;
+      }
+
+      if (pid > 0 && pid != parent) {
+         if (!this->hideUserlandThreads) {
+            char subdirname[MAX_NAME+1];
+            snprintf(subdirname, MAX_NAME, "%s/%s/task", dirname, name);
+   
+            if (access(subdirname, X_OK) == 0) {
+               ProcessList_processEntries(this, subdirname, pid, period);
+            }
+	 }
+      
+         FILE* status;
+         char statusfilename[MAX_NAME+1];
+         char command[PROCESS_COMM_LEN + 1];
+
+         Process* process;
+         Process* existingProcess = (Process*) Hashtable_get(this->processTable, pid);
+         if (!existingProcess) {
+            process = Process_clone(prototype);
+            process->pid = pid;
+            ProcessList_add(this, process);
+            if (! ProcessList_readStatusFile(process, dirname, name))
+               goto errorReadingProcess;
+         } else {
+            process = existingProcess;
+         }
+         process->updated = true;
+
+         char* username = UsersTable_getRef(this->usersTable, process->st_uid);
+         if (username) {
+            strncpy(process->user, username, PROCESS_USER_LEN);
+         } else {
+            snprintf(process->user, PROCESS_USER_LEN, "%d", process->st_uid);
+         }
+
+         int lasttimes = (process->utime + process->stime);
+
+         snprintf(statusfilename, MAX_NAME, "%s/%s/stat", dirname, name);
+         status = fopen(statusfilename, "r");
+         if (status == NULL) 
+            goto errorReadingProcess;
+         
+         int success = ProcessList_readStatFile(process, status, command);
+         fclose(status);
+         if(!success) {
+            goto errorReadingProcess;
+         }
+
+         process->percent_cpu = (process->utime + process->stime - lasttimes) / 
+            period * 100.0;
+
+         if(!existingProcess) {
+            snprintf(statusfilename, MAX_NAME, "%s/%s/cmdline", dirname, name);
+            status = fopen(statusfilename, "r");
+            if (!status) {
+               goto errorReadingProcess;
+            }
+
+            char* cmdline = process->comm;
+            int amtRead = fread(cmdline, 1, PROCESS_COMM_LEN - 1, status);
+            if (amtRead > 0) {
+               for (int i = 0; i < amtRead; i++)
+                  if (cmdline[i] == '\0' || cmdline[i] == '\n')
+                     cmdline[i] = ' ';
+               cmdline[amtRead] = '\0';
+            }
+            else {
+               strncpy(process->comm, command, PROCESS_COMM_LEN);
+               cmdline[PROCESS_COMM_LEN] = '\0';
+            }
+            fclose(status);
+         }
+
+         snprintf(statusfilename, MAX_NAME, "%s/%s/statm", dirname, name);
+         status = fopen(statusfilename, "r");
+         if(!status) {
+            goto errorReadingProcess;
+         }
+         int num = fscanf(status, "%d %d %d %d %d %d %d",
+             &process->m_size, &process->m_resident, &process->m_share, 
+             &process->m_trs, &process->m_drs, &process->m_lrs, 
+             &process->m_dt);
+         fclose(status);
+         if(num != 7)
+            goto errorReadingProcess;
+
+         process->percent_mem = process->m_resident / 
+            (float)(this->usedMem - this->cachedMem - this->buffersMem) * 
+            100.0;
+
+         this->totalTasks++;
+	 if (process->state == 'R') {
+	    this->runningTasks++;
+	 }
+
+         if (this->hideKernelThreads && process->m_size == 0)
+            ProcessList_remove(this, process);
+
+         continue;
+
+         // Exception handler.
+         errorReadingProcess: {
+            ProcessList_remove(this, process);
+         }
+      }
+   }
+   closedir(dir);
+}
+
+void ProcessList_scan(ProcessList* this) {
    long int usertime, nicetime, systemtime, idletime, totaltime;
+   long int swapFree;
 
    FILE* status;
    char buffer[128];
-  status = fopen(PROCMEMINFOFILE, "r");
+   status = fopen(PROCMEMINFOFILE, "r");
    assert(status != NULL);
    while (!feof(status)) {
       fgets(buffer, 128, status);
-      if (String_startsWith(buffer, "MemTotal:")) {
-         sscanf(buffer, "MemTotal: %ld kB", &this->totalMem);
-      } else if (String_startsWith(buffer, "MemFree:")) {
-         sscanf(buffer, "MemFree: %ld kB", &this->freeMem);
-         this->usedMem = this->totalMem - this->freeMem;
-      } else if (String_startsWith(buffer, "MemShared:")) {
-         sscanf(buffer, "MemShared: %ld kB", &this->sharedMem);
-      } else if (String_startsWith(buffer, "Buffers:")) {
-         sscanf(buffer, "Buffers: %ld kB", &this->buffersMem);
-      } else if (String_startsWith(buffer, "Cached:")) {
-         sscanf(buffer, "Cached: %ld kB", &this->cachedMem);
-      } else if (String_startsWith(buffer, "SwapTotal:")) {
-         sscanf(buffer, "SwapTotal: %ld kB", &this->totalSwap);
-      } else if (String_startsWith(buffer, "SwapFree:")) {
-         long int swapFree;
-         sscanf(buffer, "SwapFree: %ld kB", &swapFree);
-         this->usedSwap = this->totalSwap - swapFree;
+
+      switch (buffer[0]) {
+      case 'M':
+         if (String_startsWith(buffer, "MemTotal:"))
+            sscanf(buffer, "MemTotal: %ld kB", &this->totalMem);
+         else if (String_startsWith(buffer, "MemFree:"))
+            sscanf(buffer, "MemFree: %ld kB", &this->freeMem);
+         else if (String_startsWith(buffer, "MemShared:"))
+            sscanf(buffer, "MemShared: %ld kB", &this->sharedMem);
+         break;
+      case 'B':
+         if (String_startsWith(buffer, "Buffers:"))
+            sscanf(buffer, "Buffers: %ld kB", &this->buffersMem);
+         break;
+      case 'C':
+         if (String_startsWith(buffer, "Cached:"))
+            sscanf(buffer, "Cached: %ld kB", &this->cachedMem);
+         break;
+      case 'S':
+         if (String_startsWith(buffer, "SwapTotal:"))
+            sscanf(buffer, "SwapTotal: %ld kB", &this->totalSwap);
+         if (String_startsWith(buffer, "SwapFree:"))
+            sscanf(buffer, "SwapFree: %ld kB", &swapFree);
+         break;
       }
    }
+   this->usedMem = this->totalMem - this->freeMem;
+   this->usedSwap = this->totalSwap - swapFree;
    fclose(status);
 
    status = fopen(PROCSTATFILE, "r");
@@ -426,129 +608,11 @@ void ProcessList_scan(ProcessList* this) {
    
    this->totalTasks = 0;
    this->runningTasks = 0;
-
-   proc = opendir(PROCDIR);
-   assert(proc != NULL);
+   
    signal(11, ProcessList_dontCrash);
-   while ((entry = readdir(proc)) != NULL) {
-      char* name = entry->d_name;
-      int pid;
-      // filename is a number: process directory
-      pid = atoi(name);
 
-      // The RedHat kernel hides threads with a dot.
-      // I believe this is non-standard.
-      bool isThread = false;
-      if ((!this->hideThreads) && pid == 0 && name[0] == '.') {
-         char* tname = name + 1;
-         pid = atoi(tname);
-         if (pid > 0)
-            isThread = true;
-      }
-
-      if (pid > 0) {
-         FILE* status;
-         const int MAX_NAME = 128;
-         char statusfilename[MAX_NAME+1];
-         char command[PROCESS_COMM_LEN + 1];
-
-         Process* process;
-         Process* existingProcess = (Process*) Hashtable_get(this->processTable, pid);
-         if (!existingProcess) {
-            process = Process_clone(prototype);
-            process->pid = pid;
-            ProcessList_add(this, process);
-         } else {
-            process = existingProcess;
-         }
-         process->updated = true;
-
-         struct stat sstat;
-         snprintf(statusfilename, MAX_NAME, "%s/%s/stat", PROCDIR, name);
-         int statok = stat(statusfilename, &sstat);
-         if (statok == -1)
-            goto errorReadingProcess;
-         
-         char* username = UsersTable_getRef(this->usersTable, sstat.st_uid);
-         if (username) {
-            strncpy(process->user, username, PROCESS_USER_LEN);
-         } else {
-            snprintf(process->user, PROCESS_USER_LEN, "%d", sstat.st_uid);
-         }
-         process->st_uid = sstat.st_uid;
-
-         int lasttimes = (process->utime + process->stime);
-
-         status = fopen(statusfilename, "r");
-         if (status == NULL) 
-            goto errorReadingProcess;
-         
-         int success = ProcessList_readStatFile(process, status, command);
-         fclose(status);
-         if(!success) {
-            goto errorReadingProcess;
-         }
-
-         process->percent_cpu = (process->utime + process->stime - lasttimes) / 
-            period * 100.0;
-
-         if(!existingProcess) {
-            snprintf(statusfilename, MAX_NAME, "%s/%s/cmdline", PROCDIR, name);
-            status = fopen(statusfilename, "r");
-            if (!status) {
-               goto errorReadingProcess;
-            }
-
-            char* cmdline = process->comm;
-            int amtRead = fread(cmdline, 1, PROCESS_COMM_LEN - 1, status);
-            if (amtRead > 0) {
-               for (int i = 0; i < amtRead; i++)
-                  if (cmdline[i] == '\0' || cmdline[i] == '\n')
-                     cmdline[i] = ' ';
-               cmdline[amtRead] = '\0';
-            }
-            else {
-               strncpy(process->comm, command, PROCESS_COMM_LEN);
-               cmdline[PROCESS_COMM_LEN] = '\0';
-            }
-            fclose(status);
-         }
-
-         snprintf(statusfilename, MAX_NAME, "%s/%s/statm", PROCDIR, name);
-         status = fopen(statusfilename, "r");
-         if(!status) {
-            goto errorReadingProcess;
-         }
-         int num = fscanf(status, "%d %d %d %d %d %d %d",
-             &process->m_size, &process->m_resident, &process->m_share, 
-             &process->m_trs, &process->m_drs, &process->m_lrs, 
-             &process->m_dt);
-         fclose(status);
-         if(num != 7)
-            goto errorReadingProcess;
-
-         process->percent_mem = process->m_resident / 
-            (float)(this->usedMem - this->cachedMem - this->buffersMem) * 
-            100.0;
-
-         this->totalTasks++;
-	 if (process->state == 'R') {
-	    this->runningTasks++;
-	 }
-
-         if (this->hideKernelThreads && process->m_size == 0)
-            ProcessList_remove(this, process);
-
-         continue;
-
-         // Exception handler.
-         errorReadingProcess: {
-            ProcessList_remove(this, process);
-         }
-      }
-   }
+   ProcessList_processEntries(this, PROCDIR, 0, period);
    signal(11, SIG_DFL);
-   closedir(proc);
    
    for (int i = TypedVector_size(this->processes) - 1; i >= 0; i--) {
       Process* p = (Process*) TypedVector_get(this->processes, i);

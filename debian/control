@@ -1,7 +1,7 @@
 Source: htop
 Section: utils
 Priority: optional
-Maintainer: Bartosz Fenski <fenio@o2.pl>
+Maintainer: Bartosz Fenski <fenio@debian.org>
 Build-Depends: debhelper (>= 4.0.0), libncurses5-dev, autotools-dev
 Standards-Version: 3.6.1
 

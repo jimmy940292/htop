@@ -96,7 +96,7 @@ typedef enum ColorElements_ {
 
 extern int CRT_colors[LAST_COLORELEMENT];
 
-
+extern int CRT_delay;
 
 void CRT_init();
 

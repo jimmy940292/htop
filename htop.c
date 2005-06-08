@@ -416,7 +416,18 @@ int main(int argc, char** argv) {
    
    int acc = 0;
    bool follow = false;
+ 
+   struct timeval tv;
+   double time = 0.0;
+   double oldTime = 0.0;
+   bool recalculate;
+
    while (!quit) {
+      gettimeofday(&tv, NULL);
+      time = ((double)tv.tv_sec * 10) + ((double)tv.tv_usec / 100000);
+      recalculate = (time - oldTime > CRT_delay);
+      if (recalculate)
+         oldTime = time;
       if (doRefresh) {
          incSearchIndex = 0;
          incSearchBuffer[0] = 0;
@@ -425,7 +436,8 @@ int main(int argc, char** argv) {
          int currScrollV = lb->scrollV;
          if (follow)
             currPid = ProcessList_get(pl, currPos)->pid;
-         ProcessList_scan(pl);
+         if (recalculate)
+            ProcessList_scan(pl);
          if (refreshTimeout == 0) {
             ProcessList_sort(pl);
             refreshTimeout = 1;

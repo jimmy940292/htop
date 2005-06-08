@@ -34,6 +34,7 @@ DisplayOptionsListBox* DisplayOptionsListBox_new(Settings* settings, ScreenManag
    ListBox_add(super, (Object*) CheckItem_new(String_copy("Tree view"), &(settings->pl->treeView)));
    ListBox_add(super, (Object*) CheckItem_new(String_copy("Shadow other users' processes"), &(settings->pl->shadowOtherUsers)));
    ListBox_add(super, (Object*) CheckItem_new(String_copy("Hide kernel threads"), &(settings->pl->hideKernelThreads)));
+   ListBox_add(super, (Object*) CheckItem_new(String_copy("Hide userland threads"), &(settings->pl->hideUserlandThreads)));
    ListBox_add(super, (Object*) CheckItem_new(String_copy("Highlight program \"basename\""), &(settings->pl->highlightBaseName)));
    ListBox_add(super, (Object*) CheckItem_new(String_copy("Highlight megabytes in memory counters"), &(settings->pl->highlightMegabytes)));
    ListBox_add(super, (Object*) CheckItem_new(String_copy("Leave a margin around header"), &(settings->header->margin)));

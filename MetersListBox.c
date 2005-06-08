@@ -52,6 +52,9 @@ HandlerResult MetersListBox_eventHandler(ListBox* super, int ch) {
    HandlerResult result = IGNORED;
 
    switch(ch) {
+      case 0x0a:
+      case 0x0d:
+      case KEY_ENTER:
       case KEY_F(4):
       case 't':
       {

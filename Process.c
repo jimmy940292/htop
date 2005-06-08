@@ -170,8 +170,9 @@ bool Process_equals(const Object* o1, const Object* o2) {
 }
 
 void Process_setPriority(Process* this, int priority) {
+   int old_prio = getpriority(PRIO_PROCESS, this->pid);
    int err = setpriority(PRIO_PROCESS, this->pid, priority);
-   if (err == 0) {
+   if (err == 0 && old_prio != getpriority(PRIO_PROCESS, this->pid)) {
       this->nice = priority;
    }
 }

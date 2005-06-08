@@ -92,9 +92,14 @@ typedef enum ColorElements_ {
    LAST_COLORELEMENT
 } ColorElements;
 
+extern int CRT_delay;
+
 extern int CRT_colors[LAST_COLORELEMENT];
 
 }*/
+
+/* private property */
+int CRT_delay; 
 
 /* private property */
 int CRT_colors[LAST_COLORELEMENT];
@@ -119,6 +124,10 @@ void CRT_init() {
       define_key("\033OQ", KEY_F(2));
       define_key("\033OR", KEY_F(3));
       define_key("\033OS", KEY_F(4));
+      define_key("\033[11~", KEY_F(1));
+      define_key("\033[12~", KEY_F(2));
+      define_key("\033[13~", KEY_F(3));
+      define_key("\033[14~", KEY_F(4));
    }
 #ifndef DEBUG
    signal(11, CRT_handleSIGSEGV);
@@ -254,7 +263,7 @@ int CRT_readKey() {
    nocbreak();
    cbreak();
    int ret = getch();
-   halfdelay(MIN_UPDATE_SLICE);
+   halfdelay(CRT_delay);
    return ret;
 }
 

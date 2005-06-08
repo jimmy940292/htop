@@ -1,4 +1,22 @@
 
+What's new in version 0.5.2
+
+* BUGFIX: Correct display of user field
+  (thanks to Marcin Miroslaw for the report)
+* Keyboard support improvements
+  (thanks to Aury Fink Filho for the report)
+
+What's new in version 0.5.1
+
+* BUGFIX: Correctly displays NPTL threads from
+  /proc/<pid>/task subdirectories
+  (thanks to Mike Pot for the report)
+* BUGFIX: Fixes key handling on Signals listbox
+  (thanks to Ondrej Vlach)
+* Renicing no longer displays temporary illegal values
+  (thanks to Ondrej Vlach)
+* 'Hide userland threads' feature for NPTL threads
+
 What's new in version 0.5
 
 * Tree view
