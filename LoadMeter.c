@@ -26,7 +26,7 @@ struct LoadMeter_ {
 LoadMeter* LoadMeter_new() {
    LoadMeter* this = malloc(sizeof(LoadMeter));
    Meter_init((Meter*)this, String_copy("Load"), String_copy("Load: "), 1);
-   ((Meter*)this)->attributes[0] = CRT_colors[LOAD];
+   ((Meter*)this)->attributes[0] = &(CRT_colors[LOAD]);
    ((Meter*)this)->setValues = LoadMeter_setValues;
    ((Object*)this)->display = LoadMeter_display;
    Meter_setMode((Meter*)this, GRAPH);
@@ -58,5 +58,5 @@ void LoadMeter_display(Object* cast, RichString* out) {
    char buffer[20];
    RichString_prune(out);
    sprintf(buffer, "%.2f ", ((Meter*)this)->values[0]);
-   RichString_append(out, super->attributes[0], buffer);
+   RichString_append(out, *(super->attributes[0]), buffer);
 }

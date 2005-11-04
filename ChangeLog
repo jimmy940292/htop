@@ -1,4 +1,37 @@
 
+What's new in version 0.5.4
+
+* Color schemes
+* -d flag, to configure delay between updates.
+  Note that the delay value is saved in ~/.htoprc.
+* BUGFIX: Update of meters was halting after help screen.
+  (thanks to Matt Moore)
+* BUGFIX: No longer display incorrect information
+  in first frame.
+* BUGFIX: Fix auto-detection of /proc/stat,
+  correcting CPU usage information on multiprocessor
+  systems.
+
+What's new in version 0.5.3
+
+* Read new field "steal" on newer /proc/stat files
+* Auto-detects format of /proc/stat, to cope
+  with patched 2.4 kernels which display 2.6-style
+  information (most notably those on RHEL 3)
+  (thanks to Fernando Dotta for the report)
+* Support $HOME_ETC initiative
+  (see http://www.pld-linux.org/Docs/home-etc)
+  (thanks to Roman Barczynski for the tip)
+* The configure script now tests for /proc, so
+  that it fails early on unsupported platforms
+  instead of during compilation/execution.
+* Made presentation of the function keys in the
+  status bar consistent across views
+  (thanks to David Mathog for the report)
+* Minor changes to make the codebase more friendly
+  to possible future ports
+  (thanks to Jari Aalto and David Mathog for the reports)
+
 What's new in version 0.5.2
 
 * BUGFIX: Correct display of user field

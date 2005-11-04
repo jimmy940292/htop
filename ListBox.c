@@ -1,6 +1,6 @@
 /*
-htop
-(C) 2004 Hisham H. Muhammad
+htop - ListBox.c
+(C) 2004,2005 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -12,7 +12,6 @@ in the source distribution for its full text.
 #include "RichString.h"
 
 #include <math.h>
-#include <sys/param.h>
 #include <stdbool.h>
 
 #include "debug.h"
@@ -49,6 +48,13 @@ struct ListBox_ {
 extern char* LISTBOX_CLASS;
 
 }*/
+
+#ifndef MIN
+#define MIN(a,b) ((a)<(b)?(a):(b))
+#endif
+#ifndef MAX
+#define MAX(a,b) ((a)>(b)?(a):(b))
+#endif
 
 /* private property */
 char* LISTBOX_CLASS = "ListBox";

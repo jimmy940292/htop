@@ -1,6 +1,6 @@
 /*
-htop
-(C) 2004 Hisham H. Muhammad
+htop - Process.c
+(C) 2004,2005 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -40,7 +40,7 @@ int kill(pid_t pid, int signal);
 typedef enum ProcessField_ {
    PID, COMM, STATE, PPID, PGRP, SESSION, TTY_NR, TPGID, FLAGS, MINFLT, CMINFLT, MAJFLT, CMAJFLT, UTIME,
    STIME, CUTIME, CSTIME, PRIORITY, NICE, ITREALVALUE, STARTTIME, VSIZE, RSS, RLIM, STARTCODE, ENDCODE,
-   STARTSTACK, KSTKESP, KSTKEIP, SIGNAL, BLOCKED, SIGIGNORE, SIGCATCH, WCHAN, NSWAP, CNSWAP, EXIT_SIGNAL,
+   STARTSTACK, KSTKESP, KSTKEIP, SIGNAL, BLOCKED, SSIGIGNORE, SIGCATCH, WCHAN, NSWAP, CNSWAP, EXIT_SIGNAL,
    PROCESSOR, M_SIZE, M_RESIDENT, M_SHARE, M_TRS, M_DRS, M_LRS, M_DT, ST_UID, PERCENT_CPU, PERCENT_MEM,
    USER, TIME, LAST_PROCESSFIELD
 } ProcessField;
@@ -268,6 +268,7 @@ void Process_writeField(Process* this, RichString* str, ProcessField field) {
    case SESSION: snprintf(buffer, n, "%5d ", this->session); break;
    case TTY_NR: snprintf(buffer, n, "%5d ", this->tty_nr); break;
    case TPGID: snprintf(buffer, n, "%5d ", this->tpgid); break;
+   case PROCESSOR: snprintf(buffer, n, "%3d ", this->processor+1); break;
    case COMM: {
       if (!this->pl->treeView || this->indent == 0) {
          Process_writeCommand(this, attr, str);

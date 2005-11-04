@@ -1,6 +1,6 @@
 /*
-htop
-(C) 2004 Hisham H. Muhammad
+htop - htop.c
+(C) 2004,2005 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -9,7 +9,7 @@ in the source distribution for its full text.
 #include "CRT.h"
 #include "ListBox.h"
 #include "UsersTable.h"
-#include "Signal.h"
+#include "SignalItem.h"
 #include "RichString.h"
 #include "Settings.h"
 #include "ScreenManager.h"
@@ -38,15 +38,16 @@ char htop_barCharacters[] = "|#*@$%&";
 
 void printVersionFlag() {
    clear();
-   printf("htop " VERSION " - (C) 2004 Hisham Muhammad.\n");
+   printf("htop " VERSION " - (C) 2004,2005 Hisham Muhammad.\n");
    printf("Released under the GNU GPL.\n\n");
    exit(0);
 }
 
 void printHelpFlag() {
    clear();
-   printf("htop " VERSION " - (C) 2004 Hisham Muhammad.\n");
+   printf("htop " VERSION " - (C) 2004,2005 Hisham Muhammad.\n");
    printf("Released under the GNU GPL.\n\n");
+   printf("-d DELAY    Delay between updates, in tenths of seconds\n\n");
    printf("Press F1 inside htop for online help.\n");
    printf("See the man page for full info.\n\n");
    exit(0);
@@ -55,6 +56,9 @@ void printHelpFlag() {
 void showHelp() {
    clear();
    attrset(CRT_colors[HELP_BOLD]);
+   for (int i = 0; i < LINES; i++) {
+      move(i, 0); hline(' ', COLS);
+   }
    mvaddstr(0, 0, "htop " VERSION " - (C) 2004 Hisham Muhammad.");
    mvaddstr(1, 0, "Released under the GNU GPL. See man page for more info.");
    attrset(CRT_colors[DEFAULT_COLOR]);
@@ -189,7 +193,7 @@ void showColumnConfig(ProcessList* pl) {
       for (; i < LINES - 8; i++)
          mvhline(5 + i, (COLS / 2) + 1, ' ', COLS / 2);
       mvchgat(5 + currRow, (currCol) ? (COLS / 2) + 1 : 1, (COLS / 2) - 2,
-         A_REVERSE, BLACK_CYAN_PAIR, NULL);
+         A_REVERSE, CRT_colors[PANEL_HIGHLIGHT_FOCUS], NULL);
 
       refresh();
 
@@ -367,11 +371,18 @@ void Setup_run(Settings* settings, int headerHeight) {
 
 int main(int argc, char** argv) {
 
+   int delay = -1;
+
    if (argc > 0) {
       if (String_eq(argv[1], "--help")) {
          printHelpFlag();
       } else if (String_eq(argv[1], "--version")) {
          printVersionFlag();
+      } else if (String_eq(argv[1], "-d")) {
+         if (argc < 2) printHelpFlag();
+         sscanf(argv[2], "%d", &delay);
+         if (delay < 1) delay = 1;
+         if (delay > 100) delay = 100;
       }
    }
 
@@ -392,13 +403,17 @@ int main(int argc, char** argv) {
    ProcessList* pl = NULL;
    UsersTable* ut = UsersTable_new();
 
-   CRT_init();
    pl = ProcessList_new(ut);
-   ProcessList_scan(pl);
    
    Header* header = Header_new(pl);
    settings = Settings_new(pl, header);
    int headerHeight = Header_calculateHeight(header);
+
+   // FIXME: move delay code to settings
+   if (delay != -1)
+      settings->delay = delay;
+   
+   CRT_init(settings->delay, settings->colorScheme);
    
    lb = ListBox_new(0, headerHeight, COLS, LINES - headerHeight - 2, PROCESS_CLASS, false);
    ListBox_setHeader(lb, ProcessList_printHeader(pl));
@@ -411,6 +426,9 @@ int main(int argc, char** argv) {
    char* defaultFunctions[10] = {"Help  ", "Setup ", "Search", "Invert", "Tree  ",
        "SortBy", "Nice -", "Nice +", "Kill  ", "Quit  "};
    FunctionBar* defaultBar = FunctionBar_new(10, defaultFunctions, NULL, NULL);
+
+   ProcessList_scan(pl);
+   usleep(75000);
    
    FunctionBar_draw(defaultBar, NULL);
    
@@ -584,6 +602,7 @@ int main(int argc, char** argv) {
          refreshTimeout = 0;
          break;
       }
+      case '\012': // Enter
       case '\014': // Ctrl+L
       {
          clear();
@@ -602,6 +621,8 @@ int main(int argc, char** argv) {
       case KEY_F(2):
       {
          Setup_run(settings, headerHeight);
+         // TODO: shouldn't need this, colors should be dynamic
+         ListBox_setHeader(lb, ProcessList_printHeader(pl));
          headerHeight = Header_calculateHeight(header);
          ListBox_move(lb, 0, headerHeight);
          ListBox_resize(lb, COLS, LINES-headerHeight-1);

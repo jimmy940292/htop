@@ -1,6 +1,6 @@
 /*
-htop
-(C) 2004 Hisham H. Muhammad
+htop - Settings.c
+(C) 2004,2005 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -12,12 +12,16 @@ in the source distribution for its full text.
 
 #include "debug.h"
 
+#define DEFAULT_DELAY 15
+
 /*{
 
 typedef struct Settings_ {
    char* userSettings;
    ProcessList* pl;
    Header* header;
+   int colorScheme;
+   int delay;
 } Settings;
 
 }*/
@@ -26,13 +30,22 @@ Settings* Settings_new(ProcessList* pl, Header* header) {
    Settings* this = malloc(sizeof(Settings));
    this->pl = pl;
    this->header = header;
-   // TODO: how to get SYSCONFDIR correctly through Autoconf?
-   // char* systemSettings = String_cat(SYSCONFDIR, "/htoprc");
-   // Settings_read(this, systemSettings);
-   char* home = getenv("HOME");
+   char* home;
+   home = getenv("HOME_ETC");
+   if (!home) home = getenv("HOME");
    this->userSettings = String_cat(home, "/.htoprc");
-   Settings_read(this, this->userSettings);
-   // free(systemSettings);
+   this->colorScheme = 0;
+   this->delay = DEFAULT_DELAY;
+   bool ok = Settings_read(this, this->userSettings);
+   if (!ok) {
+      // TODO: how to get SYSCONFDIR correctly through Autoconf?
+      char* systemSettings = String_cat(SYSCONFDIR, "/htoprc");
+      ok = Settings_read(this, systemSettings);
+      free(systemSettings);
+      if (!ok) {
+         Header_defaultMeters(this->header);
+      }
+   }
    return this;
 }
 
@@ -72,7 +85,6 @@ bool Settings_read(Settings* this, char* fileName) {
    FILE* fd;
    fd = fopen(fileName, "r");
    if (fd == NULL) {
-      Header_defaultMeters(this->header);
       return false;
    }
    const int maxLine = 512;
@@ -82,7 +94,6 @@ bool Settings_read(Settings* this, char* fileName) {
       buffer[0] = '\0';
       fgets(buffer, maxLine, fd);
       char** option = String_split(buffer, '=');
-      // fields
       if (String_eq(option[0], "fields")) {
          char* trim = String_trim(option[1]);
          char** ids = String_split(trim, ' ');
@@ -93,49 +104,41 @@ bool Settings_read(Settings* this, char* fileName) {
          }
          this->pl->fields[i] = LAST_PROCESSFIELD;
          String_freeArray(ids);
-      // sort_key
       } else if (String_eq(option[0], "sort_key")) {
          this->pl->sortKey = atoi(option[1]);
-      // sort_direction
       } else if (String_eq(option[0], "sort_direction")) {
          this->pl->direction = atoi(option[1]);
-      // tree_view
       } else if (String_eq(option[0], "tree_view")) {
          this->pl->treeView = atoi(option[1]);
-      // hide_threads
       } else if (String_eq(option[0], "hide_threads")) {
          this->pl->hideThreads = atoi(option[1]);
-      // hide_kernel_threads
       } else if (String_eq(option[0], "hide_kernel_threads")) {
          this->pl->hideKernelThreads = atoi(option[1]);
-      // hide_kernel_threads
       } else if (String_eq(option[0], "hide_userland_threads")) {
          this->pl->hideUserlandThreads = atoi(option[1]);
-      // shadow_other_users
       } else if (String_eq(option[0], "shadow_other_users")) {
          this->pl->shadowOtherUsers = atoi(option[1]);
-      // highlight_base_name
       } else if (String_eq(option[0], "highlight_base_name")) {
          this->pl->highlightBaseName = atoi(option[1]);
-      // highlight_megabytes
       } else if (String_eq(option[0], "highlight_megabytes")) {
          this->pl->highlightMegabytes = atoi(option[1]);
-      // header_margin
       } else if (String_eq(option[0], "header_margin")) {
          this->header->margin = atoi(option[1]);
-      // left_meters
+      } else if (String_eq(option[0], "delay")) {
+         this->delay = atoi(option[1]);
+      } else if (String_eq(option[0], "color_scheme")) {
+         this->colorScheme = atoi(option[1]);
+         if (this->colorScheme < 0) this->colorScheme = 0;
+         if (this->colorScheme > 5) this->colorScheme = 5;
       } else if (String_eq(option[0], "left_meters")) {
 	 Settings_readMeters(this, option[1], LEFT_HEADER);
 	 readMeters = true;
-      // right_meters
       } else if (String_eq(option[0], "right_meters")) {
 	 Settings_readMeters(this, option[1], RIGHT_HEADER);
 	 readMeters = true;
-      // left_meter_modes
       } else if (String_eq(option[0], "left_meter_modes")) {
 	 Settings_readMeterModes(this, option[1], LEFT_HEADER);
 	 readMeters = true;
-      // right_meter_modes
       } else if (String_eq(option[0], "right_meter_modes")) {
 	 Settings_readMeterModes(this, option[1], RIGHT_HEADER);
 	 readMeters = true;
@@ -175,9 +178,12 @@ bool Settings_write(Settings* this) {
    fprintf(fd, "highlight_megabytes=%d\n", (int) this->pl->highlightMegabytes);
    fprintf(fd, "tree_view=%d\n", (int) this->pl->treeView);
    fprintf(fd, "header_margin=%d\n", (int) this->header->margin);
+   fprintf(fd, "color_scheme=%d\n", (int) this->colorScheme);
+   fprintf(fd, "delay=%d\n", (int) this->delay);
    fprintf(fd, "left_meters=");
-   for (int i = 0; i < Header_size(this->header, LEFT_HEADER); i++)
+   for (int i = 0; i < Header_size(this->header, LEFT_HEADER); i++) {
       fprintf(fd, "%s ", Header_readMeterName(this->header, i, LEFT_HEADER));
+   }
    fprintf(fd, "\n");
    fprintf(fd, "left_meter_modes=");
    for (int i = 0; i < Header_size(this->header, LEFT_HEADER); i++)

@@ -17,6 +17,7 @@ typedef struct CheckItem_ {
    Object super;
    char* text;
    bool* value;
+   bool radio;
 } CheckItem;
 
 extern char* CHECKITEM_CLASS;

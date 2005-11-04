@@ -32,7 +32,7 @@ struct UptimeMeter_ {
 UptimeMeter* UptimeMeter_new() {
    UptimeMeter* this = malloc(sizeof(UptimeMeter));
    Meter_init((Meter*)this, String_copy("Uptime"), String_copy("Uptime: "), 1);
-   ((Meter*)this)->attributes[0] = CRT_colors[UPTIME];
+   ((Meter*)this)->attributes[0] = &(CRT_colors[UPTIME]);
    ((Object*)this)->display = UptimeMeter_display;
    ((Meter*)this)->setValues = UptimeMeter_setValues;
    Meter_setMode((Meter*)this, TEXT);

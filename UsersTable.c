@@ -1,6 +1,6 @@
 /*
-htop
-(C) 2004 Hisham H. Muhammad
+htop - UsersTable.c
+(C) 2004,2005 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -16,12 +16,6 @@ in the source distribution for its full text.
 
 #include "debug.h"
 #include <assert.h>
-
-/*{
-#ifndef SYSCONFDIR
-#define SYSCONFDIR "/etc"
-#endif
-}*/
 
 /*{
 typedef struct UsersTable_ {

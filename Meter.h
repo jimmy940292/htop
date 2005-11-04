@@ -49,7 +49,7 @@ struct Meter_ {
    Method_Meter_draw draw;
    Method_Meter_setValues setValues;
    int items;
-   int* attributes;
+   int** attributes;
    double* values;
    double total;
    char* caption;

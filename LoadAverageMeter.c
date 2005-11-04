@@ -31,9 +31,9 @@ void LoadAverageMeter_scan(double* one, double* five, double* fifteen);
 LoadAverageMeter* LoadAverageMeter_new() {
    LoadAverageMeter* this = malloc(sizeof(LoadAverageMeter));
    Meter_init((Meter*)this, String_copy("LoadAverage"), String_copy("Load average: "), 3);
-   ((Meter*)this)->attributes[0] = CRT_colors[LOAD_AVERAGE_FIFTEEN];
-   ((Meter*)this)->attributes[1] = CRT_colors[LOAD_AVERAGE_FIVE];
-   ((Meter*)this)->attributes[2] = CRT_colors[LOAD_AVERAGE_ONE];
+   ((Meter*)this)->attributes[0] = &(CRT_colors[LOAD_AVERAGE_FIFTEEN]);
+   ((Meter*)this)->attributes[1] = &(CRT_colors[LOAD_AVERAGE_FIVE]);
+   ((Meter*)this)->attributes[2] = &(CRT_colors[LOAD_AVERAGE_ONE]);
    ((Object*)this)->display = LoadAverageMeter_display;
    ((Meter*)this)->setValues = LoadAverageMeter_setValues;
    Meter_setMode((Meter*)this, TEXT);

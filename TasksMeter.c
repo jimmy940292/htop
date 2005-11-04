@@ -28,7 +28,7 @@ struct TasksMeter_ {
 TasksMeter* TasksMeter_new(ProcessList* pl) {
    TasksMeter* this = malloc(sizeof(TasksMeter));
    Meter_init((Meter*)this, String_copy("Tasks"), String_copy("Tasks: "), 1);
-   ((Meter*)this)->attributes[0] = CRT_colors[TASKS_RUNNING];
+   ((Meter*)this)->attributes[0] = &(CRT_colors[TASKS_RUNNING]);
    ((Object*)this)->display = TasksMeter_display;
    ((Meter*)this)->setValues = TasksMeter_setValues;
    this->pl = pl;

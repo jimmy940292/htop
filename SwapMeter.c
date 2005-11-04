@@ -33,7 +33,7 @@ struct SwapMeter_ {
 SwapMeter* SwapMeter_new(ProcessList* pl) {
    SwapMeter* this = malloc(sizeof(SwapMeter));
    Meter_init((Meter*)this, String_copy("Swap"), String_copy("Swp"), 1);
-   ((Meter*)this)->attributes[0] = CRT_colors[SWAP];
+   ((Meter*)this)->attributes[0] = &(CRT_colors[SWAP]);
    ((Meter*)this)->setValues = SwapMeter_setValues;
    ((Object*)this)->display = SwapMeter_display;
    this->pl = pl;

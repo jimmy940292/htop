@@ -15,11 +15,12 @@ in the source distribution for its full text.
 
 #include "debug.h"
 
-
 typedef struct Settings_ {
    char* userSettings;
    ProcessList* pl;
    Header* header;
+   int colorScheme;
+   int delay;
 } Settings;
 
 

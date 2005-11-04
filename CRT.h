@@ -3,8 +3,8 @@
 #ifndef HEADER_CRT
 #define HEADER_CRT
 /*
-htop
-(C) 2004 Hisham H. Muhammad
+htop - CRT.h
+(C) 2004,2005 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -19,19 +19,12 @@ in the source distribution for its full text.
 
 #include "debug.h"
 
-#define WHITE_PAIR 0
-#define BLUE_PAIR 1
-#define GREEN_PAIR 2
-#define RED_PAIR 3
-#define BROWN_PAIR 4
-#define CYAN_PAIR 5
-#define BLACK_PAIR 6
-#define BLACK_CYAN_PAIR 7
-#define RED_CYAN_PAIR 8
-#define BLACK_GREEN_PAIR 9
-#define BLACK_WHITE_PAIR 10
-
-#define MIN_UPDATE_SLICE 15
+#define COLORSCHEME_DEFAULT 0
+#define COLORSCHEME_MONOCHROME 1
+#define COLORSCHEME_BLACKONWHITE 2
+#define COLORSCHEME_BLACKONWHITE2 3
+#define COLORSCHEME_MIDNIGHT 4
+#define COLORSCHEME_BLACKNIGHT 5
 
 //#link curses
 
@@ -96,6 +89,8 @@ typedef enum ColorElements_ {
 
 extern int CRT_colors[LAST_COLORELEMENT];
 
+extern int CRT_colorScheme;
+
 extern int CRT_delay;
 
 void CRT_init();
@@ -107,5 +102,7 @@ int CRT_readKey();
 void CRT_handleSIGSEGV(int signal);
 
 void CRT_handleSIGTERM(int signal);
+
+void CRT_setColors(int colorScheme);
 
 #endif

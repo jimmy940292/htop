@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <curses.h>
-#include <sys/param.h>
 
 #include "debug.h"
 #include <assert.h>
@@ -19,6 +18,10 @@ typedef struct RichString_ {
 } RichString;
 
 }*/
+
+#ifndef MIN
+#define MIN(a,b) ((a)<(b)?(a):(b))
+#endif
 
 /* private property */
 WINDOW* workArea = NULL;

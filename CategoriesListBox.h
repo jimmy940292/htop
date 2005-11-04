@@ -31,6 +31,8 @@ HandlerResult CategoriesListBox_eventHandler(ListBox* super, int ch);
 
 void CategoriesListBox_makeMetersPage(CategoriesListBox* this);
 
-void CategoriesListBox_makeProcessListPage(CategoriesListBox* this);
+void CategoriesListBox_makeDisplayOptionsPage(CategoriesListBox* this);
+
+void CategoriesListBox_makeColorsPage(CategoriesListBox* this);
 
 #endif

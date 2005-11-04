@@ -1,6 +1,6 @@
 /*
-htop
-(C) 2004 Hisham H. Muhammad
+htop - Header.c
+(C) 2004,2005 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -35,6 +35,10 @@ typedef struct Header_ {
 } Header;
 
 }*/
+
+#ifndef MAX
+#define MAX(a,b) ((a)>(b)?(a):(b))
+#endif
 
 Header* Header_new(ProcessList* pl) {
    Header* this = malloc(sizeof(Header));
@@ -137,6 +141,7 @@ void Header_draw(Header* this) {
    int height = this->height;
    int pad = this->pad;
    
+   attrset(CRT_colors[RESET_COLOR]);
    for (int y = 0; y < height; y++) {
       mvhline(y, 0, ' ', COLS);
    }

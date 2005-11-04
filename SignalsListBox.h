@@ -4,7 +4,7 @@
 #define HEADER_SignalsListBox
 
 #include "ListBox.h"
-#include "Signal.h"
+#include "SignalItem.h"
 #include "RichString.h"
 
 #include "debug.h"

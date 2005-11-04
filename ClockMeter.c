@@ -30,7 +30,7 @@ struct ClockMeter_ {
 ClockMeter* ClockMeter_new() {
    ClockMeter* this = malloc(sizeof(ClockMeter));
    Meter_init((Meter*)this, String_copy("Clock"), String_copy("Time: "), 1);
-   ((Meter*)this)->attributes[0] = CRT_colors[CLOCK];
+   ((Meter*)this)->attributes[0] = &(CRT_colors[CLOCK]);
    ((Meter*)this)->setValues = ClockMeter_setValues;
    ((Object*)this)->display = ClockMeter_display;
    ((Meter*)this)->total = 24 * 60;
@@ -50,5 +50,5 @@ void ClockMeter_setValues(Meter* cast) {
 void ClockMeter_display(Object* cast, RichString* out) {
    Meter* super = (Meter*) cast;
    ClockMeter* this = (ClockMeter*) cast;
-   RichString_write(out, super->attributes[0], this->clock);
+   RichString_write(out, *(super->attributes[0]), this->clock);
 }

@@ -8,6 +8,6 @@ FEATURES:
  * make bars display refresh independent from list refresh
  * auto-calibrate delay 
  * add some more 'top' features
- * add command-line parameters
+ * add more command-line parameters
  * show 'process view'
- * make colors and keybindings configurable, blah blah blah...
+ * make keybindings configurable, blah blah blah...

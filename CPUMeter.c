@@ -1,6 +1,6 @@
 /*
-htop
-(C) 2004 Hisham H. Muhammad
+htop - CPUMeter.c
+(C) 2004,2005 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -14,7 +14,6 @@ in the source distribution for its full text.
 #include <curses.h>
 #include <string.h>
 #include <math.h>
-#include <sys/param.h>
 
 #include "debug.h"
 #include <assert.h>
@@ -31,6 +30,13 @@ struct CPUMeter_ {
 
 }*/
 
+#ifndef MIN
+#define MIN(a,b) ((a)<(b)?(a):(b))
+#endif
+#ifndef MAX
+#define MAX(a,b) ((a)>(b)?(a):(b))
+#endif
+
 CPUMeter* CPUMeter_new(ProcessList* pl, int processor) {
    CPUMeter* this = malloc(sizeof(CPUMeter));
    char* caption;
@@ -43,9 +49,9 @@ CPUMeter* CPUMeter_new(ProcessList* pl, int processor) {
    Meter_init((Meter*)this, NULL, caption, 3);
    ((Meter*)this)->name = malloc(20);
    sprintf(((Meter*)this)->name, "CPU(%d)", processor);
-   ((Meter*)this)->attributes[0] = CRT_colors[CPU_NICE];
-   ((Meter*)this)->attributes[1] = CRT_colors[CPU_NORMAL];
-   ((Meter*)this)->attributes[2] = CRT_colors[CPU_KERNEL];
+   ((Meter*)this)->attributes[0] = &(CRT_colors[CPU_NICE]);
+   ((Meter*)this)->attributes[1] = &(CRT_colors[CPU_NORMAL]);
+   ((Meter*)this)->attributes[2] = &(CRT_colors[CPU_KERNEL]);
    ((Meter*)this)->setValues = CPUMeter_setValues;
    ((Object*)this)->display = CPUMeter_display;
    ((Meter*)this)->total = 1.0;
@@ -70,11 +76,11 @@ void CPUMeter_display(Object* cast, RichString* out) {
    RichString_prune(out);
    sprintf(buffer, "%5.1f%% ", this->values[1] * 100.0);
    RichString_append(out, CRT_colors[METER_TEXT], ":");
-   RichString_append(out, this->attributes[1], buffer);
+   RichString_append(out, *(this->attributes[1]), buffer);
    sprintf(buffer, "%5.1f%% ", this->values[2] * 100.0);
    RichString_append(out, CRT_colors[METER_TEXT], "sys:");
-   RichString_append(out, this->attributes[2], buffer);
+   RichString_append(out, *(this->attributes[2]), buffer);
    sprintf(buffer, "%5.1f%% ", this->values[0] * 100.0);
    RichString_append(out, CRT_colors[METER_TEXT], "low:");
-   RichString_append(out, this->attributes[0], buffer);
+   RichString_append(out, *(this->attributes[0]), buffer);
 }

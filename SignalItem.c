@@ -1,11 +1,11 @@
 /*
-htop
-(C) 2004 Hisham H. Muhammad
+htop - SignalItem.c
+(C) 2004,2005 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
-#include "Signal.h"
+#include "SignalItem.h"
 #include "String.h"
 #include "Object.h"
 #include "RichString.h"

@@ -1,6 +1,6 @@
 /*
-htop
-(C) 2004 Hisham H. Muhammad
+htop - ProcessList.c
+(C) 2004,2005 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -77,11 +77,6 @@ typedef struct ProcessList_ {
    long int usedSwap;
    long int freeSwap;
 
-   int kernelMajor;
-   int kernelMiddle;
-   int kernelMinor;
-   int kernelTiny;
-
    ProcessField* fields;
    ProcessField sortKey;
    int direction;
@@ -95,19 +90,6 @@ typedef struct ProcessList_ {
 
 } ProcessList;
 }*/
-
-/* private */
-void ProcessList_getKernelVersion(ProcessList* this) {
-   struct utsname uts;
-   (void) uname(&uts);
-   char** items = String_split(uts.release, '.');
-   this->kernelMajor = atoi(items[0]);
-   this->kernelMiddle = atoi(items[1]);
-   this->kernelMinor = atoi(items[2]);
-   this->kernelTiny = items[3] ? atoi(items[3]) : 0;
-   for (int i = 0; items[i] != NULL; i++) free(items[i]);
-   free(items);
-}
 
 /* private property */
 ProcessField defaultHeaders[LAST_PROCESSFIELD] = { PID, USER, PRIORITY, NICE, M_SIZE, M_RESIDENT, M_SHARE, STATE, PERCENT_CPU, PERCENT_MEM, TIME, COMM, LAST_PROCESSFIELD };
@@ -124,8 +106,6 @@ ProcessList* ProcessList_new(UsersTable* usersTable) {
    /* tree-view auxiliary buffers */
    this->processes2 = TypedVector_new(PROCESS_CLASS, true, DEFAULT_SIZE);
    TypedVector_setCompareFunction(this->processes2, Process_compare);
-
-   ProcessList_getKernelVersion(this);
 
    FILE* status = fopen(PROCSTATFILE, "r");
    assert(status != NULL);
@@ -561,26 +541,24 @@ void ProcessList_scan(ProcessList* this) {
    status = fopen(PROCSTATFILE, "r");
    assert(status != NULL);
    for (int i = 0; i <= this->processorCount; i++) {
+      char buffer[256];
       int cpuid;
-      if (this->kernelMajor == 2 && this->kernelMiddle <= 4) {
-         if (i == 0) {
-            fscanf(status, "cpu  %ld %ld %ld %ld\n", &usertime, &nicetime, &systemtime, &idletime);
-         } else {
-            fscanf(status, "cpu%d %ld %ld %ld %ld\n", &cpuid, &usertime, &nicetime, &systemtime, &idletime);
-            assert(cpuid == i - 1);
-         }
-         totaltime = usertime + nicetime + systemtime + idletime;
-      } else {
-         long int ioWait, irq, softIrq;
-         if (i == 0)
-            fscanf(status, "cpu  %ld %ld %ld %ld %ld %ld %ld\n", &usertime, &nicetime, &systemtime, &idletime, &ioWait, &irq, &softIrq);
-         else {
-            fscanf(status, "cpu%d %ld %ld %ld %ld %ld %ld %ld\n", &cpuid, &usertime, &nicetime, &systemtime, &idletime, &ioWait, &irq, &softIrq);
-            assert(cpuid == i - 1);
-         }
-         systemtime += ioWait + irq + softIrq;
-         totaltime = usertime + nicetime + systemtime + idletime;
+      long int ioWait, irq, softIrq, steal;
+      ioWait = irq = softIrq = steal = 0;
+      // Dependending on your kernel version,
+      // 5, 7 or 8 of these fields will be set.
+      // The rest will remain at zero.
+      fgets(buffer, 255, status);
+      if (i == 0)
+         sscanf(buffer, "cpu  %ld %ld %ld %ld %ld %ld %ld %ld\n", &usertime, &nicetime, &systemtime, &idletime, &ioWait, &irq, &softIrq, &steal);
+      else {
+         sscanf(buffer, "cpu%d %ld %ld %ld %ld %ld %ld %ld %ld\n", &cpuid, &usertime, &nicetime, &systemtime, &idletime, &ioWait, &irq, &softIrq, &steal);
+         assert(cpuid == i - 1);
       }
+      // Fields existing on kernels >= 2.6
+      // (and RHEL's patched kernel 2.4...)
+      systemtime += ioWait + irq + softIrq + steal;
+      totaltime = usertime + nicetime + systemtime + idletime;
       assert (usertime >= this->userTime[i]);
       assert (nicetime >= this->niceTime[i]);
       assert (systemtime >= this->systemTime[i]);
