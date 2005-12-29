@@ -31,9 +31,9 @@ void LoadAverageMeter_scan(double* one, double* five, double* fifteen);
 LoadAverageMeter* LoadAverageMeter_new() {
    LoadAverageMeter* this = malloc(sizeof(LoadAverageMeter));
    Meter_init((Meter*)this, String_copy("LoadAverage"), String_copy("Load average: "), 3);
-   ((Meter*)this)->attributes[0] = &(CRT_colors[LOAD_AVERAGE_FIFTEEN]);
-   ((Meter*)this)->attributes[1] = &(CRT_colors[LOAD_AVERAGE_FIVE]);
-   ((Meter*)this)->attributes[2] = &(CRT_colors[LOAD_AVERAGE_ONE]);
+   ((Meter*)this)->attributes[0] = LOAD_AVERAGE_FIFTEEN;
+   ((Meter*)this)->attributes[1] = LOAD_AVERAGE_FIVE;
+   ((Meter*)this)->attributes[2] = LOAD_AVERAGE_ONE;
    ((Object*)this)->display = LoadAverageMeter_display;
    ((Meter*)this)->setValues = LoadAverageMeter_setValues;
    Meter_setMode((Meter*)this, TEXT);
@@ -46,8 +46,10 @@ LoadAverageMeter* LoadAverageMeter_new() {
 void LoadAverageMeter_scan(double* one, double* five, double* fifteen) {
    int activeProcs, totalProcs, lastProc;
    FILE *fd = fopen(PROCDIR "/loadavg", "r");
-   fscanf(fd, "%lf %lf %lf %d/%d %d", one, five, fifteen,
+   int read = fscanf(fd, "%lf %lf %lf %d/%d %d", one, five, fifteen,
       &activeProcs, &totalProcs, &lastProc);
+   (void) read;
+   assert(read == 6);
    fclose(fd);
 }
 

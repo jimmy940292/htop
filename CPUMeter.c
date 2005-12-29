@@ -49,9 +49,9 @@ CPUMeter* CPUMeter_new(ProcessList* pl, int processor) {
    Meter_init((Meter*)this, NULL, caption, 3);
    ((Meter*)this)->name = malloc(20);
    sprintf(((Meter*)this)->name, "CPU(%d)", processor);
-   ((Meter*)this)->attributes[0] = &(CRT_colors[CPU_NICE]);
-   ((Meter*)this)->attributes[1] = &(CRT_colors[CPU_NORMAL]);
-   ((Meter*)this)->attributes[2] = &(CRT_colors[CPU_KERNEL]);
+   ((Meter*)this)->attributes[0] = CPU_NICE;
+   ((Meter*)this)->attributes[1] = CPU_NORMAL;
+   ((Meter*)this)->attributes[2] = CPU_KERNEL;
    ((Meter*)this)->setValues = CPUMeter_setValues;
    ((Object*)this)->display = CPUMeter_display;
    ((Meter*)this)->total = 1.0;
@@ -76,11 +76,11 @@ void CPUMeter_display(Object* cast, RichString* out) {
    RichString_prune(out);
    sprintf(buffer, "%5.1f%% ", this->values[1] * 100.0);
    RichString_append(out, CRT_colors[METER_TEXT], ":");
-   RichString_append(out, *(this->attributes[1]), buffer);
+   RichString_append(out, CRT_colors[CPU_NORMAL], buffer);
    sprintf(buffer, "%5.1f%% ", this->values[2] * 100.0);
    RichString_append(out, CRT_colors[METER_TEXT], "sys:");
-   RichString_append(out, *(this->attributes[2]), buffer);
+   RichString_append(out, CRT_colors[CPU_KERNEL], buffer);
    sprintf(buffer, "%5.1f%% ", this->values[0] * 100.0);
    RichString_append(out, CRT_colors[METER_TEXT], "low:");
-   RichString_append(out, *(this->attributes[0]), buffer);
+   RichString_append(out, CRT_colors[CPU_NICE], buffer);
 }

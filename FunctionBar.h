@@ -9,6 +9,7 @@ Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
+#include "Object.h"
 #include "CRT.h"
 
 #include "debug.h"
@@ -21,20 +22,23 @@ in the source distribution for its full text.
 
 
 typedef struct FunctionBar_ {
+   Object super;
    int size;
    char** functions;
    char** keys;
    int* events;
+   bool staticData;
 } FunctionBar;
 
-
-
+extern char* FUNCTIONBAR_CLASS;
 
 FunctionBar* FunctionBar_new(int size, char** functions, char** keys, int* events);
 
-void FunctionBar_delete(FunctionBar* this);
+void FunctionBar_delete(Object* this);
 
 void FunctionBar_draw(FunctionBar* this, char* buffer);
+
+void FunctionBar_setLabel(FunctionBar* this, int event, char* text);
 
 void FunctionBar_drawAttr(FunctionBar* this, char* buffer, int attr);
 

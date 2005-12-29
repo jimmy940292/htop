@@ -5,6 +5,7 @@ Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
+#include "Object.h"
 #include "FunctionBar.h"
 #include "CRT.h"
 
@@ -19,40 +20,79 @@ in the source distribution for its full text.
 /*{
 
 typedef struct FunctionBar_ {
+   Object super;
    int size;
    char** functions;
    char** keys;
    int* events;
+   bool staticData;
 } FunctionBar;
+
+extern char* FUNCTIONBAR_CLASS;
 
 }*/
 
 /* private property */
-char* FunctionBar_FKeys[10] = {"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10"};
+char* FUNCTIONBAR_CLASS = "FunctionBar";
 
 /* private property */
-int FunctionBar_FEvents[10] = {KEY_F(1), KEY_F(2), KEY_F(3), KEY_F(4), KEY_F(5), KEY_F(6), KEY_F(7), KEY_F(8), KEY_F(9), KEY_F(10)};
+static char* FunctionBar_FKeys[10] = {"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10"};
+
+/* private property */
+static char* FunctionBar_FLabels[10] = {"      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "      "};
+
+/* private property */
+static int FunctionBar_FEvents[10] = {KEY_F(1), KEY_F(2), KEY_F(3), KEY_F(4), KEY_F(5), KEY_F(6), KEY_F(7), KEY_F(8), KEY_F(9), KEY_F(10)};
 
 FunctionBar* FunctionBar_new(int size, char** functions, char** keys, int* events) {
    FunctionBar* this = malloc(sizeof(FunctionBar));
+   ((Object*) this)->class = FUNCTIONBAR_CLASS;
+   ((Object*) this)->delete = FunctionBar_delete;
    this->functions = functions;
    this->size = size;
    if (keys && events) {
-      this->keys = keys;
-      this->events = events;
+      this->staticData = false; 
+      this->functions = malloc(sizeof(char*) * size);
+      this->keys = malloc(sizeof(char*) * size);
+      this->events = malloc(sizeof(int) * size);
+      for (int i = 0; i < size; i++) {
+         this->functions[i] = String_copy(functions[i]);
+         this->keys[i] = String_copy(keys[i]);
+         this->events[i] = events[i];
+      }
    } else {
+      this->staticData = true;
+      this->functions = functions ? functions : FunctionBar_FLabels;
       this->keys = FunctionBar_FKeys;
       this->events = FunctionBar_FEvents;
-      assert(this->size == 10);
+      assert((!functions) || this->size == 10);
    }
    return this;
 }
 
-void FunctionBar_delete(FunctionBar* this) {
-   // These are always static data, RIGHT? >;)
-   // free(this->functions);
-   // free(this->keys);
+void FunctionBar_delete(Object* cast) {
+   FunctionBar* this = (FunctionBar*) cast;
+   if (!this->staticData) {
+      for (int i = 0; i < this->size; i++) {
+         free(this->functions[i]);
+         free(this->keys[i]);
+      }
+      free(this->functions);
+      free(this->keys);
+      free(this->events);
+   }
    free(this);
+}
+
+void FunctionBar_setLabel(FunctionBar* this, int event, char* text) {
+   assert(!this->staticData);
+   for (int i = 0; i < this->size; i++) {
+      if (this->events[i] == event) {
+         free(this->functions[i]);
+         this->functions[i] = String_copy(text);
+         break;
+      }
+   }
 }
 
 void FunctionBar_draw(FunctionBar* this, char* buffer) {

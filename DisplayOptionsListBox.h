@@ -25,7 +25,7 @@ DisplayOptionsListBox* DisplayOptionsListBox_new(Settings* settings, ScreenManag
 
 void DisplayOptionsListBox_delete(Object* object);
 
-HandlerResult DisplayOptionsListBox_eventHandler(ListBox* super, int ch);
+HandlerResult DisplayOptionsListBox_EventHandler(ListBox* super, int ch);
 
 
 #endif

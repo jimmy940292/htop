@@ -23,14 +23,12 @@ in the source distribution for its full text.
 #endif
 
 typedef void(*TypedVector_procedure)(void*);
-typedef int(*TypedVector_booleanFunction)(const Object*,const Object*);
 
 typedef struct TypedVector_ {
    Object **array;
    int arraySize;
    int growthRate;
    int items;
-   TypedVector_booleanFunction compareFunction;
    char* vectorType;
    bool owner;
 } TypedVector;
@@ -40,15 +38,9 @@ TypedVector* TypedVector_new(char* vectorType_, bool owner, int size);
 
 void TypedVector_delete(TypedVector* this);
 
-
 void TypedVector_prune(TypedVector* this);
 
-int TypedVector_compareFunction(const Object* v1, const Object* v2);
-
-void TypedVector_setCompareFunction(TypedVector* this, TypedVector_booleanFunction f);
-
 void TypedVector_sort(TypedVector* this);
-
 
 void TypedVector_insert(TypedVector* this, int index, void* data_);
 

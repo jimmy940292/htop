@@ -17,15 +17,15 @@ in the source distribution for its full text.
 /*{
 typedef struct Object_ Object;
 
-typedef void(*Method_Object_display)(Object*, RichString*);
-typedef bool(*Method_Object_equals)(const Object*, const Object*);
-typedef void(*Method_Object_delete)(Object*);
+typedef void(*Object_Display)(Object*, RichString*);
+typedef int(*Object_Compare)(const Object*, const Object*);
+typedef void(*Object_Delete)(Object*);
 
 struct Object_ {
    char* class;
-   Method_Object_display display;
-   Method_Object_equals equals;
-   Method_Object_delete delete;
+   Object_Display display;
+   Object_Compare compare;
+   Object_Delete delete;
 };
 }*/
 
@@ -37,7 +37,7 @@ void Object_new() {
    this = malloc(sizeof(Object));
    this->class = OBJECT_CLASS;
    this->display = Object_display;
-   this->equals = Object_equals;
+   this->compare = Object_compare;
    this->delete = Object_delete;
 }
 
@@ -55,6 +55,6 @@ void Object_display(Object* this, RichString* out) {
    RichString_write(out, CRT_colors[DEFAULT_COLOR], objAddress);
 }
 
-bool Object_equals(const Object* this, const Object* o) {
-   return (this == o);
+int Object_compare(const Object* this, const Object* o) {
+   return (this - o);
 }

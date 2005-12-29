@@ -105,4 +105,8 @@ void CRT_handleSIGTERM(int signal);
 
 void CRT_setColors(int colorScheme);
 
+void CRT_enableDelay();
+
+void CRT_disableDelay();
+
 #endif

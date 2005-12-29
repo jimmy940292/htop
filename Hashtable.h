@@ -17,8 +17,8 @@ in the source distribution for its full text.
 
 typedef struct Hashtable_ Hashtable;
 
-typedef void(*HashtablePairFunction)(int, void*);
-typedef int(*HashtableHashAlgorithm)(Hashtable*, int);
+typedef void(*Hashtable_PairFunction)(int, void*, void*);
+typedef int(*Hashtable_HashAlgorithm)(Hashtable*, int);
 
 typedef struct HashtableItem {
    int key;
@@ -30,7 +30,7 @@ struct Hashtable_ {
    int size;
    HashtableItem** buckets;
    int items;
-   HashtableHashAlgorithm hashAlgorithm;
+   Hashtable_HashAlgorithm hashAlgorithm;
    bool owner;
 };
 
@@ -50,6 +50,6 @@ void* Hashtable_remove(Hashtable* this, int key);
 
 inline void* Hashtable_get(Hashtable* this, int key);
 
-void Hashtable_foreach(Hashtable* this, HashtablePairFunction f);
+void Hashtable_foreach(Hashtable* this, Hashtable_PairFunction f, void* userData);
 
 #endif

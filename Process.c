@@ -5,6 +5,7 @@ Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
+#define _GNU_SOURCE
 #include "ProcessList.h"
 #include "Object.h"
 #include "CRT.h"
@@ -25,9 +26,6 @@ in the source distribution for its full text.
 #include <stdbool.h>
 #include <pwd.h>
 
-// TODO: wtf!?
-int kill(pid_t pid, int signal);
-
 // This works only with glibc 2.1+. On earlier versions
 // the behavior is similar to have a hardcoded page size.
 #define PAGE_SIZE ( sysconf(_SC_PAGESIZE) / 1024 )
@@ -38,7 +36,7 @@ int kill(pid_t pid, int signal);
 /*{
 
 typedef enum ProcessField_ {
-   PID, COMM, STATE, PPID, PGRP, SESSION, TTY_NR, TPGID, FLAGS, MINFLT, CMINFLT, MAJFLT, CMAJFLT, UTIME,
+   PID = 1, COMM, STATE, PPID, PGRP, SESSION, TTY_NR, TPGID, FLAGS, MINFLT, CMINFLT, MAJFLT, CMAJFLT, UTIME,
    STIME, CUTIME, CSTIME, PRIORITY, NICE, ITREALVALUE, STARTTIME, VSIZE, RSS, RLIM, STARTCODE, ENDCODE,
    STARTSTACK, KSTKESP, KSTKEIP, SIGNAL, BLOCKED, SSIGIGNORE, SIGCATCH, WCHAN, NSWAP, CNSWAP, EXIT_SIGNAL,
    PROCESSOR, M_SIZE, M_RESIDENT, M_SHARE, M_TRS, M_DRS, M_LRS, M_DT, ST_UID, PERCENT_CPU, PERCENT_MEM,
@@ -54,7 +52,7 @@ typedef struct Process_ {
    bool updated;
 
    int pid;
-   char comm[PROCESS_COMM_LEN + 2];
+   char* comm;
    int indent;
    char state;
    bool tag;
@@ -116,19 +114,20 @@ extern char* Process_fieldNames[];
 char* PROCESS_CLASS = "Process";
 
 /* private property */
-char *Process_fieldNames[] = { "PID", "COMM", "STATE", "PPID", "PGRP", "SESSION", "TTY_NR", "TPGID", "FLAGS", "MINFLT", "CMINFLT", "MAJFLT", "CMAJFLT", "UTIME", "STIME", "CUTIME", "CSTIME", "PRIORITY", "NICE", "ITREALVALUE", "STARTTIME", "VSIZE", "RSS", "RLIM", "STARTCODE", "ENDCODE", "STARTSTACK", "KSTKESP", "KSTKEIP", "SIGNAL", "BLOCKED", "SIGIGNORE", "SIGCATCH", "WCHAN", "NSWAP", "CNSWAP", "EXIT_SIGNAL",  "PROCESSOR", "M_SIZE", "M_RESIDENT", "M_SHARE", "M_TRS", "M_DRS", "M_LRS", "M_DT", "ST_UID", "PERCENT_CPU", "PERCENT_MEM", "USER", "TIME", "LAST_PROCESSFIELD"};
+char *Process_fieldNames[] = { "", "PID", "Command", "STATE", "PPID", "PGRP", "SESSION", "TTY_NR", "TPGID", "FLAGS", "MINFLT", "CMINFLT", "MAJFLT", "CMAJFLT", "UTIME", "STIME", "CUTIME", "CSTIME", "PRIORITY", "NICE", "ITREALVALUE", "STARTTIME", "VSIZE", "RSS", "RLIM", "STARTCODE", "ENDCODE", "STARTSTACK", "KSTKESP", "KSTKEIP", "SIGNAL", "BLOCKED", "SIGIGNORE", "SIGCATCH", "WCHAN", "NSWAP", "CNSWAP", "EXIT_SIGNAL",  "PROCESSOR", "M_SIZE", "M_RESIDENT", "M_SHARE", "M_TRS", "M_DRS", "M_LRS", "M_DT", "ST_UID", "PERCENT_CPU", "PERCENT_MEM", "USER", "TIME", "*** report bug! ***"};
 
 Process* Process_new(struct ProcessList_ *pl) {
    Process* this = malloc(sizeof(Process));
    ((Object*)this)->class = PROCESS_CLASS;
    ((Object*)this)->display = Process_display;
-   ((Object*)this)->equals = Process_equals;
+   ((Object*)this)->compare = Process_compare;
    ((Object*)this)->delete = Process_delete;
    this->pl = pl;
    this->tag = false;
    this->updated = false;
    this->utime = 0;
    this->stime = 0;
+   this->comm = NULL;
    return this;
 }
 
@@ -140,6 +139,7 @@ Process* Process_clone(Process* this) {
 
 void Process_delete(Object* cast) {
    Process* this = (Process*) cast;
+   if (this->comm) free(this->comm);
    assert (this != NULL);
    free(this);
 }
@@ -148,7 +148,7 @@ void Process_display(Object* cast, RichString* out) {
    Process* this = (Process*) cast;
    ProcessField* fields = this->pl->fields;
    RichString_prune(out);
-   for (int i = 0; fields[i] != LAST_PROCESSFIELD; i++)
+   for (int i = 0; fields[i]; i++)
       Process_writeField(this, out, fields[i]);
    if (this->pl->shadowOtherUsers && this->st_uid != getuid())
       RichString_setAttr(out, CRT_colors[PROCESS_SHADOW]);
@@ -159,14 +159,6 @@ void Process_display(Object* cast, RichString* out) {
 
 void Process_toggleTag(Process* this) {
    this->tag = this->tag == true ? false : true;
-}
-
-bool Process_equals(const Object* o1, const Object* o2) {
-   Process* p1 = (Process*) o1;
-   Process* p2 = (Process*) o2;
-   if (p1 == NULL || p2 == NULL)
-      return false;
-   return (p1->pid == p2->pid);
 }
 
 void Process_setPriority(Process* this, int priority) {
@@ -188,24 +180,25 @@ void Process_sendSignal(Process* this, int signal) {
 /* private */
 void Process_printLargeNumber(Process* this, RichString *str, unsigned int number) {
    char buffer[10];
+   int len;
    if(number >= (1000 * ONE_M)) {
-      snprintf(buffer, 10, "%4.2fG ", (float)number / ONE_M);
-      RichString_append(str, CRT_colors[LARGE_NUMBER], buffer);
+      len = snprintf(buffer, 10, "%4.2fG ", (float)number / ONE_M);
+      RichString_appendn(str, CRT_colors[LARGE_NUMBER], buffer, len);
    } else if(number >= (100000)) {
-      snprintf(buffer, 10, "%4dM ", number / ONE_K);
+      len = snprintf(buffer, 10, "%4dM ", number / ONE_K);
       int attr = this->pl->highlightMegabytes
                ? CRT_colors[PROCESS_MEGABYTES]
                : CRT_colors[PROCESS];
-      RichString_append(str, attr, buffer);
+      RichString_appendn(str, attr, buffer, len);
    } else if (this->pl->highlightMegabytes && number >= 1000) {
-      snprintf(buffer, 10, "%2d", number/1000);
-      RichString_append(str, CRT_colors[PROCESS_MEGABYTES], buffer);
+      len = snprintf(buffer, 10, "%2d", number/1000);
+      RichString_appendn(str, CRT_colors[PROCESS_MEGABYTES], buffer, len);
       number %= 1000;
-      snprintf(buffer, 10, "%03d ", number);
-      RichString_append(str, CRT_colors[PROCESS], buffer);
+      len = snprintf(buffer, 10, "%03d ", number);
+      RichString_appendn(str, CRT_colors[PROCESS], buffer, len);
    } else {
-      snprintf(buffer, 10, "%5d ", number);
-      RichString_append(str, CRT_colors[PROCESS], buffer);
+      len = snprintf(buffer, 10, "%5d ", number);
+      RichString_appendn(str, CRT_colors[PROCESS], buffer, len);
    }
 }
 

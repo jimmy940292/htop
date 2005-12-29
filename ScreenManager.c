@@ -30,6 +30,7 @@ typedef struct ScreenManager_ {
    int y2;
    Orientation orientation;
    TypedVector* items;
+   TypedVector* fuBars;
    int itemCount;
    FunctionBar* fuBar;
    bool owner;
@@ -47,6 +48,7 @@ ScreenManager* ScreenManager_new(int x1, int y1, int x2, int y2, Orientation ori
    this->fuBar = NULL;
    this->orientation = orientation;
    this->items = TypedVector_new(LISTBOX_CLASS, owner, DEFAULT_SIZE);
+   this->fuBars = TypedVector_new(FUNCTIONBAR_CLASS, true, DEFAULT_SIZE);
    this->itemCount = 0;
    this->owner = owner;
    return this;
@@ -54,8 +56,7 @@ ScreenManager* ScreenManager_new(int x1, int y1, int x2, int y2, Orientation ori
 
 void ScreenManager_delete(ScreenManager* this) {
    TypedVector_delete(this->items);
-   if (this->owner)
-      FunctionBar_delete(this->fuBar);
+   TypedVector_delete(this->fuBars);
    free(this);
 }
 
@@ -63,7 +64,7 @@ inline int ScreenManager_size(ScreenManager* this) {
    return this->itemCount;
 }
 
-void ScreenManager_add(ScreenManager* this, ListBox* item, int size) {
+void ScreenManager_add(ScreenManager* this, ListBox* item, FunctionBar* fuBar, int size) {
    if (this->orientation == HORIZONTAL) {
       int lastX = 0;
       if (this->itemCount > 0) {
@@ -79,6 +80,11 @@ void ScreenManager_add(ScreenManager* this, ListBox* item, int size) {
    }
    // TODO: VERTICAL
    TypedVector_add(this->items, item);
+   if (fuBar)
+      TypedVector_add(this->fuBars, fuBar);
+   else
+      TypedVector_add(this->fuBars, FunctionBar_new(0, NULL, NULL, NULL));
+   if (!this->fuBar && fuBar) this->fuBar = fuBar;
    item->needsRedraw = true;
    this->itemCount++;
 }
@@ -86,13 +92,15 @@ void ScreenManager_add(ScreenManager* this, ListBox* item, int size) {
 ListBox* ScreenManager_remove(ScreenManager* this, int index) {
    assert(this->itemCount > index);
    ListBox* lb = (ListBox*) TypedVector_remove(this->items, index);
+   TypedVector_remove(this->fuBars, index);
+   this->fuBar = NULL;
    this->itemCount--;
    return lb;
 }
 
 void ScreenManager_setFunctionBar(ScreenManager* this, FunctionBar* fuBar) {
    if (this->owner && this->fuBar)
-      FunctionBar_delete(this->fuBar);
+      FunctionBar_delete((Object*)this->fuBar);
    this->fuBar = fuBar;
 }
 
@@ -134,6 +142,9 @@ void ScreenManager_run(ScreenManager* this, ListBox** lastFocus, int* lastKey) {
             }
          }
       }
+      FunctionBar* bar = (FunctionBar*) TypedVector_get(this->fuBars, focus);
+      if (bar)
+         this->fuBar = bar;
       if (this->fuBar)
          FunctionBar_draw(this->fuBar, NULL);
 
@@ -183,10 +194,8 @@ void ScreenManager_run(ScreenManager* this, ListBox** lastFocus, int* lastKey) {
       }
       case KEY_LEFT:
          tryLeft:
-         focus--;
-         if (focus == -1) {
-            focus = this->itemCount - 1;
-         }
+         if (focus > 0)
+            focus--;
          lbFocus = (ListBox*) TypedVector_get(this->items, focus);
          if (ListBox_getSize(lbFocus) == 0 && focus > 0)
             goto tryLeft;
@@ -194,10 +203,8 @@ void ScreenManager_run(ScreenManager* this, ListBox** lastFocus, int* lastKey) {
       case KEY_RIGHT:
       case 9:
          tryRight:
-         focus++;
-         if (focus == this->itemCount) {
-            focus = 0;
-         }
+         if (focus < this->itemCount - 1)
+            focus++;
          lbFocus = (ListBox*) TypedVector_get(this->items, focus);
          if (ListBox_getSize(lbFocus) == 0 && focus < this->itemCount - 1)
             goto tryRight;

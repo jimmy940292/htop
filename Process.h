@@ -40,7 +40,7 @@ int kill(pid_t pid, int signal);
 
 
 typedef enum ProcessField_ {
-   PID, COMM, STATE, PPID, PGRP, SESSION, TTY_NR, TPGID, FLAGS, MINFLT, CMINFLT, MAJFLT, CMAJFLT, UTIME,
+   PID = 1, COMM, STATE, PPID, PGRP, SESSION, TTY_NR, TPGID, FLAGS, MINFLT, CMINFLT, MAJFLT, CMAJFLT, UTIME,
    STIME, CUTIME, CSTIME, PRIORITY, NICE, ITREALVALUE, STARTTIME, VSIZE, RSS, RLIM, STARTCODE, ENDCODE,
    STARTSTACK, KSTKESP, KSTKEIP, SIGNAL, BLOCKED, SSIGIGNORE, SIGCATCH, WCHAN, NSWAP, CNSWAP, EXIT_SIGNAL,
    PROCESSOR, M_SIZE, M_RESIDENT, M_SHARE, M_TRS, M_DRS, M_LRS, M_DT, ST_UID, PERCENT_CPU, PERCENT_MEM,
@@ -56,7 +56,7 @@ typedef struct Process_ {
    bool updated;
 
    int pid;
-   char comm[PROCESS_COMM_LEN + 2];
+   char* comm;
    int indent;
    char state;
    bool tag;
@@ -124,8 +124,6 @@ void Process_delete(Object* cast);
 void Process_display(Object* cast, RichString* out);
 
 void Process_toggleTag(Process* this);
-
-bool Process_equals(const Object* o1, const Object* o2);
 
 void Process_setPriority(Process* this, int priority);
 

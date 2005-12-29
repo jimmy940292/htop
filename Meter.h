@@ -29,8 +29,8 @@ in the source distribution for its full text.
 
 typedef struct Meter_ Meter;
 
-typedef void(*Method_Meter_setValues)(Meter*);
-typedef void(*Method_Meter_draw)(Meter*, int, int, int);
+typedef void(*Meter_SetValues)(Meter*);
+typedef void(*Meter_Draw)(Meter*, int, int, int);
 
 typedef enum MeterMode_ {
    UNSET,
@@ -46,10 +46,10 @@ struct Meter_ {
    
    int h;
    int w;
-   Method_Meter_draw draw;
-   Method_Meter_setValues setValues;
+   Meter_Draw draw;
+   Meter_SetValues setValues;
    int items;
-   int** attributes;
+   int* attributes;
    double* values;
    double total;
    char* caption;

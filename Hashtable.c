@@ -15,8 +15,8 @@ in the source distribution for its full text.
 /*{
 typedef struct Hashtable_ Hashtable;
 
-typedef void(*HashtablePairFunction)(int, void*);
-typedef int(*HashtableHashAlgorithm)(Hashtable*, int);
+typedef void(*Hashtable_PairFunction)(int, void*, void*);
+typedef int(*Hashtable_HashAlgorithm)(Hashtable*, int);
 
 typedef struct HashtableItem {
    int key;
@@ -28,7 +28,7 @@ struct Hashtable_ {
    int size;
    HashtableItem** buckets;
    int items;
-   HashtableHashAlgorithm hashAlgorithm;
+   Hashtable_HashAlgorithm hashAlgorithm;
    bool owner;
 };
 }*/
@@ -129,11 +129,11 @@ inline void* Hashtable_get(Hashtable* this, int key) {
          bucketPtr = bucketPtr->next;
 }
 
-void Hashtable_foreach(Hashtable* this, HashtablePairFunction f) {
+void Hashtable_foreach(Hashtable* this, Hashtable_PairFunction f, void* userData) {
    for (int i = 0; i < this->size; i++) {
       HashtableItem* walk = this->buckets[i];
       while (walk != NULL) {
-         f(walk->key, walk->value);
+         f(walk->key, walk->value, userData);
          walk = walk->next;
       }
    }

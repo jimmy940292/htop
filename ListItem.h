@@ -9,24 +9,31 @@ Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
+#include "String.h"
 #include "Object.h"
-#include "CRT.h"
+#include "RichString.h"
+#include <string.h>
 
 #include "debug.h"
 
-
 typedef struct ListItem_ {
    Object super;
-   char* text;
+   char* value;
+   int key;
 } ListItem;
 
 extern char* LISTITEM_CLASS;
 
-
-ListItem* ListItem_new(char* text);
+ListItem* ListItem_new(char* value, int key);
 
 void ListItem_delete(Object* cast);
 
 void ListItem_display(Object* cast, RichString* out);
+
+void ListItem_append(ListItem* this, char* text);
+
+const char* ListItem_getRef(ListItem* this);
+
+int ListItem_compare(const Object*, const Object*);
 
 #endif

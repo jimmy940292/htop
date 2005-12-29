@@ -19,15 +19,15 @@ in the source distribution for its full text.
 
 typedef struct Object_ Object;
 
-typedef void(*Method_Object_display)(Object*, RichString*);
-typedef bool(*Method_Object_equals)(const Object*, const Object*);
-typedef void(*Method_Object_delete)(Object*);
+typedef void(*Object_Display)(Object*, RichString*);
+typedef int(*Object_Compare)(const Object*, const Object*);
+typedef void(*Object_Delete)(Object*);
 
 struct Object_ {
    char* class;
-   Method_Object_display display;
-   Method_Object_equals equals;
-   Method_Object_delete delete;
+   Object_Display display;
+   Object_Compare compare;
+   Object_Delete delete;
 };
 
 
@@ -39,6 +39,6 @@ void Object_delete(Object* this);
 
 void Object_display(Object* this, RichString* out);
 
-bool Object_equals(const Object* this, const Object* o);
+int Object_compare(const Object* this, const Object* o);
 
 #endif

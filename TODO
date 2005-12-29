@@ -2,9 +2,6 @@
 FEATURES:
 
  * read SYSCONFDIR/htoprc (help, autoconf gurus!)
- * integrate columns configuration in the setup screen
- * handle saving of .htoprc more elegantly
- * option to display only processes of a single user
  * make bars display refresh independent from list refresh
  * auto-calibrate delay 
  * add some more 'top' features

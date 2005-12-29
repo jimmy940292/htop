@@ -126,6 +126,8 @@ void CRT_init(int delay, int colorScheme) {
    }
    char* termType = getenv("TERM");
    if (String_eq(termType, "xterm") || String_eq(termType, "xterm-color") || String_eq(termType, "vt220")) {
+      define_key("\033[H", KEY_HOME);
+      define_key("\033[F", KEY_END);
       define_key("\033OP", KEY_F(1));
       define_key("\033OQ", KEY_F(2));
       define_key("\033OR", KEY_F(3));
@@ -134,6 +136,7 @@ void CRT_init(int delay, int colorScheme) {
       define_key("\033[12~", KEY_F(2));
       define_key("\033[13~", KEY_F(3));
       define_key("\033[14~", KEY_F(4));
+      define_key("\033[17;2~", KEY_F(18));
    }
 #ifndef DEBUG
    signal(11, CRT_handleSIGSEGV);
@@ -144,7 +147,7 @@ void CRT_init(int delay, int colorScheme) {
       CRT_colorScheme = 1;
    CRT_setColors(CRT_colorScheme);
 
-   mousemask(BUTTON1_PRESSED, NULL);
+   mousemask(BUTTON1_CLICKED, NULL);
 }
 
 void CRT_done() {
@@ -158,6 +161,16 @@ int CRT_readKey() {
    int ret = getch();
    halfdelay(CRT_delay);
    return ret;
+}
+
+void CRT_disableDelay() {
+   nocbreak();
+   cbreak();
+   nodelay(stdscr, TRUE);
+}
+
+void CRT_enableDelay() {
+   halfdelay(CRT_delay);
 }
 
 void CRT_handleSIGSEGV(int signal) {

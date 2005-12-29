@@ -35,4 +35,6 @@ void CategoriesListBox_makeDisplayOptionsPage(CategoriesListBox* this);
 
 void CategoriesListBox_makeColorsPage(CategoriesListBox* this);
 
+void CategoriesListBox_makeColumnsPage(CategoriesListBox* this);
+
 #endif

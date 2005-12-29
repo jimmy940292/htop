@@ -28,6 +28,6 @@ AvailableMetersListBox* AvailableMetersListBox_new(Settings* settings, ListBox* 
 void AvailableMetersListBox_delete(Object* object);
 
 
-HandlerResult AvailableMetersListBox_eventHandler(ListBox* super, int ch);
+HandlerResult AvailableMetersListBox_EventHandler(ListBox* super, int ch);
 
 #endif

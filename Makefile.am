@@ -19,4 +19,6 @@ ListItem.h LoadAverageMeter.h LoadMeter.h MemoryMeter.h Meter.h \
 MetersListBox.h Object.h Process.h ProcessList.h RichString.h ScreenManager.h \
 Settings.h SignalItem.h SignalsListBox.h String.h SwapMeter.h TasksMeter.h \
 TypedVector.h UptimeMeter.h UsersTable.h CheckItem.c CheckItem.h \
-ColorsListBox.c ColorsListBox.h
+ColorsListBox.c ColorsListBox.h TraceScreen.c TraceScreen.h \
+AvailableColumnsListBox.c AvailableColumnsListBox.h ColumnsListBox.c \
+ColumnsListBox.h

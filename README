@@ -2,7 +2,7 @@
 htop
 by Hisham Muhammad <loderunner@users.sourceforge.net>
 
-May, 2004 - September, 2005
+May, 2004 - December, 2005
 
 Introduction
 ~~~~~~~~~~~~
@@ -42,27 +42,7 @@ This program is distributed as a standard autotools-based package.
 See the INSTALL file for detailed instructions, but you are
 probably used to the common "configure/make/make install" routine.
 
-Keys
-~~~~
-
-Arrows,
-[PgUp], [PgDn],
-[Home], [End] - scroll process list
-[F1], [h]     - help screen
-[F2], [S]     - setup: configure header meters
-[F3], [/]     - incremental process search: type process name
-[F4], [I]     - invert sort order
-[F5], [<]     - select sorting by previous field 
-[F6], [>]     - select sorting by next field
-[F7], []]     - increase process priority (superuser only)
-[F8], [[]     - decrease process priority
-[F9], [k]     - kill process (all tagged ones, or the current, if none is tagged)
-[F10],[q]     - quit
-[F]           - highlight follows process
-[M]           - sort by memory usage
-[P]           - sort by processor usage
-[C]           - select columns
-[space]
-[Ctrl+L]      - refresh screen
+See the manual page (man htop) or the on-line help ('F1' or 'h'
+inside htop) for a list of supported key commands.
 
 if not all keys work check your curses configuration.

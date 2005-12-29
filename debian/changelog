@@ -1,3 +1,11 @@
+htop (0.6-1) unstable; urgency=low
+
+  * New upstream version.
+    - doesn't show pipe when some value is equal to zero. (Closes: #325058)
+    - allows renicing group of processes. (Closes: #317391)
+
+ -- Bartosz Fenski <fenio@debian.org>  Thu, 29 Dec 2005 13:22:07 +0100
+
 htop (0.5.4-1) unstable; urgency=low
 
   * New upstream version.

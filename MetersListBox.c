@@ -29,8 +29,8 @@ MetersListBox* MetersListBox_new(Settings* settings, char* header, TypedVector* 
    this->settings = settings;
    this->meters = meters;
    this->scr = scr;
-   super->eventHandler = MetersListBox_eventHandler;
-   ListBox_setHeader(super, RichString_quickString(CRT_colors[PANEL_HEADER_FOCUS], header));
+   super->eventHandler = MetersListBox_EventHandler;
+   ListBox_setHeader(super, header);
    for (int i = 0; i < TypedVector_size(meters); i++) {
       Meter* meter = (Meter*) TypedVector_get(meters, i);
       ListBox_add(super, (Object*) Meter_toListItem(meter));
@@ -45,7 +45,7 @@ void MetersListBox_delete(Object* object) {
    free(this);
 }
 
-HandlerResult MetersListBox_eventHandler(ListBox* super, int ch) {
+HandlerResult MetersListBox_EventHandler(ListBox* super, int ch) {
    MetersListBox* this = (MetersListBox*) super;
    
    int selected = ListBox_getSelectedIndex(super);
@@ -59,7 +59,7 @@ HandlerResult MetersListBox_eventHandler(ListBox* super, int ch) {
       case 't':
       {
          Meter* meter = (Meter*) TypedVector_get(this->meters, selected);
-         MeterMode mode = ++(meter->mode);
+         MeterMode mode = meter->mode + 1;
          if (mode == LAST_METERMODE)
             mode = 1; // skip mode 0, "unset"
          Meter_setMode(meter, mode);

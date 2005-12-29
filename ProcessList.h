@@ -101,10 +101,7 @@ void ProcessList_delete(ProcessList* this);
 
 void ProcessList_invertSortOrder(ProcessList* this);
 
-void ProcessList_sortKey(ProcessList* this, int delta);
-
 RichString ProcessList_printHeader(ProcessList* this);
-
 
 void ProcessList_prune(ProcessList* this);
 

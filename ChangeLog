@@ -1,4 +1,18 @@
 
+What's new in version 0.6
+
+* Configuration of columns merged into the Setup screen
+* Integrated strace (press 's')
+  (thanks to Marinho Barcellos for the help)
+* BUGFIX: some fixes, aided by Valgrind
+  (thanks to Wolfram Schlich for the report)
+* BUGFIX: fixed bug when switching meter modes
+  (thanks to Eduardo Righes for the report)
+* Show processes of a single user
+* "SortBy" function now menu-based
+* Improved mouse handling
+* ...and on top of that reduced memory consumption!
+
 What's new in version 0.5.4
 
 * Color schemes

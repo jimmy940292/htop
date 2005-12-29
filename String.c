@@ -132,7 +132,7 @@ char** String_split(char* s, char sep) {
       out[ctr] = token;
       ctr++;
    }
-   out = realloc(out, sizeof(char*) * ctr + 1);
+   out = realloc(out, sizeof(char*) * (ctr + 1));
    out[ctr] = NULL;
    return out;
 }

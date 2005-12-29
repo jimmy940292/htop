@@ -32,22 +32,22 @@ AvailableMetersListBox* AvailableMetersListBox_new(Settings* settings, ListBox* 
    this->leftBox = leftMeters;
    this->rightBox = rightMeters;
    this->scr = scr;
-   super->eventHandler = AvailableMetersListBox_eventHandler;
+   super->eventHandler = AvailableMetersListBox_EventHandler;
 
-   ListBox_setHeader(super, RichString_quickString(CRT_colors[PANEL_HEADER_FOCUS], "Available meters"));
-   ListBox_add(super, (Object*) ListItem_new(String_copy("Swap")));
-   ListBox_add(super, (Object*) ListItem_new(String_copy("Memory")));
-   ListBox_add(super, (Object*) ListItem_new(String_copy("Clock")));
-   ListBox_add(super, (Object*) ListItem_new(String_copy("Load")));
-   ListBox_add(super, (Object*) ListItem_new(String_copy("LoadAverage")));
-   ListBox_add(super, (Object*) ListItem_new(String_copy("Uptime")));
-   ListBox_add(super, (Object*) ListItem_new(String_copy("Tasks")));
+   ListBox_setHeader(super, "Available meters");
+   ListBox_add(super, (Object*) ListItem_new("Swap", 0));
+   ListBox_add(super, (Object*) ListItem_new("Memory", 0));
+   ListBox_add(super, (Object*) ListItem_new("Clock", 0));
+   ListBox_add(super, (Object*) ListItem_new("Load", 0));
+   ListBox_add(super, (Object*) ListItem_new("LoadAverage", 0));
+   ListBox_add(super, (Object*) ListItem_new("Uptime", 0));
+   ListBox_add(super, (Object*) ListItem_new("Tasks", 0));
    if (settings->pl->processorCount > 1)
-      ListBox_add(super, (Object*) ListItem_new(String_copy("CPUAverage")));
+      ListBox_add(super, (Object*) ListItem_new("CPUAverage", 0));
    for (int i = 1; i <= settings->pl->processorCount; i++) {
       char buffer[50];
       sprintf(buffer, "CPU(%d)", i);
-      ListBox_add(super, (Object*) ListItem_new(String_copy(buffer)));
+      ListBox_add(super, (Object*) ListItem_new(buffer, 0));
    }
    return this;
 }
@@ -67,12 +67,12 @@ inline void AvailableMetersListBox_addHeader(Header* header, ListBox* lb, char* 
    ListBox_add(lb, (Object*) Meter_toListItem(meter));
 }
 
-HandlerResult AvailableMetersListBox_eventHandler(ListBox* super, int ch) {
+HandlerResult AvailableMetersListBox_EventHandler(ListBox* super, int ch) {
    AvailableMetersListBox* this = (AvailableMetersListBox*) super;
    Header* header = this->settings->header;
    
    ListItem* selected = (ListItem*) ListBox_getSelected(super);
-   char* name = selected->text;
+   char* name = selected->value;
    HandlerResult result = IGNORED;
 
    switch(ch) {
@@ -94,6 +94,7 @@ HandlerResult AvailableMetersListBox_eventHandler(ListBox* super, int ch) {
       }
    }
    if (result == HANDLED) {
+      this->settings->changed = true;
       Header_calculateHeight(header);
       Header_draw(header);
       ScreenManager_resize(this->scr, this->scr->x1, header->height, this->scr->x2, this->scr->y2);

@@ -21,14 +21,12 @@ in the source distribution for its full text.
 #endif
 
 typedef void(*TypedVector_procedure)(void*);
-typedef int(*TypedVector_booleanFunction)(const Object*,const Object*);
 
 typedef struct TypedVector_ {
    Object **array;
    int arraySize;
    int growthRate;
    int items;
-   TypedVector_booleanFunction compareFunction;
    char* vectorType;
    bool owner;
 } TypedVector;
@@ -44,7 +42,6 @@ TypedVector* TypedVector_new(char* vectorType_, bool owner, int size) {
    this->growthRate = size;
    this->array = (Object**) calloc(size, sizeof(Object*));
    this->arraySize = size;
-   this->compareFunction = TypedVector_compareFunction;
    this->items = 0;
    this->vectorType = vectorType_;
    this->owner = owner;
@@ -65,7 +62,7 @@ void TypedVector_delete(TypedVector* this) {
 bool TypedVector_isConsistent(TypedVector* this) {
    if (this->owner) {
       for (int i = 0; i < this->items; i++)
-         if (this->array[i]->class != this->vectorType)
+         if (this->array[i] && this->array[i]->class != this->vectorType)
             return false;
       return true;
    } else {
@@ -86,20 +83,12 @@ void TypedVector_prune(TypedVector* this) {
    this->items = 0;
 }
 
-int TypedVector_compareFunction(const Object* v1, const Object* v2) {
-   return !(v1->equals(v1, v2));
-}
-
-void TypedVector_setCompareFunction(TypedVector* this, TypedVector_booleanFunction f) {
-   this->compareFunction = f;
-}
-
 void TypedVector_sort(TypedVector* this) {
    assert(TypedVector_isConsistent(this));
    int i, j;
    for (i = 1; i < this->items; i++) {
       void* t = this->array[i];
-      for (j = i-1; j >= 0 && this->compareFunction(this->array[j], t) < 0; j--)
+      for (j = i-1; j >= 0 && this->array[j]->compare(this->array[j], t) < 0; j--)
          this->array[j+1] = this->array[j];
       this->array[j+1] = t;
    }
@@ -108,7 +97,7 @@ void TypedVector_sort(TypedVector* this) {
    /*
    for (int i = 0; i < this->items; i++) {
       for (int j = i+1; j < this->items; j++) {
-         if (this->compareFunction(this->array[i], this->array[j]) < 0) {
+         if (this->array[j]->compare(this->array[j], t) < 0) {
             void* tmp = this->array[i];
             this->array[i] = this->array[j];
             this->array[j] = tmp;
@@ -235,7 +224,7 @@ void TypedVector_merge(TypedVector* this, TypedVector* v2) {
 }
 
 void TypedVector_add(TypedVector* this, void* data_) {
-   assert(((Object*)data_)->class == this->vectorType);
+   assert(data_ && ((Object*)data_)->class == this->vectorType);
    Object* data = data_;
    assert(TypedVector_isConsistent(this));
 
@@ -252,7 +241,7 @@ inline int TypedVector_indexOf(TypedVector* this, void* search_) {
 
    for (i = 0; i < this->items; i++) {
       Object* o = (Object*)this->array[i];
-      if (o->equals(o, search))
+      if (o && o->compare(o, search) == 0)
          return i;
    }
    return -1;

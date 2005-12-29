@@ -78,8 +78,9 @@ void Header_createMeter(Header* this, char* name, HeaderSide side) {
       TypedVector_add(meters, CPUMeter_new(this->pl, 0));
    } else if (String_startsWith(name, "CPU")) {
       int num;
-      sscanf(name, "CPU(%d)", &num);
-      TypedVector_add(meters, CPUMeter_new(this->pl, num));
+      int ok = sscanf(name, "CPU(%d)", &num);
+      if (ok)
+         TypedVector_add(meters, CPUMeter_new(this->pl, num));
    }
 }
 

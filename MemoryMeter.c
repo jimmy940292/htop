@@ -35,23 +35,15 @@ struct MemoryMeter_ {
 MemoryMeter* MemoryMeter_new(ProcessList* pl) {
    MemoryMeter* this = malloc(sizeof(MemoryMeter));
    Meter_init((Meter*)this, String_copy("Memory"), String_copy("Mem"), 3);
-   ((Meter*)this)->attributes[0] = &(CRT_colors[MEMORY_USED]);
-   ((Meter*)this)->attributes[1] = &(CRT_colors[MEMORY_BUFFERS]);
-   ((Meter*)this)->attributes[2] = &(CRT_colors[MEMORY_CACHE]);
+   ((Meter*)this)->attributes[0] = MEMORY_USED;
+   ((Meter*)this)->attributes[1] = MEMORY_BUFFERS;
+   ((Meter*)this)->attributes[2] = MEMORY_CACHE;
    ((Meter*)this)->setValues = MemoryMeter_setValues;
    ((Object*)this)->display = MemoryMeter_display;
    this->pl = pl;
    Meter_setMode((Meter*)this, BAR);
-   if (this->pl->totalMem > 1000000) {
-      this->wideFormat = "%7ldk ";
-      this->wideLimit = 22 + 9 * 4;
-   } else if (this->pl->totalMem > 100000) {
-      this->wideFormat = "%6ldk ";
-      this->wideLimit = 22 + 8 * 4;
-   } else {
-      this->wideFormat = "%5ldk ";
-      this->wideLimit = 22 + 7 * 4;
-   }
+   this->wideFormat = "%6ldk ";
+   this->wideLimit = 22 + 8 * 4;
    return this;
 }
 
@@ -88,11 +80,11 @@ void MemoryMeter_display(Object* cast, RichString* out) {
    RichString_append(out, CRT_colors[METER_VALUE], buffer);
    sprintf(buffer, format, usedMem);
    RichString_append(out, CRT_colors[METER_TEXT], "used:");
-   RichString_append(out, *(meter->attributes[0]), buffer);
+   RichString_append(out, CRT_colors[MEMORY_USED], buffer);
    sprintf(buffer, format, buffersMem);
    RichString_append(out, CRT_colors[METER_TEXT], "buffers:");
-   RichString_append(out, *(meter->attributes[1]), buffer);
+   RichString_append(out, CRT_colors[MEMORY_BUFFERS], buffer);
    sprintf(buffer, format, cachedMem);
    RichString_append(out, CRT_colors[METER_TEXT], "cache:");
-   RichString_append(out, *(meter->attributes[2]), buffer);
+   RichString_append(out, CRT_colors[MEMORY_CACHE], buffer);
 }

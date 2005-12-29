@@ -33,7 +33,7 @@ typedef enum HandlerResult_ {
    BREAK_LOOP
 } HandlerResult;
 
-typedef HandlerResult(*ListBox_eventHandler)(ListBox*, int);
+typedef HandlerResult(*ListBox_EventHandler)(ListBox*, int);
 
 struct ListBox_ {
    Object super;
@@ -45,7 +45,7 @@ struct ListBox_ {
    int oldSelected;
    bool needsRedraw;
    RichString header;
-   ListBox_eventHandler eventHandler;
+   ListBox_EventHandler eventHandler;
 };
 
 extern char* LISTBOX_CLASS;
@@ -60,7 +60,11 @@ void ListBox_init(ListBox* this, int x, int y, int w, int h, char* type, bool ow
 
 void ListBox_done(ListBox* this);
 
-void ListBox_setHeader(ListBox* this, RichString header);
+void ListBox_setEventHandler(ListBox* this, ListBox_EventHandler eh);
+
+void ListBox_setRichHeader(ListBox* this, RichString header);
+
+void ListBox_setHeader(ListBox* this, char* header);
 
 void ListBox_move(ListBox* this, int x, int y);
 
@@ -69,6 +73,8 @@ void ListBox_resize(ListBox* this, int w, int h);
 void ListBox_prune(ListBox* this);
 
 void ListBox_add(ListBox* this, Object* o);
+
+void ListBox_insert(ListBox* this, int i, Object* o);
 
 void ListBox_set(ListBox* this, int i, Object* o);
 

@@ -27,7 +27,7 @@ SignalsListBox* SignalsListBox_new(int x, int y, int w, int h) {
    ((Object*)this)->delete = SignalsListBox_delete;
 
    this->signals = Signal_getSignalTable();
-   super->eventHandler = SignalsListBox_eventHandler;
+   super->eventHandler = SignalsListBox_EventHandler;
    int sigCount = Signal_getSignalCount();
    for(int i = 0; i < sigCount; i++)
       ListBox_set(super, i, (Object*) this->signals[i]);
@@ -46,12 +46,12 @@ void SignalsListBox_delete(Object* object) {
 void SignalsListBox_reset(SignalsListBox* this) {
    ListBox* super = (ListBox*) this;
 
-   ListBox_setHeader(super, RichString_quickString(CRT_colors[PANEL_HEADER_FOCUS], "Send signal:"));
+   ListBox_setHeader(super, "Send signal:");
    ListBox_setSelected(super, 16); // 16th item is SIGTERM
    this->state = 0;
 }
 
-HandlerResult SignalsListBox_eventHandler(ListBox* super, int ch) {
+HandlerResult SignalsListBox_EventHandler(ListBox* super, int ch) {
    SignalsListBox* this = (SignalsListBox*) super;
 
    int size = ListBox_getSize(super);

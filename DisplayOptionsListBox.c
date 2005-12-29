@@ -28,9 +28,9 @@ DisplayOptionsListBox* DisplayOptionsListBox_new(Settings* settings, ScreenManag
 
    this->settings = settings;
    this->scr = scr;
-   super->eventHandler = DisplayOptionsListBox_eventHandler;
+   super->eventHandler = DisplayOptionsListBox_EventHandler;
 
-   ListBox_setHeader(super, RichString_quickString(CRT_colors[PANEL_HEADER_FOCUS], "Display options"));
+   ListBox_setHeader(super, "Display options");
    ListBox_add(super, (Object*) CheckItem_new(String_copy("Tree view"), &(settings->pl->treeView)));
    ListBox_add(super, (Object*) CheckItem_new(String_copy("Shadow other users' processes"), &(settings->pl->shadowOtherUsers)));
    ListBox_add(super, (Object*) CheckItem_new(String_copy("Hide kernel threads"), &(settings->pl->hideKernelThreads)));
@@ -48,7 +48,7 @@ void DisplayOptionsListBox_delete(Object* object) {
    free(this);
 }
 
-HandlerResult DisplayOptionsListBox_eventHandler(ListBox* super, int ch) {
+HandlerResult DisplayOptionsListBox_EventHandler(ListBox* super, int ch) {
    DisplayOptionsListBox* this = (DisplayOptionsListBox*) super;
    
    HandlerResult result = IGNORED;
@@ -64,6 +64,7 @@ HandlerResult DisplayOptionsListBox_eventHandler(ListBox* super, int ch) {
    }
 
    if (result == HANDLED) {
+      this->settings->changed = true;
       Header* header = this->settings->header;
       Header_calculateHeight(header);
       Header_draw(header);

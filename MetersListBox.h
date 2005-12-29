@@ -25,6 +25,6 @@ MetersListBox* MetersListBox_new(Settings* settings, char* header, TypedVector* 
 
 void MetersListBox_delete(Object* object);
 
-HandlerResult MetersListBox_eventHandler(ListBox* super, int ch);
+HandlerResult MetersListBox_EventHandler(ListBox* super, int ch);
 
 #endif

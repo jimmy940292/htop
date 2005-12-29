@@ -30,7 +30,7 @@ typedef enum HandlerResult_ {
    BREAK_LOOP
 } HandlerResult;
 
-typedef HandlerResult(*ListBox_eventHandler)(ListBox*, int);
+typedef HandlerResult(*ListBox_EventHandler)(ListBox*, int);
 
 struct ListBox_ {
    Object super;
@@ -42,7 +42,7 @@ struct ListBox_ {
    int oldSelected;
    bool needsRedraw;
    RichString header;
-   ListBox_eventHandler eventHandler;
+   ListBox_EventHandler eventHandler;
 };
 
 extern char* LISTBOX_CLASS;
@@ -96,7 +96,7 @@ void ListBox_done(ListBox* this) {
    TypedVector_delete(this->items);
 }
 
-void ListBox_setHeader(ListBox* this, RichString header) {
+inline void ListBox_setRichHeader(ListBox* this, RichString header) {
    assert (this != NULL);
 
    if (this->header.len > 0) {
@@ -104,6 +104,14 @@ void ListBox_setHeader(ListBox* this, RichString header) {
    }
    this->header = header;
    this->needsRedraw = true;
+}
+
+inline void ListBox_setHeader(ListBox* this, char* header) {
+   ListBox_setRichHeader(this, RichString_quickString(CRT_colors[PANEL_HEADER_FOCUS], header));
+}
+
+void ListBox_setEventHandler(ListBox* this, ListBox_EventHandler eh) {
+   this->eventHandler = eh;
 }
 
 void ListBox_move(ListBox* this, int x, int y) {
@@ -138,6 +146,13 @@ void ListBox_add(ListBox* this, Object* o) {
    assert (this != NULL);
 
    TypedVector_add(this->items, o);
+   this->needsRedraw = true;
+}
+
+void ListBox_insert(ListBox* this, int i, Object* o) {
+   assert (this != NULL);
+
+   TypedVector_insert(this->items, i, o);
    this->needsRedraw = true;
 }
 

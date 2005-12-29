@@ -92,20 +92,18 @@ typedef struct ProcessList_ {
 }*/
 
 /* private property */
-ProcessField defaultHeaders[LAST_PROCESSFIELD] = { PID, USER, PRIORITY, NICE, M_SIZE, M_RESIDENT, M_SHARE, STATE, PERCENT_CPU, PERCENT_MEM, TIME, COMM, LAST_PROCESSFIELD };
+ProcessField defaultHeaders[] = { PID, USER, PRIORITY, NICE, M_SIZE, M_RESIDENT, M_SHARE, STATE, PERCENT_CPU, PERCENT_MEM, TIME, COMM, LAST_PROCESSFIELD, 0 };
 
 ProcessList* ProcessList_new(UsersTable* usersTable) {
    ProcessList* this;
    this = malloc(sizeof(ProcessList));
    this->processes = TypedVector_new(PROCESS_CLASS, true, DEFAULT_SIZE);
    this->processTable = Hashtable_new(20, false);
-   TypedVector_setCompareFunction(this->processes, Process_compare);
    this->prototype = Process_new(this);
    this->usersTable = usersTable;
    
    /* tree-view auxiliary buffers */
    this->processes2 = TypedVector_new(PROCESS_CLASS, true, DEFAULT_SIZE);
-   TypedVector_setCompareFunction(this->processes2, Process_compare);
 
    FILE* status = fopen(PROCSTATFILE, "r");
    assert(status != NULL);
@@ -132,10 +130,10 @@ ProcessList* ProcessList_new(UsersTable* usersTable) {
       this->totalPeriod[i] = 1;
    }
 
-   this->fields = malloc(sizeof(ProcessField) * LAST_PROCESSFIELD);
+   this->fields = calloc(sizeof(ProcessField), LAST_PROCESSFIELD+1);
    // TODO: turn 'fields' into a TypedVector,
    // (and ProcessFields into proper objects).
-   for (int i = 0; i < LAST_PROCESSFIELD; i++) {
+   for (int i = 0; defaultHeaders[i]; i++) {
       this->fields[i] = defaultHeaders[i];
    }
    this->sortKey = PERCENT_CPU;
@@ -179,28 +177,10 @@ void ProcessList_invertSortOrder(ProcessList* this) {
       this->direction = 1;
 }
 
-void ProcessList_sortKey(ProcessList* this, int delta) {
-   assert(delta == 1 || delta == -1);
-   int i = 0;
-   while (this->fields[i] != this->sortKey)
-      i++;
-   i += delta;
-   if (i < 0) {
-      i = 0;
-      while (this->fields[i] != LAST_PROCESSFIELD)
-         i++;
-      i--;
-   } else if (this->fields[i] == LAST_PROCESSFIELD)
-      i = 0;
-   this->sortKey = this->fields[i];
-   this->direction = 1;
-   // Weird code...
-}
-
 RichString ProcessList_printHeader(ProcessList* this) {
    RichString out = RichString_new();
    ProcessField* fields = this->fields;
-   for (int i = 0; fields[i] != LAST_PROCESSFIELD; i++) {
+   for (int i = 0; fields[i]; i++) {
       char* field = Process_printField(fields[i]);
       if (this->sortKey == fields[i])
          RichString_append(&out, CRT_colors[PANEL_HIGHLIGHT_FOCUS], field);
@@ -222,8 +202,11 @@ void ProcessList_add(ProcessList* this, Process* p) {
 
 void ProcessList_remove(ProcessList* this, Process* p) {
    Hashtable_remove(this->processTable, p->pid);
+   ProcessField pf = this->sortKey;
+   this->sortKey = PID;
    int index = TypedVector_indexOf(this->processes, p);
    TypedVector_remove(this->processes, index);
+   this->sortKey = pf;
 }
 
 Process* ProcessList_get(ProcessList* this, int index) {
@@ -447,18 +430,15 @@ void ProcessList_processEntries(ProcessList* this, char* dirname, int parent, fl
                goto errorReadingProcess;
             }
 
-            char* cmdline = process->comm;
-            int amtRead = fread(cmdline, 1, PROCESS_COMM_LEN - 1, status);
+            int amtRead = fread(command, 1, PROCESS_COMM_LEN - 1, status);
             if (amtRead > 0) {
                for (int i = 0; i < amtRead; i++)
-                  if (cmdline[i] == '\0' || cmdline[i] == '\n')
-                     cmdline[i] = ' ';
-               cmdline[amtRead] = '\0';
+                  if (command[i] == '\0' || command[i] == '\n')
+                     command[i] = ' ';
+               command[amtRead] = '\0';
             }
-            else {
-               strncpy(process->comm, command, PROCESS_COMM_LEN);
-               cmdline[PROCESS_COMM_LEN] = '\0';
-            }
+            command[PROCESS_COMM_LEN] = '\0';
+            process->comm = String_copy(command);
             fclose(status);
          }
 

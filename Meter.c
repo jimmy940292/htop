@@ -26,8 +26,8 @@ in the source distribution for its full text.
 
 typedef struct Meter_ Meter;
 
-typedef void(*Method_Meter_setValues)(Meter*);
-typedef void(*Method_Meter_draw)(Meter*, int, int, int);
+typedef void(*Meter_SetValues)(Meter*);
+typedef void(*Meter_Draw)(Meter*, int, int, int);
 
 typedef enum MeterMode_ {
    UNSET,
@@ -43,10 +43,10 @@ struct Meter_ {
    
    int h;
    int w;
-   Method_Meter_draw draw;
-   Method_Meter_setValues setValues;
+   Meter_Draw draw;
+   Meter_SetValues setValues;
    int items;
-   int** attributes;
+   int* attributes;
    double* values;
    double total;
    char* caption;
@@ -80,6 +80,9 @@ char* Meter_ledDigits[3][10] = {
 /* private property */
 char Meter_barCharacters[] = "|#*@$%&";
 
+/* private property */
+static RichString Meter_stringBuffer;
+
 Meter* Meter_new(char* name, char* caption, int items) {
    Meter* this = malloc(sizeof(Meter));
    Meter_init(this, name, caption, items);
@@ -92,7 +95,7 @@ void Meter_init(Meter* this, char* name, char* caption, int items) {
    this->items = items;
    this->name = name;
    this->caption = caption;
-   this->attributes = malloc(sizeof(int*) * items);
+   this->attributes = malloc(sizeof(int) * items);
    this->values = malloc(sizeof(double) * items);
    this->displayBuffer.c = NULL;
    this->mode = UNSET;
@@ -111,11 +114,6 @@ void Meter_freeBuffer(Meter* this) {
    switch (this->mode) {
    case BAR: {
       free(this->displayBuffer.c);
-      break;
-   }
-   case LED:
-   case TEXT: {
-      free(this->displayBuffer.rs);
       break;
    }
    case GRAPH: {
@@ -192,7 +190,7 @@ void Meter_drawBar(Meter* this, int x, int y, int w) {
    // ...then print the buffer.
    offset = 0;
    for (int i = 0; i < this->items; i++) {
-      attrset(*(this->attributes[i]));
+      attrset(CRT_colors[this->attributes[i]]);
       mvaddnstr(y, x + offset, bar + offset, blockSizes[i]);
       offset += blockSizes[i];
       offset = MAX(offset, 0);
@@ -307,13 +305,13 @@ void Meter_setMode(Meter* this, MeterMode mode) {
    }
    case TEXT: {
       this->draw = Meter_drawText;
-      this->displayBuffer.rs = malloc(sizeof(RichString));
+      this->displayBuffer.rs = & Meter_stringBuffer;
       this->h = 1;
       break;
    }
    case LED: {
       this->draw = Meter_drawLed;
-      this->displayBuffer.rs = malloc(sizeof(RichString));
+      this->displayBuffer.rs = & Meter_stringBuffer;
       this->h = 3;
       break;
    }
@@ -348,5 +346,5 @@ ListItem* Meter_toListItem(Meter* this) {
    }
    }
    sprintf(buffer, "%s [%s]", this->name, mode);
-   return ListItem_new(String_copy(buffer)); 
+   return ListItem_new(buffer, 0);
 }

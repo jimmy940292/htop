@@ -21,6 +21,7 @@ typedef struct Settings_ {
    ProcessList* pl;
    Header* header;
    int colorScheme;
+   bool changed;
    int delay;
 } Settings;
 
@@ -35,15 +36,19 @@ Settings* Settings_new(ProcessList* pl, Header* header) {
    if (!home) home = getenv("HOME");
    this->userSettings = String_cat(home, "/.htoprc");
    this->colorScheme = 0;
+   this->changed = false;
    this->delay = DEFAULT_DELAY;
    bool ok = Settings_read(this, this->userSettings);
    if (!ok) {
+      this->changed = true;
       // TODO: how to get SYSCONFDIR correctly through Autoconf?
       char* systemSettings = String_cat(SYSCONFDIR, "/htoprc");
       ok = Settings_read(this, systemSettings);
       free(systemSettings);
       if (!ok) {
          Header_defaultMeters(this->header);
+         pl->hideKernelThreads = true;
+         pl->highlightMegabytes = true;
       }
    }
    return this;
@@ -98,14 +103,20 @@ bool Settings_read(Settings* this, char* fileName) {
          char* trim = String_trim(option[1]);
          char** ids = String_split(trim, ' ');
          free(trim);
-         int i;
-         for (i = 0; ids[i] != NULL; i++) {
-            this->pl->fields[i] = atoi(ids[i]);
+         int i, j;
+         for (j = 0, i = 0; i < LAST_PROCESSFIELD && ids[i] != NULL; i++) {
+            // This "+1" is for compatibility with the older enum format.
+            int id = atoi(ids[i]) + 1;
+            if (id > 0 && id < LAST_PROCESSFIELD) {
+               this->pl->fields[j] = id;
+               j++;
+            }
          }
-         this->pl->fields[i] = LAST_PROCESSFIELD;
+         this->pl->fields[j] = (ProcessField) NULL;
          String_freeArray(ids);
       } else if (String_eq(option[0], "sort_key")) {
-         this->pl->sortKey = atoi(option[1]);
+         // This "+1" is for compatibility with the older enum format.
+         this->pl->sortKey = atoi(option[1]) + 1;
       } else if (String_eq(option[0], "sort_direction")) {
          this->pl->direction = atoi(option[1]);
       } else if (String_eq(option[0], "tree_view")) {
@@ -164,11 +175,13 @@ bool Settings_write(Settings* this) {
    fprintf(fd, "# The parser is also very primitive, and not human-friendly.\n");
    fprintf(fd, "# (I know, it's in the todo list).\n");
    fprintf(fd, "fields=");
-   for (int i = 0; this->pl->fields[i] != LAST_PROCESSFIELD; i++) {
-      fprintf(fd, "%d ", (int) this->pl->fields[i]);
+   for (int i = 0; this->pl->fields[i]; i++) {
+      // This "-1" is for compatibility with the older enum format.
+      fprintf(fd, "%d ", (int) this->pl->fields[i]-1);
    }
    fprintf(fd, "\n");
-   fprintf(fd, "sort_key=%d\n", (int) this->pl->sortKey);
+   // This "-1" is for compatibility with the older enum format.
+   fprintf(fd, "sort_key=%d\n", (int) this->pl->sortKey-1);
    fprintf(fd, "sort_direction=%d\n", (int) this->pl->direction);
    fprintf(fd, "hide_threads=%d\n", (int) this->pl->hideThreads);
    fprintf(fd, "hide_kernel_threads=%d\n", (int) this->pl->hideKernelThreads);

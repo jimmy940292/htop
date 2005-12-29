@@ -34,6 +34,7 @@ typedef struct ScreenManager_ {
    TypedVector* items;
    int itemCount;
    FunctionBar* fuBar;
+   TypedVector* fuBars;
    bool owner;
 } ScreenManager;
 
@@ -44,7 +45,7 @@ void ScreenManager_delete(ScreenManager* this);
 
 inline int ScreenManager_size(ScreenManager* this);
 
-void ScreenManager_add(ScreenManager* this, ListBox* item, int size);
+void ScreenManager_add(ScreenManager* this, ListBox* item, FunctionBar* fuBar, int size);
 
 ListBox* ScreenManager_remove(ScreenManager* this, int index);
 

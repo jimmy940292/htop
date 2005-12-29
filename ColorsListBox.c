@@ -47,9 +47,9 @@ ColorsListBox* ColorsListBox_new(Settings* settings, ScreenManager* scr) {
 
    this->settings = settings;
    this->scr = scr;
-   super->eventHandler = ColorsListBox_eventHandler;
+   super->eventHandler = ColorsListBox_EventHandler;
 
-   ListBox_setHeader(super, RichString_quickString(CRT_colors[PANEL_HEADER_FOCUS], "Colors"));
+   ListBox_setHeader(super, "Colors");
    for (int i = 0; ColorSchemes[i] != NULL; i++) {
       ListBox_add(super, (Object*) CheckItem_new(String_copy(ColorSchemes[i]), &(this->check[i])));
       this->check[i] = false;
@@ -65,7 +65,7 @@ void ColorsListBox_delete(Object* object) {
    free(this);
 }
 
-HandlerResult ColorsListBox_eventHandler(ListBox* super, int ch) {
+HandlerResult ColorsListBox_EventHandler(ListBox* super, int ch) {
    ColorsListBox* this = (ColorsListBox*) super;
    
    HandlerResult result = IGNORED;

@@ -27,6 +27,6 @@ void SignalsListBox_delete(Object* object);
 
 void SignalsListBox_reset(SignalsListBox* this);
 
-HandlerResult SignalsListBox_eventHandler(ListBox* super, int ch);
+HandlerResult SignalsListBox_EventHandler(ListBox* super, int ch);
 
 #endif

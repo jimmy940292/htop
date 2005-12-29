@@ -26,7 +26,7 @@ ColorsListBox* ColorsListBox_new(Settings* settings, ScreenManager* scr);
 
 void ColorsListBox_delete(Object* object);
 
-HandlerResult ColorsListBox_eventHandler(ListBox* super, int ch);
+HandlerResult ColorsListBox_EventHandler(ListBox* super, int ch);
 
 
 #endif
