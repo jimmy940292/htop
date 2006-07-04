@@ -1,4 +1,33 @@
 
+What's new in version 0.6.2
+
+* BUGFIX: Fixed crash when using some .htoprc files from 0.6
+  (thanks to Wolfram Schlich and John Thomas for the reports)
+* BUGFIX: Ensure changes to color scheme are saved
+* BUGFIX: Make configure behave correctly with --with-proc
+* Minor addition to .desktop file.
+
+What's new in version 0.6.1
+
+* New meter type: "All CPUs", which dynamically adjusts
+  to the number of CPUs present in the machine. Note that
+  because of this, older versions of htop may crash when
+  using an .htoprc file modified my the newer version.
+* Accept --with-proc=<dir> in configure, to specify
+  alternative procfs locations (making htop friendlier
+  to the Linux compatibility layer in FreeBSD)
+* Included icon .desktop and desktop entry
+  (thanks to Peter Hyman)
+* Added a check to make sure that a root-user htop closes
+  when its parent non-root terminal is closed.
+  (thanks to Ilya Evseev for the report)
+* BUGFIX: does not crash anymore when $HOME is not set
+  (thanks to Henning Schild for the report)
+* Wait for strace child process to die properly.
+  (thanks to Marcus Fritzsch)
+* Support $HTOPRC
+  (thanks to Luis Limon)
+
 What's new in version 0.6
 
 * Configuration of columns merged into the Setup screen

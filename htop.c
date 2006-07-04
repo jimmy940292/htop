@@ -1,6 +1,6 @@
 /*
 htop - htop.c
-(C) 2004,2005 Hisham H. Muhammad
+(C) 2004-2006 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -38,14 +38,14 @@ char htop_barCharacters[] = "|#*@$%&";
 
 void printVersionFlag() {
    clear();
-   printf("htop " VERSION " - (C) 2004,2005 Hisham Muhammad.\n");
+   printf("htop " VERSION " - (C) 2004-2006 Hisham Muhammad.\n");
    printf("Released under the GNU GPL.\n\n");
    exit(0);
 }
 
 void printHelpFlag() {
    clear();
-   printf("htop " VERSION " - (C) 2004,2005 Hisham Muhammad.\n");
+   printf("htop " VERSION " - (C) 2004-2006 Hisham Muhammad.\n");
    printf("Released under the GNU GPL.\n\n");
    printf("-d DELAY     Delay between updates, in tenths of seconds\n\n");
    printf("-u USERNAME  Show only processes of a given user\n\n");
@@ -57,7 +57,7 @@ void printHelpFlag() {
 void showHelp() {
    clear();
    attrset(CRT_colors[HELP_BOLD]);
-   mvaddstr(0, 0, "htop " VERSION " - (C) 2004 Hisham Muhammad.");
+   mvaddstr(0, 0, "htop " VERSION " - (C) 2004-2006 Hisham Muhammad.");
    mvaddstr(1, 0, "Released under the GNU GPL. See 'man' page for more info.");
 
    attrset(CRT_colors[DEFAULT_COLOR]);
@@ -213,6 +213,11 @@ int main(int argc, char** argv) {
          setUserOnly(argv[2], &userOnly, &userId);
       }
    }
+   
+   if (access(PROCDIR, R_OK) != 0) {
+      fprintf(stderr, "Error: could not read procfs (compiled to look in %s).\n", PROCDIR);
+      exit(1);
+   }
 
    ListBox* lb;
    int quit = 0;
@@ -268,6 +273,8 @@ int main(int argc, char** argv) {
    double oldTime = 0.0;
    bool recalculate;
 
+   int ch = 0;
+   int closeTimeout = 0;
 
    while (!quit) {
       gettimeofday(&tv, NULL);
@@ -309,12 +316,24 @@ int main(int argc, char** argv) {
       Header_draw(header);
 
       ListBox_draw(lb, true);
-      int ch = getch();
+      int prev = ch;
+      ch = getch();
+
+      if (ch == ERR) {
+         if (!incSearchMode)
+            refreshTimeout--;
+         if (prev == ch && !recalculate) {
+            closeTimeout++;
+            if (closeTimeout == 10)
+               break;
+         } else
+            closeTimeout = 0;
+         continue;
+      }
+
       if (incSearchMode) {
          doRefresh = false;
-         if (ch == ERR) {
-            continue;
-         } else if (ch == KEY_F(3)) {
+         if (ch == KEY_F(3)) {
             int here = ListBox_getSelectedIndex(lb);
             int size = ProcessList_size(pl);
             int i = here+1;
@@ -393,9 +412,6 @@ int main(int argc, char** argv) {
       }
 
       switch (ch) {
-      case ERR:
-         refreshTimeout--;
-         continue;
       case KEY_RESIZE:
          ListBox_resize(lb, COLS, LINES-headerHeight-1);
          if (incSearchMode)

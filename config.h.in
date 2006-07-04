@@ -112,6 +112,9 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Path of proc filesystem */
+#undef PROCDIR
+
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
 

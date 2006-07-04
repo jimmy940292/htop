@@ -14,6 +14,7 @@
 
 @SET_MAKE@
 
+
 SOURCES = $(htop_SOURCES)
 
 srcdir = @srcdir@
@@ -41,18 +42,17 @@ subdir = .
 DIST_COMMON = README $(am__configure_deps) $(dist_man_MANS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/config.h.in $(top_srcdir)/configure AUTHORS COPYING \
-	ChangeLog INSTALL NEWS TODO depcomp install-sh missing \
-	mkinstalldirs
+	ChangeLog INSTALL NEWS depcomp install-sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno configure.status.lineno
-mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+mkinstalldirs = $(mkdir_p)
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)"
+am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(applicationsdir)" "$(DESTDIR)$(pixmapdir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_htop_OBJECTS = AvailableMetersListBox.$(OBJEXT) \
@@ -61,13 +61,12 @@ am_htop_OBJECTS = AvailableMetersListBox.$(OBJEXT) \
 	DisplayOptionsListBox.$(OBJEXT) FunctionBar.$(OBJEXT) \
 	Hashtable.$(OBJEXT) Header.$(OBJEXT) htop.$(OBJEXT) \
 	ListBox.$(OBJEXT) ListItem.$(OBJEXT) \
-	LoadAverageMeter.$(OBJEXT) LoadMeter.$(OBJEXT) \
-	MemoryMeter.$(OBJEXT) Meter.$(OBJEXT) MetersListBox.$(OBJEXT) \
-	Object.$(OBJEXT) Process.$(OBJEXT) ProcessList.$(OBJEXT) \
-	RichString.$(OBJEXT) ScreenManager.$(OBJEXT) \
-	Settings.$(OBJEXT) SignalItem.$(OBJEXT) \
-	SignalsListBox.$(OBJEXT) String.$(OBJEXT) SwapMeter.$(OBJEXT) \
-	TasksMeter.$(OBJEXT) TypedVector.$(OBJEXT) \
+	LoadAverageMeter.$(OBJEXT) MemoryMeter.$(OBJEXT) \
+	Meter.$(OBJEXT) MetersListBox.$(OBJEXT) Object.$(OBJEXT) \
+	Process.$(OBJEXT) ProcessList.$(OBJEXT) RichString.$(OBJEXT) \
+	ScreenManager.$(OBJEXT) Settings.$(OBJEXT) \
+	SignalItem.$(OBJEXT) SignalsListBox.$(OBJEXT) String.$(OBJEXT) \
+	SwapMeter.$(OBJEXT) TasksMeter.$(OBJEXT) TypedVector.$(OBJEXT) \
 	UptimeMeter.$(OBJEXT) UsersTable.$(OBJEXT) CheckItem.$(OBJEXT) \
 	ColorsListBox.$(OBJEXT) TraceScreen.$(OBJEXT) \
 	AvailableColumnsListBox.$(OBJEXT) ColumnsListBox.$(OBJEXT)
@@ -89,7 +88,6 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/Hashtable.Po ./$(DEPDIR)/Header.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ListBox.Po ./$(DEPDIR)/ListItem.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/LoadAverageMeter.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/LoadMeter.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/MemoryMeter.Po ./$(DEPDIR)/Meter.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/MetersListBox.Po ./$(DEPDIR)/Object.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/Process.Po ./$(DEPDIR)/ProcessList.Po \
@@ -112,6 +110,9 @@ DIST_SOURCES = $(htop_SOURCES)
 man1dir = $(mandir)/man1
 NROFF = nroff
 MANS = $(dist_man_MANS)
+applicationsDATA_INSTALL = $(INSTALL_DATA)
+pixmapDATA_INSTALL = $(INSTALL_DATA)
+DATA = $(applications_DATA) $(pixmap_DATA)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -195,19 +196,23 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 dist_man_MANS = htop.1
-EXTRA_DIST = $(dist_man_MANS)
+EXTRA_DIST = $(dist_man_MANS) htop.desktop htop.png scripts/MakeHeader.py
+applicationsdir = $(datadir)/applications
+applications_DATA = htop.desktop
+pixmapdir = $(datadir)/pixmaps
+pixmap_DATA = htop.png
 AM_CFLAGS = -pedantic -Wall -std=c99
 AM_CPPFLAGS = -DSYSCONFDIR=\"$(sysconfdir)\"
 htop_SOURCES = AvailableMetersListBox.c CategoriesListBox.c ClockMeter.c \
 CPUMeter.c CRT.c DebugMemory.c DisplayOptionsListBox.c FunctionBar.c \
 Hashtable.c Header.c htop.c ListBox.c ListItem.c LoadAverageMeter.c \
-LoadMeter.c MemoryMeter.c Meter.c MetersListBox.c Object.c Process.c \
+MemoryMeter.c Meter.c MetersListBox.c Object.c Process.c \
 ProcessList.c RichString.c ScreenManager.c Settings.c SignalItem.c \
 SignalsListBox.c String.c SwapMeter.c TasksMeter.c TypedVector.c \
 UptimeMeter.c UsersTable.c AvailableMetersListBox.h CategoriesListBox.h \
 ClockMeter.h config.h CPUMeter.h CRT.h debug.h DebugMemory.h \
 DisplayOptionsListBox.h FunctionBar.h Hashtable.h Header.h htop.h ListBox.h \
-ListItem.h LoadAverageMeter.h LoadMeter.h MemoryMeter.h Meter.h \
+ListItem.h LoadAverageMeter.h MemoryMeter.h Meter.h \
 MetersListBox.h Object.h Process.h ProcessList.h RichString.h ScreenManager.h \
 Settings.h SignalItem.h SignalsListBox.h String.h SwapMeter.h TasksMeter.h \
 TypedVector.h UptimeMeter.h UsersTable.h CheckItem.c CheckItem.h \
@@ -320,7 +325,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ListBox.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ListItem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/LoadAverageMeter.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/LoadMeter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MemoryMeter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Meter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MetersListBox.Po@am__quote@
@@ -402,6 +406,40 @@ uninstall-man1:
 	  echo " rm -f '$(DESTDIR)$(man1dir)/$$inst'"; \
 	  rm -f "$(DESTDIR)$(man1dir)/$$inst"; \
 	done
+install-applicationsDATA: $(applications_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(applicationsdir)" || $(mkdir_p) "$(DESTDIR)$(applicationsdir)"
+	@list='$(applications_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " $(applicationsDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(applicationsdir)/$$f'"; \
+	  $(applicationsDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(applicationsdir)/$$f"; \
+	done
+
+uninstall-applicationsDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(applications_DATA)'; for p in $$list; do \
+	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " rm -f '$(DESTDIR)$(applicationsdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(applicationsdir)/$$f"; \
+	done
+install-pixmapDATA: $(pixmap_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(pixmapdir)" || $(mkdir_p) "$(DESTDIR)$(pixmapdir)"
+	@list='$(pixmap_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " $(pixmapDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(pixmapdir)/$$f'"; \
+	  $(pixmapDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(pixmapdir)/$$f"; \
+	done
+
+uninstall-pixmapDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(pixmap_DATA)'; for p in $$list; do \
+	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " rm -f '$(DESTDIR)$(pixmapdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(pixmapdir)/$$f"; \
+	done
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -454,6 +492,7 @@ distclean-tags:
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
+	$(mkdir_p) $(distdir)/scripts
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \
@@ -579,9 +618,9 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS) $(MANS) config.h
+all-am: Makefile $(PROGRAMS) $(MANS) $(DATA) config.h
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(applicationsdir)" "$(DESTDIR)$(pixmapdir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
 install: install-am
@@ -629,7 +668,8 @@ info: info-am
 
 info-am:
 
-install-data-am: install-man
+install-data-am: install-applicationsDATA install-man \
+	install-pixmapDATA
 
 install-exec-am: install-binPROGRAMS
 
@@ -658,7 +698,8 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-info-am uninstall-man
+uninstall-am: uninstall-applicationsDATA uninstall-binPROGRAMS \
+	uninstall-info-am uninstall-man uninstall-pixmapDATA
 
 uninstall-man: uninstall-man1
 
@@ -668,14 +709,19 @@ uninstall-man: uninstall-man1
 	distclean-compile distclean-generic distclean-hdr \
 	distclean-tags distcleancheck distdir distuninstallcheck dvi \
 	dvi-am html html-am info info-am install install-am \
-	install-binPROGRAMS install-data install-data-am install-exec \
-	install-exec-am install-info install-info-am install-man \
-	install-man1 install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
-	ps ps-am tags uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-info-am uninstall-man uninstall-man1
+	install-applicationsDATA install-binPROGRAMS install-data \
+	install-data-am install-exec install-exec-am install-info \
+	install-info-am install-man install-man1 install-pixmapDATA \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-applicationsDATA \
+	uninstall-binPROGRAMS uninstall-info-am uninstall-man \
+	uninstall-man1 uninstall-pixmapDATA
 
+
+debug:
+	$(MAKE) all CFLAGS="-g -DDEBUG"
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

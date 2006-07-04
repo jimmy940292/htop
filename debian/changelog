@@ -1,3 +1,10 @@
+htop (0.6.2-1) unstable; urgency=low
+
+  * New upstream version.
+    - doesn't segfault running as root. (Closes: #354258)
+
+ -- Bartosz Fenski <fenio@debian.org>  Tue,  4 Jul 2006 07:53:58 +0200
+
 htop (0.6-1) unstable; urgency=low
 
   * New upstream version.

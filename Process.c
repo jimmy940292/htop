@@ -1,6 +1,6 @@
 /*
 htop - Process.c
-(C) 2004,2005 Hisham H. Muhammad
+(C) 2004-2006 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -179,7 +179,7 @@ void Process_sendSignal(Process* this, int signal) {
 
 /* private */
 void Process_printLargeNumber(Process* this, RichString *str, unsigned int number) {
-   char buffer[10];
+   char buffer[11];
    int len;
    if(number >= (1000 * ONE_M)) {
       len = snprintf(buffer, 10, "%4.2fG ", (float)number / ONE_M);
@@ -206,7 +206,7 @@ void Process_printLargeNumber(Process* this, RichString *str, unsigned int numbe
 double jiffy = 0.0;
 
 /* private */
-void Process_printTime(RichString* str, unsigned long t) {
+static void Process_printTime(RichString* str, unsigned long t) {
    if(jiffy == 0.0) jiffy = sysconf(_SC_CLK_TCK);
    double jiffytime = 1.0 / jiffy;
 
@@ -217,7 +217,7 @@ void Process_printTime(RichString* str, unsigned long t) {
    int minutes = (iRealTime / 60) % 60;
    int seconds = iRealTime % 60;
    int hundredths = (realTime - iRealTime) * 100;
-   char buffer[10];
+   char buffer[11];
    if (hours) {
       snprintf(buffer, 10, "%2dh", hours);
       RichString_append(str, CRT_colors[LARGE_NUMBER], buffer);
@@ -228,7 +228,8 @@ void Process_printTime(RichString* str, unsigned long t) {
    RichString_append(str, CRT_colors[DEFAULT_COLOR], buffer);
 }
 
-inline void Process_writeCommand(Process* this, int attr, RichString* str) {
+/* private */
+inline static void Process_writeCommand(Process* this, int attr, RichString* str) {
    if (this->pl->highlightBaseName) {
       char* firstSpace = strchr(this->comm, ' ');
       if (firstSpace) {

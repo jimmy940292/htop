@@ -4,11 +4,12 @@
 #define HEADER_Process
 /*
 htop - Process.h
-(C) 2004,2005 Hisham H. Muhammad
+(C) 2004-2006 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
+#define _GNU_SOURCE
 #include "ProcessList.h"
 #include "Object.h"
 #include "CRT.h"
@@ -27,9 +28,6 @@ in the source distribution for its full text.
 #include <string.h>
 #include <stdbool.h>
 #include <pwd.h>
-
-// TODO: wtf!?
-int kill(pid_t pid, int signal);
 
 // This works only with glibc 2.1+. On earlier versions
 // the behavior is similar to have a hardcoded page size.
@@ -132,11 +130,6 @@ void Process_sendSignal(Process* this, int signal);
 #define ONE_K 1024
 #define ONE_M (ONE_K * ONE_K)
 #define ONE_G (ONE_M * ONE_K)
-
-
-
-
-inline void Process_writeCommand(Process* this, int attr, RichString* str);
 
 void Process_writeField(Process* this, RichString* str, ProcessField field);
 

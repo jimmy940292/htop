@@ -28,7 +28,7 @@ typedef struct ColorsListBox_ {
 
 }*/
 
-/* private property */
+/* private */
 static char* ColorSchemes[] = {
    "Default",
    "Monochromatic",
@@ -85,6 +85,7 @@ HandlerResult ColorsListBox_EventHandler(ListBox* super, int ch) {
    }
 
    if (result == HANDLED) {
+      this->settings->changed = true;
       Header* header = this->settings->header;
       CRT_setColors(mark);
       ListBox* lbMenu = (ListBox*) TypedVector_get(this->scr->items, 0);

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([htop],[0.6],[loderunner@users.sourceforge.net])
+AC_INIT([htop],[0.6.2],[loderunner@users.sourceforge.net])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([htop.c])
 AC_CONFIG_HEADER([config.h])
@@ -33,8 +33,23 @@ AC_TYPE_SIGNAL
 AC_FUNC_STAT
 AC_CHECK_FUNCS([memmove strncasecmp strstr strdup])
 
-AC_CHECK_FILE(/proc/stat,,AC_MSG_ERROR(Cannot find /proc/stat. Make sure you have a Linux-compatible /proc filesystem mounted. See the file README for help.))
-AC_CHECK_FILE(/proc/meminfo,,AC_MSG_ERROR(Cannot find /proc/meminfo. Make sure you have a Linux-compatible /proc filesystem mounted. See the file README for help.))
+CFLAGS="${CFLAGS} -std=c99"
+AC_MSG_CHECKING([whether gcc -std=c99 option works])
+AC_TRY_COMPILE(AC_INCLUDES_DEFAULT, [char *a; a = strdup("foo"); int i = 0; i++; // C99],
+   AC_MSG_RESULT([yes]),
+   AC_MSG_ERROR([htop is written in C99. A newer version of gcc is required.]))
+
+PROCDIR=/proc
+AC_ARG_WITH(proc, [  --with-proc=DIR      Location of a Linux-compatible proc filesystem (default=/proc).],
+
+   if test -n "$withval"; then
+      AC_DEFINE_UNQUOTED(PROCDIR, "$withval", [Path of proc filesystem])
+      PROCDIR="$withval"
+   fi,
+   AC_DEFINE(PROCDIR, "/proc", [Path of proc filesystem]))
+
+AC_CHECK_FILE($PROCDIR/stat,,AC_MSG_ERROR(Cannot find /proc/stat. Make sure you have a Linux-compatible /proc filesystem mounted. See the file README for help.))
+AC_CHECK_FILE($PROCDIR/meminfo,,AC_MSG_ERROR(Cannot find /proc/meminfo. Make sure you have a Linux-compatible /proc filesystem mounted. See the file README for help.))
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

@@ -1,6 +1,6 @@
 /*
 htop - TraceScreen.c
-(C) 2005 Hisham H. Muhammad
+(C) 2005-2006 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -11,11 +11,15 @@ in the source distribution for its full text.
 #include <stdbool.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "TraceScreen.h"
 #include "ProcessList.h"
 #include "Process.h"
 #include "ListItem.h"
+#include "ListBox.h"
+#include "FunctionBar.h"
 
 /*{
 
@@ -160,5 +164,6 @@ void TraceScreen_run(TraceScreen* this) {
       ListBox_draw(lb, true);
    }
    kill(child, SIGTERM);
+   waitpid(child, NULL, 0);
    fclose(strace);
 }
