@@ -3,7 +3,7 @@
 #ifndef HEADER_Header
 #define HEADER_Header
 /*
-htop - Header.c
+htop - Header.h
 (C) 2004-2006 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
@@ -21,8 +21,8 @@ typedef enum HeaderSide_ {
 } HeaderSide;
 
 typedef struct Header_ {
-   TypedVector* leftMeters;
-   TypedVector* rightMeters;
+   Vector* leftMeters;
+   Vector* rightMeters;
    ProcessList* pl;
    bool margin;
    int height;

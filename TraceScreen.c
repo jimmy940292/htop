@@ -18,40 +18,37 @@ in the source distribution for its full text.
 #include "ProcessList.h"
 #include "Process.h"
 #include "ListItem.h"
-#include "ListBox.h"
+#include "Panel.h"
 #include "FunctionBar.h"
 
 /*{
 
 typedef struct TraceScreen_ {
    Process* process;
-   ListBox* display;
+   Panel* display;
    FunctionBar* bar;
    bool tracing;
 } TraceScreen;
 
 }*/
 
-/* private property */
 static char* tbFunctions[3] = {"AutoScroll ", "Stop Tracing   ", "Done   "};
 
-/* private property */
 static char* tbKeys[3] = {"F4", "F5", "Esc"};
 
-/* private property */
 static int tbEvents[3] = {KEY_F(4), KEY_F(5), 27};
 
 TraceScreen* TraceScreen_new(Process* process) {
    TraceScreen* this = (TraceScreen*) malloc(sizeof(TraceScreen));
    this->process = process;
-   this->display = ListBox_new(0, 1, COLS, LINES-2, LISTITEM_CLASS, true);
+   this->display = Panel_new(0, 1, COLS, LINES-2, LISTITEM_CLASS, true, ListItem_compare);
    this->bar = FunctionBar_new(3, tbFunctions, tbKeys, tbEvents);
    this->tracing = true;
    return this;
 }
 
 void TraceScreen_delete(TraceScreen* this) {
-   ListBox_delete((Object*)this->display);
+   Panel_delete((Object*)this->display);
    FunctionBar_delete((Object*)this->bar);
    free(this);
 }
@@ -77,11 +74,13 @@ void TraceScreen_run(TraceScreen* this) {
       fcntl(fdpair[1], F_SETFL, O_NONBLOCK);
       sprintf(buffer, "%d", this->process->pid);
       execlp("strace", "strace", "-p", buffer, NULL);
+      const char* message = "Could not execute 'strace'. Please make sure it is available in your $PATH.";
+      write(fdpair[1], message, strlen(message));
       exit(1);
    }
    fcntl(fdpair[0], F_SETFL, O_NONBLOCK);
    FILE* strace = fdopen(fdpair[0], "r");
-   ListBox* lb = this->display;
+   Panel* panel = this->display;
    int fd_strace = fileno(strace);
    TraceScreen_draw(this);
    CRT_disableDelay();
@@ -105,31 +104,31 @@ void TraceScreen_run(TraceScreen* this) {
             if (buffer[i] == '\n') {
                buffer[i] = '\0';
                if (contLine) {
-                  ListItem_append((ListItem*)ListBox_get(lb,
-                     ListBox_getSize(lb)-1), line);
+                  ListItem_append((ListItem*)Panel_get(panel,
+                     Panel_getSize(panel)-1), line);
                   contLine = false;
                } else {
-                  ListBox_add(lb, (Object*) ListItem_new(line, 0));
+                  Panel_add(panel, (Object*) ListItem_new(line, 0));
                }
                line = buffer+i+1;
             }
          }
          if (line < buffer+nread) {
-            ListBox_add(lb, (Object*) ListItem_new(line, 0));
+            Panel_add(panel, (Object*) ListItem_new(line, 0));
             buffer[nread] = '\0';
             contLine = true;
          }
          if (follow)
-            ListBox_setSelected(lb, ListBox_getSize(lb)-1);
-         ListBox_draw(lb, true);
+            Panel_setSelected(panel, Panel_getSize(panel)-1);
+         Panel_draw(panel, true);
       }
       int ch = getch();
       if (ch == KEY_MOUSE) {
          MEVENT mevent;
          int ok = getmouse(&mevent);
          if (ok == OK)
-            if (mevent.y >= lb->y && mevent.y < LINES - 1) {
-               ListBox_setSelected(lb, mevent.y - lb->y + lb->scrollV);
+            if (mevent.y >= panel->y && mevent.y < LINES - 1) {
+               Panel_setSelected(panel, mevent.y - panel->y + panel->scrollV);
                follow = false;
                ch = 0;
             } if (mevent.y == LINES - 1)
@@ -147,21 +146,21 @@ void TraceScreen_run(TraceScreen* this) {
       case KEY_F(4):
          follow = !follow;
          if (follow)
-            ListBox_setSelected(lb, ListBox_getSize(lb)-1);
+            Panel_setSelected(panel, Panel_getSize(panel)-1);
          break;
       case 'q':
       case 27:
          looping = false;
          break;
       case KEY_RESIZE:
-         ListBox_resize(lb, COLS, LINES-2);
+         Panel_resize(panel, COLS, LINES-2);
          TraceScreen_draw(this);
          break;
       default:
          follow = false;
-         ListBox_onKey(lb, ch);
+         Panel_onKey(panel, ch);
       }
-      ListBox_draw(lb, true);
+      Panel_draw(panel, true);
    }
    kill(child, SIGTERM);
    waitpid(child, NULL, 0);

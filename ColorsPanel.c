@@ -1,8 +1,8 @@
 
 #include "CRT.h"
-#include "ColorsListBox.h"
+#include "ColorsPanel.h"
 
-#include "ListBox.h"
+#include "Panel.h"
 #include "CheckItem.h"
 #include "Settings.h"
 #include "ScreenManager.h"
@@ -11,24 +11,23 @@
 #include <assert.h>
 
 // TO ADD A NEW SCHEME:
-// * Increment the size of bool check in ColorsListBox.h
+// * Increment the size of bool check in ColorsPanel.h
 // * Add the entry in the ColorSchemes array below in the file
 // * Add a define in CRT.h that matches the order of the array
 // * Add the colors in CRT_setColors
 
 /*{
 
-typedef struct ColorsListBox_ {
-   ListBox super;
+typedef struct ColorsPanel_ {
+   Panel super;
 
    Settings* settings;
    ScreenManager* scr;
    bool check[5];
-} ColorsListBox;
+} ColorsPanel;
 
 }*/
 
-/* private */
 static char* ColorSchemes[] = {
    "Default",
    "Monochromatic",
@@ -39,37 +38,37 @@ static char* ColorSchemes[] = {
    NULL
 };
 
-ColorsListBox* ColorsListBox_new(Settings* settings, ScreenManager* scr) {
-   ColorsListBox* this = (ColorsListBox*) malloc(sizeof(ColorsListBox));
-   ListBox* super = (ListBox*) this;
-   ListBox_init(super, 1, 1, 1, 1, CHECKITEM_CLASS, true);
-   ((Object*)this)->delete = ColorsListBox_delete;
+ColorsPanel* ColorsPanel_new(Settings* settings, ScreenManager* scr) {
+   ColorsPanel* this = (ColorsPanel*) malloc(sizeof(ColorsPanel));
+   Panel* super = (Panel*) this;
+   Panel_init(super, 1, 1, 1, 1, CHECKITEM_CLASS, true);
+   ((Object*)this)->delete = ColorsPanel_delete;
 
    this->settings = settings;
    this->scr = scr;
-   super->eventHandler = ColorsListBox_EventHandler;
+   super->eventHandler = ColorsPanel_EventHandler;
 
-   ListBox_setHeader(super, "Colors");
+   Panel_setHeader(super, "Colors");
    for (int i = 0; ColorSchemes[i] != NULL; i++) {
-      ListBox_add(super, (Object*) CheckItem_new(String_copy(ColorSchemes[i]), &(this->check[i])));
+      Panel_add(super, (Object*) CheckItem_new(String_copy(ColorSchemes[i]), &(this->check[i])));
       this->check[i] = false;
    }
    this->check[settings->colorScheme] = true;
    return this;
 }
 
-void ColorsListBox_delete(Object* object) {
-   ListBox* super = (ListBox*) object;
-   ColorsListBox* this = (ColorsListBox*) object;
-   ListBox_done(super);
+void ColorsPanel_delete(Object* object) {
+   Panel* super = (Panel*) object;
+   ColorsPanel* this = (ColorsPanel*) object;
+   Panel_done(super);
    free(this);
 }
 
-HandlerResult ColorsListBox_EventHandler(ListBox* super, int ch) {
-   ColorsListBox* this = (ColorsListBox*) super;
+HandlerResult ColorsPanel_EventHandler(Panel* super, int ch) {
+   ColorsPanel* this = (ColorsPanel*) super;
    
    HandlerResult result = IGNORED;
-   int mark = ListBox_getSelectedIndex(super);
+   int mark = Panel_getSelectedIndex(super);
 
    switch(ch) {
    case 0x0a:
@@ -88,10 +87,10 @@ HandlerResult ColorsListBox_EventHandler(ListBox* super, int ch) {
       this->settings->changed = true;
       Header* header = this->settings->header;
       CRT_setColors(mark);
-      ListBox* lbMenu = (ListBox*) TypedVector_get(this->scr->items, 0);
+      Panel* menu = (Panel*) Vector_get(this->scr->items, 0);
       Header_draw(header);
       RichString_setAttr(&(super->header), CRT_colors[PANEL_HEADER_FOCUS]);
-      RichString_setAttr(&(lbMenu->header), CRT_colors[PANEL_HEADER_UNFOCUS]);
+      RichString_setAttr(&(menu->header), CRT_colors[PANEL_HEADER_UNFOCUS]);
       ScreenManager_resize(this->scr, this->scr->x1, header->height, this->scr->x2, this->scr->y2);
    }
    return result;

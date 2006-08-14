@@ -19,15 +19,17 @@ typedef struct CheckItem_ {
    bool* value;
 } CheckItem;
 
-extern char* CHECKITEM_CLASS;
 }*/
 
-/* private property */
+#ifdef DEBUG
 char* CHECKITEM_CLASS = "CheckItem";
+#else
+#define CHECKITEM_CLASS NULL
+#endif
 
 CheckItem* CheckItem_new(char* text, bool* value) {
    CheckItem* this = malloc(sizeof(CheckItem));
-   ((Object*)this)->class = CHECKITEM_CLASS;
+   Object_setClass(this, CHECKITEM_CLASS);
    ((Object*)this)->display = CheckItem_display;
    ((Object*)this)->delete = CheckItem_delete;
    this->text = text;

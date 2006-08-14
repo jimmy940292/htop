@@ -3,7 +3,7 @@
 #ifndef HEADER_ProcessList
 #define HEADER_ProcessList
 /*
-htop - ProcessList.c
+htop - ProcessList.h
 (C) 2004,2005 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
@@ -15,9 +15,10 @@ in the source distribution for its full text.
 #endif
 
 #include "Process.h"
-#include "TypedVector.h"
+#include "Vector.h"
 #include "UsersTable.h"
 #include "Hashtable.h"
+#include "String.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -50,14 +51,18 @@ in the source distribution for its full text.
 #endif
 
 #ifndef MAX_READ
-#define MAX_READ 8192
+#define MAX_READ 2048
 #endif
 
 
 
+#ifdef DEBUG
+typedef int(*vxscanf)(void*, const char*, va_list);
+#endif
+
 typedef struct ProcessList_ {
-   TypedVector* processes;
-   TypedVector* processes2;
+   Vector* processes;
+   Vector* processes2;
    Hashtable* processTable;
    Process* prototype;
    UsersTable* usersTable;
@@ -66,26 +71,26 @@ typedef struct ProcessList_ {
    int totalTasks;
    int runningTasks;
 
-   long int* totalTime;
-   long int* userTime;
-   long int* systemTime;
-   long int* idleTime;
-   long int* niceTime;
-   long int* totalPeriod;
-   long int* userPeriod;
-   long int* systemPeriod;
-   long int* idlePeriod;
-   long int* nicePeriod;
+   unsigned long long int* totalTime;
+   unsigned long long int* userTime;
+   unsigned long long int* systemTime;
+   unsigned long long int* idleTime;
+   unsigned long long int* niceTime;
+   unsigned long long int* totalPeriod;
+   unsigned long long int* userPeriod;
+   unsigned long long int* systemPeriod;
+   unsigned long long int* idlePeriod;
+   unsigned long long int* nicePeriod;
 
-   long int totalMem;
-   long int usedMem;
-   long int freeMem;
-   long int sharedMem;
-   long int buffersMem;
-   long int cachedMem;
-   long int totalSwap;
-   long int usedSwap;
-   long int freeSwap;
+   unsigned long long int totalMem;
+   unsigned long long int usedMem;
+   unsigned long long int freeMem;
+   unsigned long long int sharedMem;
+   unsigned long long int buffersMem;
+   unsigned long long int cachedMem;
+   unsigned long long int totalSwap;
+   unsigned long long int usedSwap;
+   unsigned long long int freeSwap;
 
    ProcessField* fields;
    ProcessField sortKey;
@@ -103,14 +108,10 @@ typedef struct ProcessList_ {
 
 } ProcessList;
 
-
 #ifdef DEBUG
-
 
 #define ProcessList_read(this, buffer, format, ...) ProcessList_xread(this, (vxscanf) vsscanf, buffer, format, ## __VA_ARGS__ )
 #define ProcessList_fread(this, file, format, ...)  ProcessList_xread(this, (vxscanf) vfscanf, file, format, ## __VA_ARGS__ )
-
-
 
 #else
 
@@ -141,16 +142,12 @@ Process* ProcessList_get(ProcessList* this, int index);
 
 int ProcessList_size(ProcessList* this);
 
-
 void ProcessList_sort(ProcessList* this);
-
 
 bool ProcessList_readStatusFile(ProcessList* this, Process* proc, char* dirname, char* name);
 
 void ProcessList_processEntries(ProcessList* this, char* dirname, int parent, float period);
 
 void ProcessList_scan(ProcessList* this);
-
-void ProcessList_dontCrash(int signal);
 
 #endif

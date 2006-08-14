@@ -12,10 +12,10 @@ in the source distribution for its full text.
 
 #include "debug.h"
 
-/* private property */
-int LoadAverageMeter_attributes[] = { LOAD_AVERAGE_FIFTEEN, LOAD_AVERAGE_FIVE, LOAD_AVERAGE_ONE };
+int LoadAverageMeter_attributes[] = {
+   LOAD_AVERAGE_FIFTEEN, LOAD_AVERAGE_FIVE, LOAD_AVERAGE_ONE
+};
 
-/* private */
 MeterType LoadAverageMeter = {
    .setValues = LoadAverageMeter_setValues, 
    .display = LoadAverageMeter_display,
@@ -28,10 +28,8 @@ MeterType LoadAverageMeter = {
    .caption = "Load average: "
 };
 
-/* private property */
 int LoadMeter_attributes[] = { LOAD };
 
-/* private */
 MeterType LoadMeter = {
    .setValues = LoadMeter_setValues, 
    .display = LoadMeter_display,
@@ -44,8 +42,7 @@ MeterType LoadMeter = {
    .caption = "Load: "
 };
 
-/* private */
-inline static void LoadAverageMeter_scan(double* one, double* five, double* fifteen) {
+static inline void LoadAverageMeter_scan(double* one, double* five, double* fifteen) {
    int activeProcs, totalProcs, lastProc;
    FILE *fd = fopen(PROCDIR "/loadavg", "r");
    int read = fscanf(fd, "%lf %lf %lf %d/%d %d", one, five, fifteen,
@@ -63,7 +60,7 @@ void LoadAverageMeter_setValues(Meter* this, char* buffer, int size) {
 void LoadAverageMeter_display(Object* cast, RichString* out) {
    Meter* this = (Meter*)cast;
    char buffer[20];
-   RichString_prune(out);
+   RichString_init(out);
    sprintf(buffer, "%.2f ", this->values[2]);
    RichString_append(out, CRT_colors[LOAD_AVERAGE_FIFTEEN], buffer);
    sprintf(buffer, "%.2f ", this->values[1]);
@@ -84,7 +81,7 @@ void LoadMeter_setValues(Meter* this, char* buffer, int size) {
 void LoadMeter_display(Object* cast, RichString* out) {
    Meter* this = (Meter*)cast;
    char buffer[20];
-   RichString_prune(out);
+   RichString_init(out);
    sprintf(buffer, "%.2f ", ((Meter*)this)->values[0]);
    RichString_append(out, CRT_colors[LOAD], buffer);
 }

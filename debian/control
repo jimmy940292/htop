@@ -3,7 +3,7 @@ Section: utils
 Priority: optional
 Maintainer: Bartosz Fenski <fenio@debian.org>
 Build-Depends: debhelper (>= 4.0.0), libncurses5-dev, autotools-dev
-Standards-Version: 3.6.2
+Standards-Version: 3.7.2
 
 Package: htop
 Architecture: any

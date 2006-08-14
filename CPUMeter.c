@@ -18,10 +18,10 @@ in the source distribution for its full text.
 #include "debug.h"
 #include <assert.h>
 
-/* private property */
-static int CPUMeter_attributes[] = { CPU_NICE, CPU_NORMAL, CPU_KERNEL };
+int CPUMeter_attributes[] = {
+   CPU_NICE, CPU_NORMAL, CPU_KERNEL
+};
 
-/* private */
 MeterType CPUMeter = {
    .setValues = CPUMeter_setValues, 
    .display = CPUMeter_display,
@@ -35,7 +35,6 @@ MeterType CPUMeter = {
    .init = CPUMeter_init
 };
 
-/* private */
 MeterType AllCPUsMeter = {
    .mode = 0,
    .items = 1,
@@ -82,7 +81,7 @@ void CPUMeter_setValues(Meter* this, char* buffer, int size) {
 void CPUMeter_display(Object* cast, RichString* out) {
    char buffer[50];
    Meter* this = (Meter*)cast;
-   RichString_prune(out);
+   RichString_init(out);
    sprintf(buffer, "%5.1f%% ", this->values[1]);
    RichString_append(out, CRT_colors[METER_TEXT], ":");
    RichString_append(out, CRT_colors[CPU_NORMAL], buffer);

@@ -42,7 +42,7 @@ subdir = .
 DIST_COMMON = README $(am__configure_deps) $(dist_man_MANS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/config.h.in $(top_srcdir)/configure AUTHORS COPYING \
-	ChangeLog INSTALL NEWS depcomp install-sh missing
+	ChangeLog INSTALL NEWS TODO depcomp install-sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -55,52 +55,52 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(applicationsdir)" "$(DESTDIR)$(pixmapdir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_htop_OBJECTS = AvailableMetersListBox.$(OBJEXT) \
-	CategoriesListBox.$(OBJEXT) ClockMeter.$(OBJEXT) \
+am_htop_OBJECTS = AvailableMetersPanel.$(OBJEXT) \
+	CategoriesPanel.$(OBJEXT) ClockMeter.$(OBJEXT) \
 	CPUMeter.$(OBJEXT) CRT.$(OBJEXT) DebugMemory.$(OBJEXT) \
-	DisplayOptionsListBox.$(OBJEXT) FunctionBar.$(OBJEXT) \
+	DisplayOptionsPanel.$(OBJEXT) FunctionBar.$(OBJEXT) \
 	Hashtable.$(OBJEXT) Header.$(OBJEXT) htop.$(OBJEXT) \
-	ListBox.$(OBJEXT) ListItem.$(OBJEXT) \
-	LoadAverageMeter.$(OBJEXT) MemoryMeter.$(OBJEXT) \
-	Meter.$(OBJEXT) MetersListBox.$(OBJEXT) Object.$(OBJEXT) \
-	Process.$(OBJEXT) ProcessList.$(OBJEXT) RichString.$(OBJEXT) \
-	ScreenManager.$(OBJEXT) Settings.$(OBJEXT) \
-	SignalItem.$(OBJEXT) SignalsListBox.$(OBJEXT) String.$(OBJEXT) \
-	SwapMeter.$(OBJEXT) TasksMeter.$(OBJEXT) TypedVector.$(OBJEXT) \
-	UptimeMeter.$(OBJEXT) UsersTable.$(OBJEXT) CheckItem.$(OBJEXT) \
-	ColorsListBox.$(OBJEXT) TraceScreen.$(OBJEXT) \
-	AvailableColumnsListBox.$(OBJEXT) ColumnsListBox.$(OBJEXT)
+	Panel.$(OBJEXT) ListItem.$(OBJEXT) LoadAverageMeter.$(OBJEXT) \
+	MemoryMeter.$(OBJEXT) Meter.$(OBJEXT) MetersPanel.$(OBJEXT) \
+	Object.$(OBJEXT) Process.$(OBJEXT) ProcessList.$(OBJEXT) \
+	RichString.$(OBJEXT) ScreenManager.$(OBJEXT) \
+	Settings.$(OBJEXT) SignalItem.$(OBJEXT) SignalsPanel.$(OBJEXT) \
+	String.$(OBJEXT) SwapMeter.$(OBJEXT) TasksMeter.$(OBJEXT) \
+	Vector.$(OBJEXT) UptimeMeter.$(OBJEXT) UsersTable.$(OBJEXT) \
+	CheckItem.$(OBJEXT) ColorsPanel.$(OBJEXT) \
+	TraceScreen.$(OBJEXT) AvailableColumnsPanel.$(OBJEXT) \
+	ColumnsPanel.$(OBJEXT)
 htop_OBJECTS = $(am_htop_OBJECTS)
 htop_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/AvailableColumnsListBox.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/AvailableMetersListBox.Po \
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/AvailableColumnsPanel.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/AvailableMetersPanel.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/CPUMeter.Po ./$(DEPDIR)/CRT.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/CategoriesListBox.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/CategoriesPanel.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/CheckItem.Po ./$(DEPDIR)/ClockMeter.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ColorsListBox.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ColumnsListBox.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ColorsPanel.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ColumnsPanel.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/DebugMemory.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/DisplayOptionsListBox.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/DisplayOptionsPanel.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FunctionBar.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/Hashtable.Po ./$(DEPDIR)/Header.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ListBox.Po ./$(DEPDIR)/ListItem.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ListItem.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/LoadAverageMeter.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/MemoryMeter.Po ./$(DEPDIR)/Meter.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/MetersListBox.Po ./$(DEPDIR)/Object.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/Process.Po ./$(DEPDIR)/ProcessList.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/MetersPanel.Po ./$(DEPDIR)/Object.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/Panel.Po ./$(DEPDIR)/Process.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ProcessList.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/RichString.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ScreenManager.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/Settings.Po ./$(DEPDIR)/SignalItem.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/SignalsListBox.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/String.Po ./$(DEPDIR)/SwapMeter.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/TasksMeter.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/SignalsPanel.Po ./$(DEPDIR)/String.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/SwapMeter.Po ./$(DEPDIR)/TasksMeter.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/TraceScreen.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/TypedVector.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/UptimeMeter.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/UsersTable.Po ./$(DEPDIR)/htop.Po
+@AMDEP_TRUE@	./$(DEPDIR)/UsersTable.Po ./$(DEPDIR)/Vector.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/htop.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -196,29 +196,31 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 dist_man_MANS = htop.1
-EXTRA_DIST = $(dist_man_MANS) htop.desktop htop.png scripts/MakeHeader.py
+EXTRA_DIST = $(dist_man_MANS) htop.desktop htop.png scripts/MakeHeader.py \
+install-sh autogen.sh missing
+
 applicationsdir = $(datadir)/applications
 applications_DATA = htop.desktop
 pixmapdir = $(datadir)/pixmaps
 pixmap_DATA = htop.png
 AM_CFLAGS = -pedantic -Wall -std=c99
 AM_CPPFLAGS = -DSYSCONFDIR=\"$(sysconfdir)\"
-htop_SOURCES = AvailableMetersListBox.c CategoriesListBox.c ClockMeter.c \
-CPUMeter.c CRT.c DebugMemory.c DisplayOptionsListBox.c FunctionBar.c \
-Hashtable.c Header.c htop.c ListBox.c ListItem.c LoadAverageMeter.c \
-MemoryMeter.c Meter.c MetersListBox.c Object.c Process.c \
+htop_SOURCES = AvailableMetersPanel.c CategoriesPanel.c ClockMeter.c \
+CPUMeter.c CRT.c DebugMemory.c DisplayOptionsPanel.c FunctionBar.c \
+Hashtable.c Header.c htop.c Panel.c ListItem.c LoadAverageMeter.c \
+MemoryMeter.c Meter.c MetersPanel.c Object.c Process.c \
 ProcessList.c RichString.c ScreenManager.c Settings.c SignalItem.c \
-SignalsListBox.c String.c SwapMeter.c TasksMeter.c TypedVector.c \
-UptimeMeter.c UsersTable.c AvailableMetersListBox.h CategoriesListBox.h \
+SignalsPanel.c String.c SwapMeter.c TasksMeter.c Vector.c \
+UptimeMeter.c UsersTable.c AvailableMetersPanel.h CategoriesPanel.h \
 ClockMeter.h config.h CPUMeter.h CRT.h debug.h DebugMemory.h \
-DisplayOptionsListBox.h FunctionBar.h Hashtable.h Header.h htop.h ListBox.h \
+DisplayOptionsPanel.h FunctionBar.h Hashtable.h Header.h htop.h Panel.h \
 ListItem.h LoadAverageMeter.h MemoryMeter.h Meter.h \
-MetersListBox.h Object.h Process.h ProcessList.h RichString.h ScreenManager.h \
-Settings.h SignalItem.h SignalsListBox.h String.h SwapMeter.h TasksMeter.h \
-TypedVector.h UptimeMeter.h UsersTable.h CheckItem.c CheckItem.h \
-ColorsListBox.c ColorsListBox.h TraceScreen.c TraceScreen.h \
-AvailableColumnsListBox.c AvailableColumnsListBox.h ColumnsListBox.c \
-ColumnsListBox.h
+MetersPanel.h Object.h Process.h ProcessList.h RichString.h ScreenManager.h \
+Settings.h SignalItem.h SignalsPanel.h String.h SwapMeter.h TasksMeter.h \
+Vector.h UptimeMeter.h UsersTable.h CheckItem.c CheckItem.h \
+ColorsPanel.c ColorsPanel.h TraceScreen.c TraceScreen.h \
+AvailableColumnsPanel.c AvailableColumnsPanel.h ColumnsPanel.c \
+ColumnsPanel.h
 
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -308,41 +310,41 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AvailableColumnsListBox.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AvailableMetersListBox.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AvailableColumnsPanel.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AvailableMetersPanel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CPUMeter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CRT.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CategoriesListBox.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CategoriesPanel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CheckItem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClockMeter.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ColorsListBox.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ColumnsListBox.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ColorsPanel.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ColumnsPanel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DebugMemory.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DisplayOptionsListBox.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DisplayOptionsPanel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FunctionBar.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Hashtable.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Header.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ListBox.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ListItem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/LoadAverageMeter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MemoryMeter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Meter.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MetersListBox.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MetersPanel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Object.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Panel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Process.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ProcessList.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RichString.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ScreenManager.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Settings.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SignalItem.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SignalsListBox.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SignalsPanel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/String.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SwapMeter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TasksMeter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TraceScreen.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TypedVector.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/UptimeMeter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/UsersTable.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Vector.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop.Po@am__quote@
 
 .c.o:
@@ -720,8 +722,14 @@ uninstall-man: uninstall-man1
 	uninstall-man1 uninstall-pixmapDATA
 
 
+profile:
+	$(MAKE) all CFLAGS="-pg -O2"
+
 debug:
 	$(MAKE) all CFLAGS="-g -DDEBUG"
+
+debuglite:
+	$(MAKE) all CFLAGS="-g -DDEBUGLITE"
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

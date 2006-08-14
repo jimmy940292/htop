@@ -96,24 +96,17 @@ typedef enum ColorElements_ {
    LAST_COLORELEMENT
 } ColorElements;
 
-extern int CRT_delay;
-
-extern int CRT_colors[LAST_COLORELEMENT];
-
-extern int CRT_colorScheme;
-
 }*/
 
 // TODO: centralize these in Settings.
 
-/* private property */
-int CRT_delay; 
+int CRT_delay = 0;
 
-/* private property */
-int CRT_colorScheme;
+int CRT_colorScheme = 0;
 
-/* private property */
-int CRT_colors[LAST_COLORELEMENT];
+int CRT_colors[LAST_COLORELEMENT] = { 0 };
+
+char* CRT_termType;
 
 // TODO: pass an instance of Settings instead.
 
@@ -133,8 +126,8 @@ void CRT_init(int delay, int colorScheme) {
    } else {
       CRT_hasColors = false;
    }
-   char* termType = getenv("TERM");
-   if (String_eq(termType, "xterm") || String_eq(termType, "xterm-color") || String_eq(termType, "vt220")) {
+   CRT_termType = getenv("TERM");
+   if (String_eq(CRT_termType, "xterm") || String_eq(CRT_termType, "xterm-color") || String_eq(CRT_termType, "vt220")) {
       define_key("\033[H", KEY_HOME);
       define_key("\033[F", KEY_END);
       define_key("\033OP", KEY_F(1));

@@ -1,3 +1,11 @@
+htop (0.6.3-1) unstable; urgency=low
+
+  * New upstream version.
+    - allows to rekill tagged group of processes (Closes: #375219)
+  * Bumped Standards-Version to 3.7.2 (no changes needed).
+
+ -- Bartosz Fenski <fenio@debian.org>  Mon, 14 Aug 2006 13:03:15 +0200
+
 htop (0.6.2-1) unstable; urgency=low
 
   * New upstream version.

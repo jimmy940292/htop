@@ -1,4 +1,23 @@
 
+What's new in version 0.6.3
+
+* Performance improvements: uses much less CPU than the
+  previous release with the default setup.
+* Use 64-bit values when storing processor times to
+  avoid overflow.
+* Memory consumption improvements, compensating storage
+  of 64-bit values.
+* Internal change: rename TypedVector to Vector and
+  ListBox (and related classes) to Panel.
+* Have configure actually fail when needed libraries or
+  headers are not found.
+* Horizontally scroll in larger increments when on the
+  Linux console because of slow update of unaccelerated fb
+* No longer untag processes after sending a signal
+  (useful for when SIGTERM fails and one wants to try again
+  with SIGKILL). All processes can be untagged at once with 'U'.
+  (thanks to A. Costa for the suggestion)
+
 What's new in version 0.6.2
 
 * BUGFIX: Fixed crash when using some .htoprc files from 0.6
@@ -137,7 +156,7 @@ What's new in version 0.4
 * Clock and load average meters
   (thanks to Marc Calahan)
 * BUGFIX: numeric swap indicator was printing bogus value
-* BUGFIX: internal fixes on ListBox widget
+* BUGFIX: internal fixes on Panel widget
 * Clear the bottom line when exiting
 * Press "F3" during search to walk through the results
 * Improved navigation on column configuration screen
