@@ -139,6 +139,8 @@ bool Settings_read(Settings* this, char* fileName) {
          this->pl->highlightMegabytes = atoi(option[1]);
       } else if (String_eq(option[0], "header_margin")) {
          this->header->margin = atoi(option[1]);
+      } else if (String_eq(option[0], "expand_system_time")) {
+         this->pl->expandSystemTime = atoi(option[1]);
       } else if (String_eq(option[0], "delay")) {
          this->delay = atoi(option[1]);
       } else if (String_eq(option[0], "color_scheme")) {
@@ -195,6 +197,7 @@ bool Settings_write(Settings* this) {
    fprintf(fd, "highlight_megabytes=%d\n", (int) this->pl->highlightMegabytes);
    fprintf(fd, "tree_view=%d\n", (int) this->pl->treeView);
    fprintf(fd, "header_margin=%d\n", (int) this->header->margin);
+   fprintf(fd, "expand_system_time=%d\n", (int) this->pl->expandSystemTime);
    fprintf(fd, "color_scheme=%d\n", (int) this->colorScheme);
    fprintf(fd, "delay=%d\n", (int) this->delay);
    fprintf(fd, "left_meters=");
@@ -218,6 +221,7 @@ bool Settings_write(Settings* this) {
    fprintf(fd, "right_meter_modes=");
    for (int i = 0; i < Header_size(this->header, RIGHT_HEADER); i++)
       fprintf(fd, "%d ", Header_readMeterMode(this->header, i, RIGHT_HEADER));
+   fprintf(fd, "\n");
    fclose(fd);
    return true;
 }

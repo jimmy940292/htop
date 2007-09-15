@@ -1,3 +1,54 @@
+What's new in version 0.6.7
+
+* BUGFIX: Don't crash with invalid command-line flags
+  (thanks to Nico Golde for the report)
+* Fix GCC 4.3 compilation issues
+  (thanks to Martin Michlmayr for the report)
+* OpenVZ support, enabled at compile-time with
+  the --enable-openvz flag.
+  (thanks to Sergey Lychko)
+
+What's new in version 0.6.6
+
+* Add support of NLWP field
+  (thanks to Bert Wesarg)
+* BUGFIX: Fix use of configurable /proc location
+  (thanks to Florent Thoumie)
+* Fix memory percentage calculation and make it saner
+  (thanks to Olev Kartau for the report)
+* Added display of DRS, DT, LRS and TRS
+  (thanks to Matthias Lederhofer)
+* BUGFIX: LRS and DRS memory values were flipped
+  (thanks to Matthias Lederhofer)
+* BUGFIX: Don't crash on very high UIDs
+  (thanks to Egmont Koblinger)
+
+What's new in version 0.6.5
+
+* Add hardened-debug flags for debugging with Hardened GCC
+* BUGFIX: Handle error condition when a directory vanishes
+  from /proc
+* BUGFIX: Fix leak of process command line
+* BUGFIX: Collect orphaned items when arranging the tree view.
+  (thanks to Wolfram Schlich for assistance with debugging)
+* Separate proc and memory debugging into separate #defines.
+* BUGFIX: Fix message when configure fails due to
+  missing libraries
+  (thanks to Jon)
+* BUGFIX: Don't truncate value when displaying a very large
+  process
+  (thanks to Bo Liu)
+
+What's new in version 0.6.4
+
+* Add an option to split the display of kernel time
+  in the CPU meter into system, IO-wait, IRQ and soft-IRQ.
+  (thanks to Philipp Richter)
+* --sort-key flag in the command-line, overriding the
+  saved setting in .htoprc for the session.
+  (thanks to Rodolfo Borges)
+* BUGFIX: Fixed string overflow on uptime display.
+  (thanks to Marc Cahalan)
 
 What's new in version 0.6.3
 

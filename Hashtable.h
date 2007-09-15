@@ -12,6 +12,7 @@ in the source distribution for its full text.
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include "debug.h"
 
@@ -20,7 +21,7 @@ typedef struct Hashtable_ Hashtable;
 typedef void(*Hashtable_PairFunction)(int, void*, void*);
 
 typedef struct HashtableItem {
-   int key;
+   unsigned int key;
    void* value;
    struct HashtableItem* next;
 } HashtableItem;
@@ -32,19 +33,27 @@ struct Hashtable_ {
    bool owner;
 };
 
-HashtableItem* HashtableItem_new(int key, void* value);
+#ifdef DEBUG
+
+bool Hashtable_isConsistent(Hashtable* this);
+
+int Hashtable_count(Hashtable* this);
+
+#endif
+
+HashtableItem* HashtableItem_new(unsigned int key, void* value);
 
 Hashtable* Hashtable_new(int size, bool owner);
 
 void Hashtable_delete(Hashtable* this);
 
-inline int Hashtable_size(Hashtable* this);
+extern int Hashtable_size(Hashtable* this);
 
-void Hashtable_put(Hashtable* this, int key, void* value);
+void Hashtable_put(Hashtable* this, unsigned int key, void* value);
 
-void* Hashtable_remove(Hashtable* this, int key);
-//#include <stdio.h>
-inline void* Hashtable_get(Hashtable* this, int key);
+void* Hashtable_remove(Hashtable* this, unsigned int key);
+
+extern void* Hashtable_get(Hashtable* this, unsigned int key);
 
 void Hashtable_foreach(Hashtable* this, Hashtable_PairFunction f, void* userData);
 

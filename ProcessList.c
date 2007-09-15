@@ -37,11 +37,11 @@ in the source distribution for its full text.
 #endif
 
 #ifndef PROCSTATFILE
-#define PROCSTATFILE "/proc/stat"
+#define PROCSTATFILE PROCDIR "/stat"
 #endif
 
 #ifndef PROCMEMINFOFILE
-#define PROCMEMINFOFILE "/proc/meminfo"
+#define PROCMEMINFOFILE PROCDIR "/meminfo"
 #endif
 
 #ifndef MAX_NAME
@@ -52,11 +52,15 @@ in the source distribution for its full text.
 #define MAX_READ 2048
 #endif
 
+#ifndef PER_PROCESSOR_FIELDS
+#define PER_PROCESSOR_FIELDS 20
+#endif
+
 }*/
 
 /*{
 
-#ifdef DEBUG
+#ifdef DEBUG_PROC
 typedef int(*vxscanf)(void*, const char*, va_list);
 #endif
 
@@ -71,16 +75,27 @@ typedef struct ProcessList_ {
    int totalTasks;
    int runningTasks;
 
+   // Must match number of PER_PROCESSOR_FIELDS constant
    unsigned long long int* totalTime;
    unsigned long long int* userTime;
    unsigned long long int* systemTime;
+   unsigned long long int* systemAllTime;
    unsigned long long int* idleTime;
    unsigned long long int* niceTime;
+   unsigned long long int* ioWaitTime;
+   unsigned long long int* irqTime;
+   unsigned long long int* softIrqTime;
+   unsigned long long int* stealTime;
    unsigned long long int* totalPeriod;
    unsigned long long int* userPeriod;
    unsigned long long int* systemPeriod;
+   unsigned long long int* systemAllPeriod;
    unsigned long long int* idlePeriod;
    unsigned long long int* nicePeriod;
+   unsigned long long int* ioWaitPeriod;
+   unsigned long long int* irqPeriod;
+   unsigned long long int* softIrqPeriod;
+   unsigned long long int* stealPeriod;
 
    unsigned long long int totalMem;
    unsigned long long int usedMem;
@@ -102,7 +117,8 @@ typedef struct ProcessList_ {
    bool treeView;
    bool highlightBaseName;
    bool highlightMegabytes;
-   #ifdef DEBUG
+   bool expandSystemTime;
+   #ifdef DEBUG_PROC
    FILE* traceFile;
    #endif
 
@@ -111,7 +127,7 @@ typedef struct ProcessList_ {
 
 static ProcessField defaultHeaders[] = { PID, USER, PRIORITY, NICE, M_SIZE, M_RESIDENT, M_SHARE, STATE, PERCENT_CPU, PERCENT_MEM, TIME, COMM, 0 };
 
-#ifdef DEBUG
+#ifdef DEBUG_PROC
 
 #define ProcessList_read(this, buffer, format, ...) ProcessList_xread(this, (vxscanf) vsscanf, buffer, format, ## __VA_ARGS__ )
 #define ProcessList_fread(this, file, format, ...)  ProcessList_xread(this, (vxscanf) vfscanf, file, format, ## __VA_ARGS__ )
@@ -173,18 +189,29 @@ static inline int ProcessList_xread(ProcessList* this, vxscanf fn, void* buffer,
 
 #endif
 
+static inline void ProcessList_allocatePerProcessorBuffers(ProcessList* this, int procs) {
+   unsigned long long int** bufferPtr = &(this->totalTime);
+   unsigned long long int* buffer = calloc(procs * PER_PROCESSOR_FIELDS, sizeof(unsigned long long int));
+   for (int i = 0; i < PER_PROCESSOR_FIELDS; i++) {
+      *bufferPtr = buffer;
+      bufferPtr++;
+      buffer += procs;
+   }
+}
+
 ProcessList* ProcessList_new(UsersTable* usersTable) {
    ProcessList* this;
    this = malloc(sizeof(ProcessList));
    this->processes = Vector_new(PROCESS_CLASS, true, DEFAULT_SIZE, Process_compare);
    this->processTable = Hashtable_new(70, false);
+   assert(Hashtable_count(this->processTable) == Vector_count(this->processes));
    this->prototype = Process_new(this);
    this->usersTable = usersTable;
    
    /* tree-view auxiliary buffers */
    this->processes2 = Vector_new(PROCESS_CLASS, true, DEFAULT_SIZE, Process_compare);
    
-   #ifdef DEBUG
+   #ifdef DEBUG_PROC
    this->traceFile = fopen("/tmp/htop-proc-trace", "w");
    #endif
 
@@ -198,16 +225,9 @@ ProcessList* ProcessList_new(UsersTable* usersTable) {
    } while (String_startsWith(buffer, "cpu"));
    fclose(status);
    this->processorCount = procs - 1;
-   this->totalTime = calloc(procs, sizeof(long long int));
-   this->userTime = calloc(procs, sizeof(long long int));
-   this->systemTime = calloc(procs, sizeof(long long int));
-   this->niceTime = calloc(procs, sizeof(long long int));
-   this->idleTime = calloc(procs, sizeof(long long int));
-   this->totalPeriod = calloc(procs, sizeof(long long int));
-   this->userPeriod = calloc(procs, sizeof(long long int));
-   this->systemPeriod = calloc(procs, sizeof(long long int));
-   this->nicePeriod = calloc(procs, sizeof(long long int));
-   this->idlePeriod = calloc(procs, sizeof(long long int));
+   
+   ProcessList_allocatePerProcessorBuffers(this, procs);
+
    for (int i = 0; i < procs; i++) {
       this->totalTime[i] = 1;
       this->totalPeriod[i] = 1;
@@ -228,6 +248,7 @@ ProcessList* ProcessList_new(UsersTable* usersTable) {
    this->treeView = false;
    this->highlightBaseName = false;
    this->highlightMegabytes = false;
+   this->expandSystemTime = false;
 
    return this;
 }
@@ -238,18 +259,11 @@ void ProcessList_delete(ProcessList* this) {
    Vector_delete(this->processes2);
    Process_delete((Object*)this->prototype);
 
+   // Free first entry only;
+   // other fields are offsets of the same buffer
    free(this->totalTime);
-   free(this->userTime);
-   free(this->systemTime);
-   free(this->niceTime);
-   free(this->idleTime);
-   free(this->totalPeriod);
-   free(this->userPeriod);
-   free(this->systemPeriod);
-   free(this->nicePeriod);
-   free(this->idlePeriod);
 
-   #ifdef DEBUG
+   #ifdef DEBUG_PROC
    fclose(this->traceFile);
    #endif
 
@@ -284,14 +298,26 @@ void ProcessList_prune(ProcessList* this) {
 }
 
 void ProcessList_add(ProcessList* this, Process* p) {
+   assert(Vector_indexOf(this->processes, p, Process_pidCompare) == -1);
+   assert(Hashtable_get(this->processTable, p->pid) == NULL);
    Vector_add(this->processes, p);
    Hashtable_put(this->processTable, p->pid, p);
+   assert(Vector_indexOf(this->processes, p, Process_pidCompare) != -1);
+   assert(Hashtable_get(this->processTable, p->pid) != NULL);
+   assert(Hashtable_count(this->processTable) == Vector_count(this->processes));
 }
 
 void ProcessList_remove(ProcessList* this, Process* p) {
-   Hashtable_remove(this->processTable, p->pid);
+   assert(Vector_indexOf(this->processes, p, Process_pidCompare) != -1);
+   assert(Hashtable_get(this->processTable, p->pid) != NULL);
+   Process* pp = Hashtable_remove(this->processTable, p->pid);
+   assert(pp == p); (void)pp;
+   unsigned int pid = p->pid;
    int index = Vector_indexOf(this->processes, p, Process_pidCompare);
+   assert(index != -1);
    Vector_remove(this->processes, index);
+   assert(Hashtable_get(this->processTable, pid) == NULL); (void)pid;
+   assert(Hashtable_count(this->processTable) == Vector_count(this->processes));
 }
 
 Process* ProcessList_get(ProcessList* this, int index) {
@@ -305,21 +331,22 @@ int ProcessList_size(ProcessList* this) {
 static void ProcessList_buildTree(ProcessList* this, int pid, int level, int indent, int direction) {
    Vector* children = Vector_new(PROCESS_CLASS, false, DEFAULT_SIZE, Process_compare);
 
-   for (int i = 0; i < Vector_size(this->processes); i++) {
+   for (int i = Vector_size(this->processes) - 1; i >= 0; i--) {
       Process* process = (Process*) (Vector_get(this->processes, i));
       if (process->ppid == pid) {
          Process* process = (Process*) (Vector_take(this->processes, i));
          Vector_add(children, process);
-         i--;
       }
    }
    int size = Vector_size(children);
    for (int i = 0; i < size; i++) {
       Process* process = (Process*) (Vector_get(children, i));
+      int s = this->processes2->items;
       if (direction == 1)
          Vector_add(this->processes2, process);
       else
          Vector_insert(this->processes2, 0, process);
+      assert(this->processes2->items == s+1); (void)s;
       int nextIndent = indent;
       if (i < size - 1)
          nextIndent = indent | (1 << level);
@@ -340,11 +367,19 @@ void ProcessList_sort(ProcessList* this) {
       Vector_sort(this->processes);
       this->sortKey = sortKey;
       this->direction = direction;
+      int vsize = Vector_size(this->processes);
       Process* init = (Process*) (Vector_take(this->processes, 0));
       assert(init->pid == 1);
       init->indent = 0;
       Vector_add(this->processes2, init);
       ProcessList_buildTree(this, init->pid, 0, 0, direction);
+      while (Vector_size(this->processes)) {
+         Process* p = (Process*) (Vector_take(this->processes, 0));
+         p->indent = 0;
+         Vector_add(this->processes2, p);
+      }
+      assert(Vector_size(this->processes2) == vsize); (void)vsize;
+      assert(Vector_size(this->processes) == 0);
       Vector* t = this->processes;
       this->processes = this->processes2;
       this->processes2 = t;
@@ -358,7 +393,7 @@ static int ProcessList_readStatFile(ProcessList* this, Process *proc, FILE *f, c
    int size = fread(buf, 1, MAX_READ, f);
    if(!size) return 0;
 
-   proc->pid = atoi(buf);
+   assert(proc->pid == atoi(buf));
    char *location = strchr(buf, ' ');
    if(!location) return 0;
 
@@ -371,9 +406,9 @@ static int ProcessList_readStatFile(ProcessList* this, Process *proc, FILE *f, c
    command[commsize] = '\0';
    location = end + 2;
    
-   #ifdef DEBUG
+   #ifdef DEBUG_PROC
    int num = ProcessList_read(this, location, 
-      "%c %d %d %d %d %d %lu %lu %lu %lu "
+      "%c %u %u %u %u %u %lu %lu %lu %lu "
       "%lu %lu %lu %ld %ld %ld %ld %ld %ld "
       "%lu %lu %ld %lu %lu %lu %lu %lu "
       "%lu %lu %lu %lu %lu %lu %lu %lu "
@@ -382,7 +417,7 @@ static int ProcessList_readStatFile(ProcessList* this, Process *proc, FILE *f, c
       &proc->tpgid, &proc->flags,
       &proc->minflt, &proc->cminflt, &proc->majflt, &proc->cmajflt,
       &proc->utime, &proc->stime, &proc->cutime, &proc->cstime, 
-      &proc->priority, &proc->nice, &zero, &proc->itrealvalue, 
+      &proc->priority, &proc->nice, &proc->nlwp, &proc->itrealvalue,
       &proc->starttime, &proc->vsize, &proc->rss, &proc->rlim, 
       &proc->startcode, &proc->endcode, &proc->startstack, &proc->kstkesp, 
       &proc->kstkeip, &proc->signal, &proc->blocked, &proc->sigignore, 
@@ -391,7 +426,7 @@ static int ProcessList_readStatFile(ProcessList* this, Process *proc, FILE *f, c
    #else
    long int uzero;
    int num = ProcessList_read(this, location, 
-      "%c %d %d %d %d %d %lu %lu %lu %lu "
+      "%c %u %u %u %u %u %lu %lu %lu %lu "
       "%lu %lu %lu %ld %ld %ld %ld %ld %ld "
       "%lu %lu %ld %lu %lu %lu %lu %lu "
       "%lu %lu %lu %lu %lu %lu %lu %lu "
@@ -400,7 +435,7 @@ static int ProcessList_readStatFile(ProcessList* this, Process *proc, FILE *f, c
       &proc->tpgid, &proc->flags,
       &zero, &zero, &zero, &zero,
       &proc->utime, &proc->stime, &proc->cutime, &proc->cstime, 
-      &proc->priority, &proc->nice, &uzero, &uzero, 
+      &proc->priority, &proc->nice, &proc->nlwp, &uzero,
       &zero, &zero, &uzero, &zero, 
       &zero, &zero, &zero, &zero, 
       &zero, &zero, &zero, &zero, 
@@ -464,7 +499,7 @@ void ProcessList_processEntries(ProcessList* this, char* dirname, int parent, fl
    Process* prototype = this->prototype;
 
    dir = opendir(dirname);
-   assert(dir != NULL);
+   if (!dir) return;
    while ((entry = readdir(dir)) != NULL) {
       char* name = entry->d_name;
       int pid;
@@ -495,14 +530,17 @@ void ProcessList_processEntries(ProcessList* this, char* dirname, int parent, fl
          char statusfilename[MAX_NAME+1];
          char command[PROCESS_COMM_LEN + 1];
 
-         Process* process;
+         Process* process = NULL;
 
+         assert(Hashtable_count(this->processTable) == Vector_count(this->processes));
          Process* existingProcess = (Process*) Hashtable_get(this->processTable, pid);
          if (existingProcess) {
+            assert(Vector_indexOf(this->processes, existingProcess, Process_pidCompare) != -1);
             process = existingProcess;
+            assert(process->pid == pid);
          } else {
             process = prototype;
-            process->comm = NULL;
+            assert(process->comm == NULL);
             process->pid = pid;
             if (! ProcessList_readStatusFile(this, process, dirname, name))
                goto errorReadingProcess;
@@ -517,7 +555,7 @@ void ProcessList_processEntries(ProcessList* this, char* dirname, int parent, fl
          }
          int num = ProcessList_fread(this, status, "%d %d %d %d %d %d %d",
              &process->m_size, &process->m_resident, &process->m_share, 
-             &process->m_trs, &process->m_drs, &process->m_lrs, 
+             &process->m_trs, &process->m_lrs, &process->m_drs, 
              &process->m_dt);
 
          fclose(status);
@@ -542,6 +580,28 @@ void ProcessList_processEntries(ProcessList* this, char* dirname, int parent, fl
 
          if(!existingProcess) {
             process->user = UsersTable_getRef(this->usersTable, process->st_uid);
+
+            #ifdef HAVE_OPENVZ
+            if (access("/proc/vz", R_OK) != 0) {
+               process->vpid = process->pid;
+               process->veid = 0;
+            } else {
+               snprintf(statusfilename, MAX_NAME, "%s/%s/stat", dirname, name);
+               status = ProcessList_fopen(this, statusfilename, "r");
+               if (status == NULL) 
+                  goto errorReadingProcess;
+               num = ProcessList_fread(this, status, 
+                  "%*u %*s %*c %*u %*u %*u %*u %*u %*u %*u "
+                  "%*u %*u %*u %*u %*u %*u %*u %*u "
+                  "%*u %*u %*u %*u %*u %*u %*u %*u "
+                  "%*u %*u %*u %*u %*u %*u %*u %*u "
+                  "%*u %*u %*u %*u %*u %*u %*u %*u "
+                  "%*u %*u %*u %*u %*u %*u %*u "
+                  "%u %u",
+                  &process->vpid, &process->veid);
+               fclose(status);
+            }
+            #endif
  
             snprintf(statusfilename, MAX_NAME, "%s/%s/cmdline", dirname, name);
             status = ProcessList_fopen(this, statusfilename, "r");
@@ -564,8 +624,8 @@ void ProcessList_processEntries(ProcessList* this, char* dirname, int parent, fl
          process->percent_cpu = (process->utime + process->stime - lasttimes) / 
             period * 100.0;
 
-         process->percent_mem = process->m_resident / 
-            (float)(this->usedMem - this->cachedMem - this->buffersMem) * 
+         process->percent_mem = (process->m_resident * PAGE_SIZE) / 
+            (float)(this->totalMem) * 
             100.0;
 
          this->totalTasks++;
@@ -574,29 +634,28 @@ void ProcessList_processEntries(ProcessList* this, char* dirname, int parent, fl
          }
 
          if (!existingProcess) {
-            process = Process_clone(process);
-            ProcessList_add(this, process);
+            ProcessList_add(this, Process_clone(process));
          }
 
          continue;
 
          // Exception handler.
          errorReadingProcess: {
+            if (process->comm) {
+               free(process->comm);
+               process->comm = NULL;
+            }
             if (existingProcess)
                ProcessList_remove(this, process);
-            else {
-               if (process->comm)
-                  free(process->comm);
-            }
+            assert(Hashtable_count(this->processTable) == Vector_count(this->processes));
          }
       }
    }
-   prototype->comm = NULL;
    closedir(dir);
 }
 
 void ProcessList_scan(ProcessList* this) {
-   unsigned long long int usertime, nicetime, systemtime, idletime, totaltime;
+   unsigned long long int usertime, nicetime, systemtime, systemalltime, idletime, totaltime;
    unsigned long long int swapFree;
 
    FILE* status;
@@ -656,22 +715,37 @@ void ProcessList_scan(ProcessList* this) {
       }
       // Fields existing on kernels >= 2.6
       // (and RHEL's patched kernel 2.4...)
-      systemtime += ioWait + irq + softIrq + steal;
-      totaltime = usertime + nicetime + systemtime + idletime;
+      systemalltime = systemtime + ioWait + irq + softIrq + steal;
+      totaltime = usertime + nicetime + systemalltime + idletime;
       assert (usertime >= this->userTime[i]);
       assert (nicetime >= this->niceTime[i]);
       assert (systemtime >= this->systemTime[i]);
       assert (idletime >= this->idleTime[i]);
       assert (totaltime >= this->totalTime[i]);
+      assert (systemalltime >= this->systemAllTime[i]);
+      assert (ioWait >= this->ioWaitTime[i]);
+      assert (irq >= this->irqTime[i]);
+      assert (softIrq >= this->softIrqTime[i]);
+      assert (steal >= this->stealTime[i]);
       this->userPeriod[i] = usertime - this->userTime[i];
       this->nicePeriod[i] = nicetime - this->niceTime[i];
       this->systemPeriod[i] = systemtime - this->systemTime[i];
+      this->systemAllPeriod[i] = systemalltime - this->systemAllTime[i];
       this->idlePeriod[i] = idletime - this->idleTime[i];
+      this->ioWaitPeriod[i] = ioWait - this->ioWaitTime[i];
+      this->irqPeriod[i] = irq - this->irqTime[i];
+      this->softIrqPeriod[i] = softIrq - this->softIrqTime[i];
+      this->stealPeriod[i] = steal - this->stealTime[i];
       this->totalPeriod[i] = totaltime - this->totalTime[i];
       this->userTime[i] = usertime;
       this->niceTime[i] = nicetime;
       this->systemTime[i] = systemtime;
+      this->systemAllTime[i] = systemalltime;
       this->idleTime[i] = idletime;
+      this->ioWaitTime[i] = ioWait;
+      this->irqTime[i] = irq;
+      this->softIrqTime[i] = softIrq;
+      this->stealTime[i] = steal;
       this->totalTime[i] = totaltime;
    }
    float period = (float)this->totalPeriod[0] / this->processorCount;

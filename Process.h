@@ -31,7 +31,9 @@ in the source distribution for its full text.
 
 // This works only with glibc 2.1+. On earlier versions
 // the behavior is similar to have a hardcoded page size.
+#ifndef PAGE_SIZE
 #define PAGE_SIZE ( sysconf(_SC_PAGESIZE) / 1024 )
+#endif
 
 #define PROCESS_COMM_LEN 300
 
@@ -41,7 +43,11 @@ typedef enum ProcessField_ {
    STIME, CUTIME, CSTIME, PRIORITY, NICE, ITREALVALUE, STARTTIME, VSIZE, RSS, RLIM, STARTCODE, ENDCODE,
    STARTSTACK, KSTKESP, KSTKEIP, SIGNAL, BLOCKED, SSIGIGNORE, SIGCATCH, WCHAN, NSWAP, CNSWAP, EXIT_SIGNAL,
    PROCESSOR, M_SIZE, M_RESIDENT, M_SHARE, M_TRS, M_DRS, M_LRS, M_DT, ST_UID, PERCENT_CPU, PERCENT_MEM,
-   USER, TIME, LAST_PROCESSFIELD
+   USER, TIME, NLWP, 
+   #ifdef HAVE_OPENVZ
+   VEID, VPID,
+   #endif
+   LAST_PROCESSFIELD
 } ProcessField;
 
 struct ProcessList_;
@@ -52,16 +58,16 @@ typedef struct Process_ {
    struct ProcessList_ *pl;
    bool updated;
 
-   int pid;
+   unsigned int pid;
    char* comm;
    int indent;
    char state;
    bool tag;
-   int ppid;
-   int pgrp;
-   int session;
-   int tty_nr;
-   int tpgid;
+   unsigned int ppid;
+   unsigned int pgrp;
+   unsigned int session;
+   unsigned int tty_nr;
+   unsigned int tpgid;
    unsigned long int flags;
    #ifdef DEBUG
    unsigned long int minflt;
@@ -75,6 +81,7 @@ typedef struct Process_ {
    long int cstime;
    long int priority;
    long int nice;
+   long int nlwp;
    #ifdef DEBUG
    long int itrealvalue;
    unsigned long int starttime;
@@ -107,6 +114,10 @@ typedef struct Process_ {
    float percent_cpu;
    float percent_mem;
    char* user;
+   #ifdef HAVE_OPENVZ
+   unsigned int veid;
+   unsigned int vpid;
+   #endif
 } Process;
 
 

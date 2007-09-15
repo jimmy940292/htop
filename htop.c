@@ -46,12 +46,13 @@ void printHelpFlag() {
    printf("Released under the GNU GPL.\n\n");
    printf("-d DELAY     Delay between updates, in tenths of seconds\n\n");
    printf("-u USERNAME  Show only processes of a given user\n\n");
+   printf("--sort-key COLUMN  Sort by this column (use --sort-key help for a column list)\n\n");
    printf("Press F1 inside htop for online help.\n");
    printf("See the man page for full information.\n\n");
    exit(0);
 }
 
-void showHelp() {
+void showHelp(ProcessList* pl) {
    clear();
    attrset(CRT_colors[HELP_BOLD]);
    mvaddstr(0, 0, "htop " VERSION " - (C) 2004-2006 Hisham Muhammad.");
@@ -61,10 +62,20 @@ void showHelp() {
    mvaddstr(3, 0, "CPU usage bar: ");
    #define addattrstr(a,s) attrset(a);addstr(s)
    addattrstr(CRT_colors[BAR_BORDER], "[");
-   addattrstr(CRT_colors[CPU_NICE], "low-priority"); addstr("/");
-   addattrstr(CRT_colors[CPU_NORMAL], "normal"); addstr("/");
-   addattrstr(CRT_colors[CPU_KERNEL], "kernel");
-   addattrstr(CRT_colors[BAR_SHADOW], "      used%");
+   if (pl->expandSystemTime) {
+      addattrstr(CRT_colors[CPU_NICE], "low"); addstr("/");
+      addattrstr(CRT_colors[CPU_NORMAL], "normal"); addstr("/");
+      addattrstr(CRT_colors[CPU_KERNEL], "kernel"); addstr("/");
+      addattrstr(CRT_colors[CPU_IOWAIT], "io-wait"); addstr("/");
+      addattrstr(CRT_colors[CPU_IRQ], "irq"); addstr("/");
+      addattrstr(CRT_colors[CPU_SOFTIRQ], "soft-irq");
+      addattrstr(CRT_colors[BAR_SHADOW], " used%");
+   } else {
+      addattrstr(CRT_colors[CPU_NICE], "low-priority"); addstr("/");
+      addattrstr(CRT_colors[CPU_NORMAL], "normal"); addstr("/");
+      addattrstr(CRT_colors[CPU_KERNEL], "kernel");
+      addattrstr(CRT_colors[BAR_SHADOW], "             used%");
+   }
    addattrstr(CRT_colors[BAR_BORDER], "]");
    attrset(CRT_colors[DEFAULT_COLOR]);
    mvaddstr(4, 0, "Memory bar:    ");
@@ -72,45 +83,46 @@ void showHelp() {
    addattrstr(CRT_colors[MEMORY_USED], "used"); addstr("/");
    addattrstr(CRT_colors[MEMORY_BUFFERS], "buffers"); addstr("/");
    addattrstr(CRT_colors[MEMORY_CACHE], "cache");
-   addattrstr(CRT_colors[BAR_SHADOW], "         used/total");
+   addattrstr(CRT_colors[BAR_SHADOW], "                used/total");
    addattrstr(CRT_colors[BAR_BORDER], "]");
    attrset(CRT_colors[DEFAULT_COLOR]);
    mvaddstr(5, 0, "Swap bar:      ");
    addattrstr(CRT_colors[BAR_BORDER], "[");
    addattrstr(CRT_colors[SWAP], "used");
-   addattrstr(CRT_colors[BAR_SHADOW], "                       used/total");
+   addattrstr(CRT_colors[BAR_SHADOW], "                              used/total");
    addattrstr(CRT_colors[BAR_BORDER], "]");
    attrset(CRT_colors[DEFAULT_COLOR]);
-   mvaddstr(6,0, "Type and layout of header meters is configurable in the setup screen.");
+   mvaddstr(6,0, "Type and layout of header meters are configurable in the setup screen.");
+   mvaddstr(7, 0, "Status: R: running; S: sleeping; T: traced/stopped; Z: zombie; D: disk sleep");
 
-   mvaddstr( 8, 0, " Arrows: scroll process list             F5 t: tree view");
-   mvaddstr( 9, 0, " Digits: incremental PID search             u: show processes of a single user");
-   mvaddstr(10, 0, "   F3 /: incremental name search            H: hide/show user threads");
-   mvaddstr(11, 0, "                                            K: hide/show kernel threads");
-   mvaddstr(12, 0, "  Space: tag processes                      F: cursor follows process");
-   mvaddstr(13, 0, "      U: untag all processes");
-   mvaddstr(14, 0, "   F9 k: kill process/tagged processes      P: sort by CPU%");
-   mvaddstr(15, 0, " + [ F7: lower priority (+ nice)            M: sort by MEM%");
-   mvaddstr(16, 0, " - ] F8: higher priority (root only)        T: sort by TIME");
-   mvaddstr(17, 0, "                                         F4 I: invert sort order");
-   mvaddstr(18, 0, "   F2 S: setup                           F6 >: select sort column");
-   mvaddstr(19, 0, "   F1 h: show this help screen");
-   mvaddstr(20, 0, "  F10 q: quit                               s: trace syscalls with strace");
+   mvaddstr( 9, 0, " Arrows: scroll process list             F5 t: tree view");
+   mvaddstr(10, 0, " Digits: incremental PID search             u: show processes of a single user");
+   mvaddstr(11, 0, "   F3 /: incremental name search            H: hide/show user threads");
+   mvaddstr(12, 0, "                                            K: hide/show kernel threads");
+   mvaddstr(13, 0, "  Space: tag processes                      F: cursor follows process");
+   mvaddstr(14, 0, "      U: untag all processes");
+   mvaddstr(15, 0, "   F9 k: kill process/tagged processes      P: sort by CPU%");
+   mvaddstr(16, 0, " + [ F7: lower priority (+ nice)            M: sort by MEM%");
+   mvaddstr(17, 0, " - ] F8: higher priority (root only)        T: sort by TIME");
+   mvaddstr(18, 0, "                                         F4 I: invert sort order");
+   mvaddstr(19, 0, "   F2 S: setup                           F6 >: select sort column");
+   mvaddstr(20, 0, "   F1 h: show this help screen");
+   mvaddstr(21, 0, "  F10 q: quit                               s: trace syscalls with strace");
 
    attrset(CRT_colors[HELP_BOLD]);
-   mvaddstr( 8, 0, " Arrows"); mvaddstr( 8,40, " F5 t");
-   mvaddstr( 9, 0, " Digits"); mvaddstr( 9,40, "    u");
-   mvaddstr(10, 0, "   F3 /"); mvaddstr(10,40, "    H");
-                               mvaddstr(11,40, "    K");
-   mvaddstr(12, 0, "  Space"); mvaddstr(12,40, "    F");
-   mvaddstr(13, 0, "      U");
-   mvaddstr(14, 0, "   F9 k"); mvaddstr(14,40, "    P");
-   mvaddstr(15, 0, " + [ F7"); mvaddstr(15,40, "    M");
-   mvaddstr(16, 0, " - ] F8"); mvaddstr(16,40, "    T");
-                               mvaddstr(17,40, " F4 I");
-   mvaddstr(18, 0, "   F2 S"); mvaddstr(18,40, " F6 >");
-   mvaddstr(19, 0, "   F1 h");
-   mvaddstr(20, 0, "  F10 q"); mvaddstr(20,40, "    s");
+   mvaddstr( 9, 0, " Arrows"); mvaddstr( 9,40, " F5 t");
+   mvaddstr(10, 0, " Digits"); mvaddstr(10,40, "    u");
+   mvaddstr(11, 0, "   F3 /"); mvaddstr(11,40, "    H");
+                               mvaddstr(12,40, "    K");
+   mvaddstr(13, 0, "  Space"); mvaddstr(13,40, "    F");
+   mvaddstr(14, 0, "      U");
+   mvaddstr(15, 0, "   F9 k"); mvaddstr(15,40, "    P");
+   mvaddstr(16, 0, " + [ F7"); mvaddstr(16,40, "    M");
+   mvaddstr(17, 0, " - ] F8"); mvaddstr(17,40, "    T");
+                               mvaddstr(18,40, " F4 I");
+   mvaddstr(19, 0, "   F2 S"); mvaddstr(19,40, " F6 >");
+   mvaddstr(20, 0, "   F1 h");
+   mvaddstr(21, 0, "  F10 q"); mvaddstr(21,40, "    s");
    attrset(CRT_colors[DEFAULT_COLOR]);
 
    attrset(CRT_colors[HELP_BOLD]);
@@ -194,21 +206,40 @@ int main(int argc, char** argv) {
    int delay = -1;
    bool userOnly = false;
    uid_t userId = 0;
+   int sortKey = 0;
 
-   if (argc > 0) {
-      if (String_eq(argv[1], "--help")) {
+   int arg = 1;
+   while (arg < argc) {
+      if (String_eq(argv[arg], "--help")) {
          printHelpFlag();
-      } else if (String_eq(argv[1], "--version")) {
+      } else if (String_eq(argv[arg], "--version")) {
          printVersionFlag();
-      } else if (String_eq(argv[1], "-d")) {
-         if (argc < 2) printHelpFlag();
-         sscanf(argv[2], "%d", &delay);
+      } else if (String_eq(argv[arg], "--sort-key")) {
+         if (arg == argc - 1) printHelpFlag();
+         arg++;
+         char* field = argv[arg];
+         if (String_eq(field, "help")) {
+            for (int j = 1; j < LAST_PROCESSFIELD; j++)
+               printf ("%s\n", Process_fieldNames[j]);
+            exit(0);
+         }
+         sortKey = ColumnsPanel_fieldNameToIndex(field);
+         if (sortKey == -1) {
+            fprintf(stderr, "Error: invalid column \"%s\".\n", field);
+            exit(1);
+         }
+      } else if (String_eq(argv[arg], "-d")) {
+         if (arg == argc - 1) printHelpFlag();
+         arg++;
+         sscanf(argv[arg], "%d", &delay);
          if (delay < 1) delay = 1;
          if (delay > 100) delay = 100;
-      } else if (String_eq(argv[1], "-u")) {
-         if (argc < 2) printHelpFlag();
-         setUserOnly(argv[2], &userOnly, &userId);
+      } else if (String_eq(argv[arg], "-u")) {
+         if (arg == argc - 1) printHelpFlag();
+         arg++;
+         setUserOnly(argv[arg], &userOnly, &userId);
       }
+      arg++;
    }
    
    if (access(PROCDIR, R_OK) != 0) {
@@ -237,6 +268,10 @@ int main(int argc, char** argv) {
    
    Header* header = Header_new(pl);
    settings = Settings_new(pl, header);
+   if (sortKey > 0) {
+      pl->sortKey = sortKey;
+      pl->treeView = false;
+   }
    int headerHeight = Header_calculateHeight(header);
 
    // FIXME: move delay code to settings
@@ -283,7 +318,7 @@ int main(int argc, char** argv) {
          incSearchIndex = 0;
          incSearchBuffer[0] = 0;
          int currPos = Panel_getSelectedIndex(panel);
-         int currPid = 0;
+         unsigned int currPid = 0;
          int currScrollV = panel->scrollV;
          if (follow)
             currPid = ProcessList_get(pl, currPos)->pid;
@@ -377,7 +412,7 @@ int main(int argc, char** argv) {
          continue;
       }
       if (isdigit((char)ch)) {
-         int pid = ch-48 + acc;
+         unsigned int pid = ch-48 + acc;
          for (int i = 0; i < ProcessList_size(pl) && ((Process*) Panel_getSelected(panel))->pid != pid; i++)
             Panel_setSelected(panel, i);
          acc = pid * 10;
@@ -455,7 +490,7 @@ int main(int argc, char** argv) {
       case KEY_F(1):
       case 'h':
       {
-         showHelp();
+         showHelp(pl);
          FunctionBar_draw(defaultBar, NULL);
          refreshTimeout = 0;
          break;

@@ -28,7 +28,9 @@ in the source distribution for its full text.
 
 // This works only with glibc 2.1+. On earlier versions
 // the behavior is similar to have a hardcoded page size.
+#ifndef PAGE_SIZE
 #define PAGE_SIZE ( sysconf(_SC_PAGESIZE) / 1024 )
+#endif
 
 #define PROCESS_COMM_LEN 300
 
@@ -39,7 +41,11 @@ typedef enum ProcessField_ {
    STIME, CUTIME, CSTIME, PRIORITY, NICE, ITREALVALUE, STARTTIME, VSIZE, RSS, RLIM, STARTCODE, ENDCODE,
    STARTSTACK, KSTKESP, KSTKEIP, SIGNAL, BLOCKED, SSIGIGNORE, SIGCATCH, WCHAN, NSWAP, CNSWAP, EXIT_SIGNAL,
    PROCESSOR, M_SIZE, M_RESIDENT, M_SHARE, M_TRS, M_DRS, M_LRS, M_DT, ST_UID, PERCENT_CPU, PERCENT_MEM,
-   USER, TIME, LAST_PROCESSFIELD
+   USER, TIME, NLWP, 
+   #ifdef HAVE_OPENVZ
+   VEID, VPID,
+   #endif
+   LAST_PROCESSFIELD
 } ProcessField;
 
 struct ProcessList_;
@@ -50,16 +56,16 @@ typedef struct Process_ {
    struct ProcessList_ *pl;
    bool updated;
 
-   int pid;
+   unsigned int pid;
    char* comm;
    int indent;
    char state;
    bool tag;
-   int ppid;
-   int pgrp;
-   int session;
-   int tty_nr;
-   int tpgid;
+   unsigned int ppid;
+   unsigned int pgrp;
+   unsigned int session;
+   unsigned int tty_nr;
+   unsigned int tpgid;
    unsigned long int flags;
    #ifdef DEBUG
    unsigned long int minflt;
@@ -73,6 +79,7 @@ typedef struct Process_ {
    long int cstime;
    long int priority;
    long int nice;
+   long int nlwp;
    #ifdef DEBUG
    long int itrealvalue;
    unsigned long int starttime;
@@ -105,6 +112,10 @@ typedef struct Process_ {
    float percent_cpu;
    float percent_mem;
    char* user;
+   #ifdef HAVE_OPENVZ
+   unsigned int veid;
+   unsigned int vpid;
+   #endif
 } Process;
 
 }*/
@@ -116,7 +127,11 @@ char* PROCESS_CLASS = "Process";
 #endif
 
 char *Process_fieldNames[] = {
-   "", "PID", "Command", "STATE", "PPID", "PGRP", "SESSION", "TTY_NR", "TPGID", "FLAGS", "MINFLT", "CMINFLT", "MAJFLT", "CMAJFLT", "UTIME", "STIME", "CUTIME", "CSTIME", "PRIORITY", "NICE", "ITREALVALUE", "STARTTIME", "VSIZE", "RSS", "RLIM", "STARTCODE", "ENDCODE", "STARTSTACK", "KSTKESP", "KSTKEIP", "SIGNAL", "BLOCKED", "SIGIGNORE", "SIGCATCH", "WCHAN", "NSWAP", "CNSWAP", "EXIT_SIGNAL",  "PROCESSOR", "M_SIZE", "M_RESIDENT", "M_SHARE", "M_TRS", "M_DRS", "M_LRS", "M_DT", "ST_UID", "PERCENT_CPU", "PERCENT_MEM", "USER", "TIME", "*** report bug! ***"
+   "", "PID", "Command", "STATE", "PPID", "PGRP", "SESSION", "TTY_NR", "TPGID", "FLAGS", "MINFLT", "CMINFLT", "MAJFLT", "CMAJFLT", "UTIME", "STIME", "CUTIME", "CSTIME", "PRIORITY", "NICE", "ITREALVALUE", "STARTTIME", "VSIZE", "RSS", "RLIM", "STARTCODE", "ENDCODE", "STARTSTACK", "KSTKESP", "KSTKEIP", "SIGNAL", "BLOCKED", "SIGIGNORE", "SIGCATCH", "WCHAN", "NSWAP", "CNSWAP", "EXIT_SIGNAL",  "PROCESSOR", "M_SIZE", "M_RESIDENT", "M_SHARE", "M_TRS", "M_DRS", "M_LRS", "M_DT", "ST_UID", "PERCENT_CPU", "PERCENT_MEM", "USER", "TIME", "NLWP", 
+#ifdef HAVE_OPENVZ
+"VEID", "VPID",
+#endif
+"*** report bug! ***"
 };
 
 static int Process_getuid = -1;
@@ -126,12 +141,14 @@ Process* Process_new(struct ProcessList_ *pl) {
    Object_setClass(this, PROCESS_CLASS);
    ((Object*)this)->display = Process_display;
    ((Object*)this)->delete = Process_delete;
+   this->pid = 0;
    this->pl = pl;
    this->tag = false;
    this->updated = false;
    this->utime = 0;
    this->stime = 0;
    this->comm = NULL;
+   this->indent = 0;
    if (Process_getuid == -1) Process_getuid = getuid();
    return this;
 }
@@ -139,13 +156,15 @@ Process* Process_new(struct ProcessList_ *pl) {
 Process* Process_clone(Process* this) {
    Process* clone = malloc(sizeof(Process));
    memcpy(clone, this, sizeof(Process));
+   this->comm = NULL;
+   this->pid = 0;
    return clone;
 }
 
 void Process_delete(Object* cast) {
    Process* this = (Process*) cast;
-   if (this->comm) free(this->comm);
    assert (this != NULL);
+   if (this->comm) free(this->comm);
    free(this);
 }
 
@@ -182,26 +201,26 @@ void Process_sendSignal(Process* this, int signal) {
 #define ONE_M (ONE_K * ONE_K)
 #define ONE_G (ONE_M * ONE_K)
 
-static void Process_printLargeNumber(Process* this, RichString *str, unsigned int number) {
+static void Process_printLargeNumber(Process* this, RichString *str, unsigned long number) {
    char buffer[11];
    int len;
    if(number >= (1000 * ONE_M)) {
       len = snprintf(buffer, 10, "%4.2fG ", (float)number / ONE_M);
       RichString_appendn(str, CRT_colors[LARGE_NUMBER], buffer, len);
    } else if(number >= (100000)) {
-      len = snprintf(buffer, 10, "%4dM ", number / ONE_K);
+      len = snprintf(buffer, 10, "%4ldM ", number / ONE_K);
       int attr = this->pl->highlightMegabytes
                ? CRT_colors[PROCESS_MEGABYTES]
                : CRT_colors[PROCESS];
       RichString_appendn(str, attr, buffer, len);
    } else if (this->pl->highlightMegabytes && number >= 1000) {
-      len = snprintf(buffer, 10, "%2d", number/1000);
+      len = snprintf(buffer, 10, "%2ld", number/1000);
       RichString_appendn(str, CRT_colors[PROCESS_MEGABYTES], buffer, len);
       number %= 1000;
-      len = snprintf(buffer, 10, "%03d ", number);
+      len = snprintf(buffer, 10, "%03ld ", number);
       RichString_appendn(str, CRT_colors[PROCESS], buffer, len);
    } else {
-      len = snprintf(buffer, 10, "%5d ", number);
+      len = snprintf(buffer, 10, "%5ld ", number);
       RichString_appendn(str, CRT_colors[PROCESS], buffer, len);
    }
 }
@@ -257,13 +276,14 @@ void Process_writeField(Process* this, RichString* str, ProcessField field) {
    int n = PROCESS_COMM_LEN;
 
    switch (field) {
-   case PID: snprintf(buffer, n, "%5d ", this->pid); break;
-   case PPID: snprintf(buffer, n, "%5d ", this->ppid); break;
-   case PGRP: snprintf(buffer, n, "%5d ", this->pgrp); break;
-   case SESSION: snprintf(buffer, n, "%5d ", this->session); break;
-   case TTY_NR: snprintf(buffer, n, "%5d ", this->tty_nr); break;
-   case TPGID: snprintf(buffer, n, "%5d ", this->tpgid); break;
+   case PID: snprintf(buffer, n, "%5u ", this->pid); break;
+   case PPID: snprintf(buffer, n, "%5u ", this->ppid); break;
+   case PGRP: snprintf(buffer, n, "%5u ", this->pgrp); break;
+   case SESSION: snprintf(buffer, n, "%5u ", this->session); break;
+   case TTY_NR: snprintf(buffer, n, "%5u ", this->tty_nr); break;
+   case TPGID: snprintf(buffer, n, "%5u ", this->tpgid); break;
    case PROCESSOR: snprintf(buffer, n, "%3d ", this->processor+1); break;
+   case NLWP: snprintf(buffer, n, "%4ld ", this->nlwp); break;
    case COMM: {
       if (!this->pl->treeView || this->indent == 0) {
          Process_writeCommand(this, attr, str);
@@ -312,6 +332,10 @@ void Process_writeField(Process* this, RichString* str, ProcessField field) {
            : attr;
       break;
    }
+   case M_DRS: Process_printLargeNumber(this, str, this->m_drs * PAGE_SIZE); return;
+   case M_DT: Process_printLargeNumber(this, str, this->m_dt * PAGE_SIZE); return;
+   case M_LRS: Process_printLargeNumber(this, str, this->m_lrs * PAGE_SIZE); return;
+   case M_TRS: Process_printLargeNumber(this, str, this->m_trs * PAGE_SIZE); return;
    case M_SIZE: Process_printLargeNumber(this, str, this->m_size * PAGE_SIZE); return;
    case M_RESIDENT: Process_printLargeNumber(this, str, this->m_resident * PAGE_SIZE); return;
    case M_SHARE: Process_printLargeNumber(this, str, this->m_share * PAGE_SIZE); return;
@@ -351,6 +375,10 @@ void Process_writeField(Process* this, RichString* str, ProcessField field) {
       }
       break;
    }
+   #ifdef HAVE_OPENVZ
+   case VEID: snprintf(buffer, n, "%5u ", this->veid); break;
+   case VPID: snprintf(buffer, n, "%5u ", this->vpid); break;
+   #endif
    default:
       snprintf(buffer, n, "- ");
    }
@@ -387,6 +415,14 @@ int Process_compare(const void* v1, const void* v2) {
       return (p1->state - p2->state);
    case NICE:
       return (p1->nice - p2->nice);
+   case M_DRS:
+      return (p2->m_drs - p1->m_drs);
+   case M_DT:
+      return (p2->m_dt - p1->m_dt);
+   case M_LRS:
+      return (p2->m_lrs - p1->m_lrs);
+   case M_TRS:
+      return (p2->m_trs - p1->m_trs);
    case M_SIZE:
       return (p2->m_size - p1->m_size);
    case M_RESIDENT:
@@ -405,6 +441,14 @@ int Process_compare(const void* v1, const void* v2) {
       return ((p2->utime+p2->stime) - (p1->utime+p1->stime));
    case COMM:
       return strcmp(p1->comm, p2->comm);
+   case NLWP:
+      return (p1->nlwp - p2->nlwp);
+   #ifdef HAVE_OPENVZ
+   case VEID:
+      return (p1->veid - p2->veid);
+   case VPID:
+      return (p1->vpid - p2->vpid);
+   #endif
    default:
       return (p1->pid - p2->pid);
    }
@@ -423,6 +467,10 @@ char* Process_printField(ProcessField field) {
    case STATE: return "S ";
    case PRIORITY: return "PRI ";
    case NICE: return " NI ";
+   case M_DRS: return " DATA ";
+   case M_DT: return " DIRTY ";
+   case M_LRS: return " LIB ";
+   case M_TRS: return " CODE ";
    case M_SIZE: return " VIRT ";
    case M_RESIDENT: return "  RES ";
    case M_SHARE: return "  SHR ";
@@ -434,6 +482,11 @@ char* Process_printField(ProcessField field) {
    case PERCENT_CPU: return "CPU% ";
    case PERCENT_MEM: return "MEM% ";
    case PROCESSOR: return "CPU ";
+   case NLWP: return "NLWP ";
+   #ifdef HAVE_OPENVZ
+   case VEID: return " VEID ";
+   case VPID: return " VPID ";
+   #endif
    default: return "- ";
    }
 }

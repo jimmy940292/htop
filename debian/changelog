@@ -1,3 +1,13 @@
+htop (0.6.6+svn20070915-1) unstable; urgency=low
+
+  * New upstream snapshot with dedication to Nico Golde
+    (Closes: #410398, #410391, #427127)
+    - fixes problems with trailing newline in confi (Closes: #420856)
+    - fixes segfault on missing command line args (Closes: #435651)
+    - fixes FTBS with GCC 4.3 branch (Closes: #416852)
+
+ -- Bartosz Fenski <fenio@debian.org>  Sat, 15 Sep 2007 14:37:41 +0200
+
 htop (0.6.3-1) unstable; urgency=low
 
   * New upstream version.
