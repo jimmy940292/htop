@@ -1,3 +1,12 @@
+htop (0.7-1) unstable; urgency=low
+
+  * New upstrem version. (Closes: #452634)
+  * Move URL to homepage header.
+  * Bumped Standards-Version (no changes needed).
+  * Fixed watch file. (Closes: #449631)
+
+ -- Bartosz Fenski <fenio@debian.org>  Sat, 26 Apr 2008 13:57:14 +0200
+
 htop (0.6.6+svn20070915-1) unstable; urgency=low
 
   * New upstream snapshot with dedication to Nico Golde

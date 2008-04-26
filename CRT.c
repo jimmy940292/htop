@@ -14,6 +14,7 @@ in the source distribution for its full text.
 
 #include "String.h"
 
+#include "config.h"
 #include "debug.h"
 
 #define ColorPair(i,j) COLOR_PAIR((7-i)*8+j)
@@ -181,7 +182,7 @@ void CRT_enableDelay() {
 
 void CRT_handleSIGSEGV(int signal) {
    CRT_done();
-   fprintf(stderr, "Aborted. Please report bug at http://htop.sf.net");
+   fprintf(stderr, "htop " VERSION " aborted. Please report bug at http://htop.sf.net\n");
    exit(1);
 }
 
@@ -254,7 +255,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[CHECK_BOX] = A_BOLD;
       CRT_colors[CHECK_MARK] = A_NORMAL;
       CRT_colors[CHECK_TEXT] = A_NORMAL;
-      CRT_colors[CPU_IOWAIT] = A_BOLD;
+      CRT_colors[CPU_IOWAIT] = A_NORMAL;
       CRT_colors[CPU_IRQ] = A_BOLD;
       CRT_colors[CPU_SOFTIRQ] = A_BOLD;
    } else if (CRT_colorScheme == COLORSCHEME_BLACKONWHITE) {
@@ -309,7 +310,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[CHECK_BOX] = ColorPair(Blue,White);
       CRT_colors[CHECK_MARK] = ColorPair(Black,White);
       CRT_colors[CHECK_TEXT] = ColorPair(Black,White);
-      CRT_colors[CPU_IOWAIT] = ColorPair(Yellow,White);
+      CRT_colors[CPU_IOWAIT] = A_BOLD | ColorPair(Black, Black);
       CRT_colors[CPU_IRQ] = ColorPair(Blue,White);
       CRT_colors[CPU_SOFTIRQ] = ColorPair(Blue,White);
    } else if (CRT_colorScheme == COLORSCHEME_BLACKONWHITE2) {
@@ -364,7 +365,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[CHECK_BOX] = ColorPair(Blue,Black);
       CRT_colors[CHECK_MARK] = ColorPair(Black,Black);
       CRT_colors[CHECK_TEXT] = ColorPair(Black,Black);
-      CRT_colors[CPU_IOWAIT] = ColorPair(Yellow,Black);
+      CRT_colors[CPU_IOWAIT] = A_BOLD | ColorPair(Black, Black);
       CRT_colors[CPU_IRQ] = A_BOLD | ColorPair(Blue,Black);
       CRT_colors[CPU_SOFTIRQ] = ColorPair(Blue,Black);
    } else if (CRT_colorScheme == COLORSCHEME_MIDNIGHT) {
@@ -419,7 +420,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[CHECK_BOX] = ColorPair(Cyan,Blue);
       CRT_colors[CHECK_MARK] = A_BOLD | ColorPair(White,Blue);
       CRT_colors[CHECK_TEXT] = A_NORMAL | ColorPair(White,Blue);
-      CRT_colors[CPU_IOWAIT] = A_BOLD | ColorPair(Yellow,Blue);
+      CRT_colors[CPU_IOWAIT] = ColorPair(Yellow,Blue);
       CRT_colors[CPU_IRQ] = A_BOLD | ColorPair(Black,Blue);
       CRT_colors[CPU_SOFTIRQ] = ColorPair(Black,Blue);
    } else if (CRT_colorScheme == COLORSCHEME_BLACKNIGHT) {
@@ -530,7 +531,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[CHECK_BOX] = ColorPair(Cyan,Black);
       CRT_colors[CHECK_MARK] = A_BOLD;
       CRT_colors[CHECK_TEXT] = A_NORMAL;
-      CRT_colors[CPU_IOWAIT] = ColorPair(Cyan,Black);
+      CRT_colors[CPU_IOWAIT] = A_BOLD | ColorPair(Black, Black);
       CRT_colors[CPU_IRQ] = ColorPair(Yellow,Black);
       CRT_colors[CPU_SOFTIRQ] = ColorPair(Magenta,Black);
    }

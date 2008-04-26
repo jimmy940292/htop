@@ -1,4 +1,4 @@
-.TH "htop" "1" "0.6.6" "Bartosz Fenski <fenio@o2.pl>" "Utils"
+.TH "htop" "1" "0.7" "Bartosz Fenski <fenio@o2.pl>" "Utils"
 .SH "NAME"
 htop \- interactive process viewer
 .SH "SYNTAX"
@@ -76,6 +76,9 @@ If none is tagged, sends to the currently selected process.
 .TP
 .B F10, q
 Quit
+.TP
+.B a (on multiprocessor machines)
+Set CPU affinity: mark which CPUs a process is allowed to use.
 .TP
 .B u
 Show only processes owned by a specified user.
