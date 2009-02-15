@@ -2,16 +2,20 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([htop],[0.7],[loderunner@users.sourceforge.net])
+AC_INIT([htop],[0.8.1],[loderunner@users.sourceforge.net])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([htop.c])
 AC_CONFIG_HEADER([config.h])
 
 # Checks for programs.
 AC_PROG_CC
+AM_PROG_CC_C_O
+
+AM_DISABLE_SHARED
+AM_ENABLE_STATIC
+AC_PROG_LIBTOOL
 
 # Checks for libraries.
-AC_CHECK_LIB([ncurses], [refresh], [], [missing_libraries="$missing_libraries libncurses"])
 AC_CHECK_LIB([m], [ceil], [], [missing_libraries="$missing_libraries libm"])
 
 if test ! -z "$missing_libraries"; then
@@ -43,11 +47,13 @@ AC_TYPE_SIGNAL
 AC_FUNC_STAT
 AC_CHECK_FUNCS([memmove strncasecmp strstr strdup])
 
+save_cflags="${CFLAGS}"
 CFLAGS="${CFLAGS} -std=c99"
 AC_MSG_CHECKING([whether gcc -std=c99 option works])
 AC_TRY_COMPILE(AC_INCLUDES_DEFAULT, [char *a; a = strdup("foo"); int i = 0; i++; // C99],
    AC_MSG_RESULT([yes]),
    AC_MSG_ERROR([htop is written in C99. A newer version of gcc is required.]))
+CFLAGS="$save_cflags"
 
 PROCDIR=/proc
 AC_ARG_WITH(proc, [  --with-proc=DIR      Location of a Linux-compatible proc filesystem (default=/proc).],
@@ -60,11 +66,40 @@ AC_ARG_WITH(proc, [  --with-proc=DIR      Location of a Linux-compatible proc fi
 
 AC_ARG_ENABLE(openvz, [AC_HELP_STRING([--enable-openvz], [enable OpenVZ support])], ,enable_openvz="no")
 if test "x$enable_openvz" = xyes; then
-    AC_DEFINE(HAVE_OPENVZ, 1, [Define if openvz support enabled.])
+   AC_DEFINE(HAVE_OPENVZ, 1, [Define if openvz support enabled.])
+fi
+
+AC_ARG_ENABLE(vserver, [AC_HELP_STRING([--enable-vserver], [enable VServer support])], ,enable_vserver="no")
+if test "x$enable_vserver" = xyes; then
+    AC_DEFINE(HAVE_VSERVER, 1, [Define if vserver support enabled.])
+fi
+
+AC_ARG_ENABLE(ancient_vserver, [AC_HELP_STRING([--enable-ancient-vserver], [enable ancient VServer support (implies --enable-vserver)])], ,enable_ancient_vserver="no")
+if test "x$enable_ancient_vserver" = xyes; then
+    AC_DEFINE(HAVE_VSERVER, 1, [Define if vserver support enabled.])
+    AC_DEFINE(HAVE_ANCIENT_VSERVER, 1, [Define if ancient vserver support enabled.])
+fi
+
+AC_ARG_ENABLE(taskstats, [AC_HELP_STRING([--enable-taskstats], [enable per-task IO Stats (taskstats kernel sup required)])], ,enable_taskstats="yes")
+if test "x$enable_taskstats" = xyes; then
+    AC_DEFINE(HAVE_TASKSTATS, 1, [Define if taskstats support enabled.])
+fi
+
+AC_ARG_ENABLE(unicode, [AC_HELP_STRING([--enable-unicode], [enable Unicode support])], ,enable_unicode="no")
+if test "x$enable_unicode" = xyes; then
+   AC_CHECK_LIB([ncursesw], [refresh], [], [missing_libraries="$missing_libraries libncursesw"])
+else
+   AC_CHECK_LIB([ncurses], [refresh], [], [missing_libraries="$missing_libraries libncurses"])
 fi
 
 AC_CHECK_FILE($PROCDIR/stat,,AC_MSG_ERROR(Cannot find /proc/stat. Make sure you have a Linux-compatible /proc filesystem mounted. See the file README for help.))
 AC_CHECK_FILE($PROCDIR/meminfo,,AC_MSG_ERROR(Cannot find /proc/meminfo. Make sure you have a Linux-compatible /proc filesystem mounted. See the file README for help.))
+
+PLPA_INCLUDED(plpa-1.1)
+PLPA_INIT(plpa_happy=yes, plpa_happy=no)
+if test "x$plpa_happy" = xno; then
+   AC_MSG_ERROR([Failed to initialize PLPA.])
+fi
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

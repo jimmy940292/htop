@@ -22,6 +22,34 @@ typedef struct AvailableColumnsPanel_ {
 
 }*/
 
+static void AvailableColumnsPanel_delete(Object* object) {
+   Panel* super = (Panel*) object;
+   AvailableColumnsPanel* this = (AvailableColumnsPanel*) object;
+   Panel_done(super);
+   free(this);
+}
+
+static HandlerResult AvailableColumnsPanel_eventHandler(Panel* super, int ch) {
+   AvailableColumnsPanel* this = (AvailableColumnsPanel*) super;
+   char* text = ((ListItem*) Panel_getSelected(super))->value;
+   HandlerResult result = IGNORED;
+
+   switch(ch) {
+      case 13:
+      case KEY_ENTER:
+      case KEY_F(5):
+      {
+         int at = Panel_getSelectedIndex(this->columns);
+         Panel_insert(this->columns, at, (Object*) ListItem_new(text, 0));
+         Panel_setSelected(this->columns, at+1);
+         ColumnsPanel_update(this->columns);
+         result = HANDLED;
+         break;
+      }
+   }
+   return result;
+}
+
 AvailableColumnsPanel* AvailableColumnsPanel_new(Settings* settings, Panel* columns, ScreenManager* scr) {
    AvailableColumnsPanel* this = (AvailableColumnsPanel*) malloc(sizeof(AvailableColumnsPanel));
    Panel* super = (Panel*) this;
@@ -40,33 +68,4 @@ AvailableColumnsPanel* AvailableColumnsPanel_new(Settings* settings, Panel* colu
    }
    this->columns = columns;
    return this;
-}
-
-void AvailableColumnsPanel_delete(Object* object) {
-   Panel* super = (Panel*) object;
-   AvailableColumnsPanel* this = (AvailableColumnsPanel*) object;
-   Panel_done(super);
-   free(this);
-}
-
-HandlerResult AvailableColumnsPanel_eventHandler(Panel* super, int ch) {
-   AvailableColumnsPanel* this = (AvailableColumnsPanel*) super;
-   char* text = ((ListItem*) Panel_getSelected(super))->value;
-   HandlerResult result = IGNORED;
-
-   switch(ch) {
-      case 13:
-      case KEY_ENTER:
-      case KEY_F(5):
-      {
-         int at = Panel_getSelectedIndex(this->columns) + 1;
-         if (at == Panel_getSize(this->columns))
-            at--;
-         Panel_insert(this->columns, at, (Object*) ListItem_new(text, 0));
-         ColumnsPanel_update(this->columns);
-         result = HANDLED;
-         break;
-      }
-   }
-   return result;
 }

@@ -1,3 +1,2 @@
-?package(htop):needs="text" section="Apps/System"\
-  title="htop" command="/usr/bin/htop"\
-  hints="Monitoring"
+?package(htop):needs="text" section="Applications/System/Monitoring"\
+  title="htop" command="/usr/bin/htop"

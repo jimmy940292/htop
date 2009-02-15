@@ -98,12 +98,6 @@ Panel* ScreenManager_remove(ScreenManager* this, int index) {
    return panel;
 }
 
-void ScreenManager_setFunctionBar(ScreenManager* this, FunctionBar* fuBar) {
-   if (this->owner && this->fuBar)
-      FunctionBar_delete((Object*)this->fuBar);
-   this->fuBar = fuBar;
-}
-
 void ScreenManager_resize(ScreenManager* this, int x1, int y1, int x2, int y2) {
    this->x1 = x1;
    this->y1 = y1;
@@ -150,7 +144,6 @@ void ScreenManager_run(ScreenManager* this, Panel** lastFocus, int* lastKey) {
 
       ch = getch();
       
-      bool loop = false;
       if (ch == KEY_MOUSE) {
          MEVENT mevent;
          int ok = getmouse(&mevent);
@@ -165,14 +158,12 @@ void ScreenManager_run(ScreenManager* this, Panel** lastFocus, int* lastKey) {
                      focus = i;
                      panelFocus = panel;
                      Panel_setSelected(panel, mevent.y - panel->y + panel->scrollV - 1);
-                     loop = true;
                      break;
                   }
                }
             }
          }
       }
-      if (loop) continue;
       
       if (panelFocus->eventHandler) {
          HandlerResult result = panelFocus->eventHandler(panelFocus, ch);

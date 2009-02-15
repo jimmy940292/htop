@@ -11,6 +11,7 @@ in the source distribution for its full text.
 #include "CRT.h"
 #include "String.h"
 #include "Process.h"
+#include "RichString.h"
 
 #include "debug.h"
 
@@ -27,6 +28,8 @@ in the source distribution for its full text.
 #include <pwd.h>
 #include <sched.h>
 
+#include <plpa.h>
+
 // This works only with glibc 2.1+. On earlier versions
 // the behavior is similar to have a hardcoded page size.
 #ifndef PAGE_SIZE
@@ -42,9 +45,15 @@ typedef enum ProcessField_ {
    STIME, CUTIME, CSTIME, PRIORITY, NICE, ITREALVALUE, STARTTIME, VSIZE, RSS, RLIM, STARTCODE, ENDCODE,
    STARTSTACK, KSTKESP, KSTKEIP, SIGNAL, BLOCKED, SSIGIGNORE, SIGCATCH, WCHAN, NSWAP, CNSWAP, EXIT_SIGNAL,
    PROCESSOR, M_SIZE, M_RESIDENT, M_SHARE, M_TRS, M_DRS, M_LRS, M_DT, ST_UID, PERCENT_CPU, PERCENT_MEM,
-   USER, TIME, NLWP, TGID
+   USER, TIME, NLWP, TGID,
    #ifdef HAVE_OPENVZ
    VEID, VPID,
+   #endif
+   #ifdef HAVE_VSERVER
+   VXID,
+   #endif
+   #ifdef HAVE_TASKSTATS
+   RCHAR, WCHAR, SYSCR, SYSCW, RBYTES, WBYTES, CNCLWB, IO_READ_RATE, IO_WRITE_RATE, IO_RATE,
    #endif
    LAST_PROCESSFIELD
 } ProcessField;
@@ -118,6 +127,22 @@ typedef struct Process_ {
    unsigned int veid;
    unsigned int vpid;
    #endif
+   #ifdef HAVE_VSERVER
+   unsigned int vxid;
+   #endif
+   #ifdef HAVE_TASKSTATS
+   unsigned long long io_rchar;
+   unsigned long long io_wchar;
+   unsigned long long io_syscr;
+   unsigned long long io_syscw;
+   unsigned long long io_read_bytes;
+   unsigned long long io_write_bytes;
+   unsigned long long io_cancelled_write_bytes;
+   double io_rate_read_bps;
+   unsigned long long io_rate_read_time;
+   double io_rate_write_bps;
+   unsigned long long io_rate_write_time;   
+   #endif
 } Process;
 
 }*/
@@ -129,85 +154,49 @@ char* PROCESS_CLASS = "Process";
 #endif
 
 char *Process_fieldNames[] = {
-   "", "PID", "Command", "STATE", "PPID", "PGRP", "SESSION", "TTY_NR", "TPGID", "FLAGS", "MINFLT", "CMINFLT", "MAJFLT", "CMAJFLT", "UTIME", "STIME", "CUTIME", "CSTIME", "PRIORITY", "NICE", "ITREALVALUE", "STARTTIME", "VSIZE", "RSS", "RLIM", "STARTCODE", "ENDCODE", "STARTSTACK", "KSTKESP", "KSTKEIP", "SIGNAL", "BLOCKED", "SIGIGNORE", "SIGCATCH", "WCHAN", "NSWAP", "CNSWAP", "EXIT_SIGNAL",  "PROCESSOR", "M_SIZE", "M_RESIDENT", "M_SHARE", "M_TRS", "M_DRS", "M_LRS", "M_DT", "ST_UID", "PERCENT_CPU", "PERCENT_MEM", "USER", "TIME", "NLWP", "TGID", 
+   "", "PID", "Command", "STATE", "PPID", "PGRP", "SESSION",
+   "TTY_NR", "TPGID", "FLAGS", "MINFLT", "CMINFLT", "MAJFLT", "CMAJFLT",
+   "UTIME", "STIME", "CUTIME", "CSTIME", "PRIORITY", "NICE", "ITREALVALUE",
+   "STARTTIME", "VSIZE", "RSS", "RLIM", "STARTCODE", "ENDCODE", "STARTSTACK",
+   "KSTKESP", "KSTKEIP", "SIGNAL", "BLOCKED", "SIGIGNORE", "SIGCATCH", "WCHAN",
+   "NSWAP", "CNSWAP", "EXIT_SIGNAL", "PROCESSOR", "M_SIZE", "M_RESIDENT", "M_SHARE",
+   "M_TRS", "M_DRS", "M_LRS", "M_DT", "ST_UID", "PERCENT_CPU", "PERCENT_MEM",
+   "USER", "TIME", "NLWP", "TGID", 
 #ifdef HAVE_OPENVZ
-"VEID", "VPID",
+   "VEID", "VPID",
+#endif
+#ifdef HAVE_VSERVER
+   "VXID",
+#endif
+#ifdef HAVE_TASKSTATS
+   "RCHAR", "WCHAR", "SYSCR", "SYSCW", "RBYTES", "WBYTES", "CNCLWB",
+   "IO_READ_RATE", "IO_WRITE_RATE", "IO_RATE",
 #endif
 "*** report bug! ***"
 };
 
+char *Process_fieldTitles[] = {
+   "", "  PID ", "Command ", "S ", " PPID ", " PGRP ", " SESN ",
+   "  TTY ", "TPGID ", "- ", "- ", "- ", "- ", "- ",
+   " UTIME+  ", " STIME+  ",  "- ", "- ", "PRI ", " NI ", "- ",
+   "- ", "- ", "- ", "- ", "- ", "- ", "- ",
+   "- ", "- ", "- ", "- ", "- ", "- ", "- ",
+   "- ", "- ", "- ", "CPU ", " VIRT ", "  RES ", "  SHR ",
+   " CODE ", " DATA ", " LIB ", " DIRTY ", " UID ", "CPU% ", "MEM% ",
+   "USER     ", "  TIME+  ", "NLWP ", " TGID ",
+#ifdef HAVE_OPENVZ
+   " VEID ", " VPID ",
+#endif
+#ifdef HAVE_VSERVER
+   " VXID ",
+#endif
+#ifdef HAVE_TASKSTATS
+   "   RD_CHAR ", "   WR_CHAR ", "   RD_SYSC ", "   WR_SYSC ", "     IO_RD ", "     IO_WR ", " IO_CANCEL ",
+   " IORR ", " IOWR ", "   IO ",
+#endif
+};
+
 static int Process_getuid = -1;
-
-Process* Process_new(struct ProcessList_ *pl) {
-   Process* this = malloc(sizeof(Process));
-   Object_setClass(this, PROCESS_CLASS);
-   ((Object*)this)->display = Process_display;
-   ((Object*)this)->delete = Process_delete;
-   this->pid = 0;
-   this->pl = pl;
-   this->tag = false;
-   this->updated = false;
-   this->utime = 0;
-   this->stime = 0;
-   this->comm = NULL;
-   this->indent = 0;
-   if (Process_getuid == -1) Process_getuid = getuid();
-   return this;
-}
-
-Process* Process_clone(Process* this) {
-   Process* clone = malloc(sizeof(Process));
-   memcpy(clone, this, sizeof(Process));
-   this->comm = NULL;
-   this->pid = 0;
-   return clone;
-}
-
-void Process_delete(Object* cast) {
-   Process* this = (Process*) cast;
-   assert (this != NULL);
-   if (this->comm) free(this->comm);
-   free(this);
-}
-
-void Process_display(Object* cast, RichString* out) {
-   Process* this = (Process*) cast;
-   ProcessField* fields = this->pl->fields;
-   RichString_init(out);
-   for (int i = 0; fields[i]; i++)
-      Process_writeField(this, out, fields[i]);
-   if (this->pl->shadowOtherUsers && this->st_uid != Process_getuid)
-      RichString_setAttr(out, CRT_colors[PROCESS_SHADOW]);
-   if (this->tag == true)
-      RichString_setAttr(out, CRT_colors[PROCESS_TAG]);
-   assert(out->len > 0);
-}
-
-void Process_toggleTag(Process* this) {
-   this->tag = this->tag == true ? false : true;
-}
-
-void Process_setPriority(Process* this, int priority) {
-   int old_prio = getpriority(PRIO_PROCESS, this->pid);
-   int err = setpriority(PRIO_PROCESS, this->pid, priority);
-   if (err == 0 && old_prio != getpriority(PRIO_PROCESS, this->pid)) {
-      this->nice = priority;
-   }
-}
-
-unsigned long Process_getAffinity(Process* this) {
-   unsigned long mask = 0;
-   sched_getaffinity(this->pid, sizeof(unsigned long), (cpu_set_t*) &mask);
-   return mask;
-}
-
-void Process_setAffinity(Process* this, unsigned long mask) {
-   sched_setaffinity(this->pid, sizeof(unsigned long), (cpu_set_t*) &mask);
-}
-
-void Process_sendSignal(Process* this, int signal) {
-   kill(this->pid, signal);
-}
 
 #define ONE_K 1024
 #define ONE_M (ONE_K * ONE_K)
@@ -261,30 +250,43 @@ static void Process_printTime(RichString* str, unsigned long t) {
    RichString_append(str, CRT_colors[DEFAULT_COLOR], buffer);
 }
 
-static inline void Process_writeCommand(Process* this, int attr, RichString* str) {
+static inline void Process_writeCommand(Process* this, int attr, int baseattr, RichString* str) {
+   int start = str->len;
+   RichString_append(str, attr, this->comm);
    if (this->pl->highlightBaseName) {
-      char* firstSpace = strchr(this->comm, ' ');
-      if (firstSpace) {
-         char* slash = firstSpace;
-         while (slash > this->comm && *slash != '/')
-            slash--;
-         if (slash > this->comm) {
-            slash++;
-            RichString_appendn(str, attr, this->comm, slash - this->comm);
-         }
-         RichString_appendn(str, CRT_colors[PROCESS_BASENAME], slash, firstSpace - slash);
-         RichString_append(str, attr, firstSpace);
-      } else {
-         RichString_append(str, CRT_colors[PROCESS_BASENAME], this->comm);
+      int finish = str->len - 1;
+      int space = RichString_findChar(str, ' ', start);
+      if (space != -1)
+         finish = space - 1;
+      for (;;) {
+         int slash = RichString_findChar(str, '/', start);
+         if (slash == -1 || slash > finish)
+            break;
+         start = slash + 1;
       }
-   } else {
-      RichString_append(str, attr, this->comm);
+      RichString_setAttrn(str, baseattr, start, finish);
    }
 }
 
-void Process_writeField(Process* this, RichString* str, ProcessField field) {
+static inline void Process_outputRate(Process* this, RichString* str, int attr, char* buffer, int n, double rate) {
+   rate = rate / 1024;
+   if (rate < 0.01)
+      snprintf(buffer, n, "    0 ");
+   else if (rate <= 10)
+      snprintf(buffer, n, "%5.2f ", rate);
+   else if (rate <= 100)
+      snprintf(buffer, n, "%5.1f ", rate);
+   else {
+      Process_printLargeNumber(this, str, rate);
+      return;
+   }
+   RichString_append(str, attr, buffer);
+}
+
+static void Process_writeField(Process* this, RichString* str, ProcessField field) {
    char buffer[PROCESS_COMM_LEN];
    int attr = CRT_colors[DEFAULT_COLOR];
+   int baseattr = CRT_colors[PROCESS_BASENAME];
    int n = PROCESS_COMM_LEN;
 
    switch (field) {
@@ -298,8 +300,12 @@ void Process_writeField(Process* this, RichString* str, ProcessField field) {
    case PROCESSOR: snprintf(buffer, n, "%3d ", this->processor+1); break;
    case NLWP: snprintf(buffer, n, "%4ld ", this->nlwp); break;
    case COMM: {
+      if (this->pl->highlightThreads && (this->pid != this->tgid || this->m_size == 0)) {
+         attr = CRT_colors[PROCESS_THREAD];
+         baseattr = CRT_colors[PROCESS_THREAD_BASENAME];
+      }
       if (!this->pl->treeView || this->indent == 0) {
-         Process_writeCommand(this, attr, str);
+         Process_writeCommand(this, attr, baseattr, str);
          return;
       } else {
          char* buf = buffer;
@@ -320,7 +326,7 @@ void Process_writeField(Process* this, RichString* str, ProcessField field) {
          else
             snprintf(buf, n, " ,- ");
          RichString_append(str, CRT_colors[PROCESS_TREE], buffer);
-         Process_writeCommand(this, attr, str);
+         Process_writeCommand(this, attr, baseattr, str);
          return;
       }
    }
@@ -373,8 +379,10 @@ void Process_writeField(Process* this, RichString* str, ProcessField field) {
    case CSTIME: Process_printTime(str, this->cstime); return;
    case TIME: Process_printTime(str, this->utime + this->stime); return;
    case PERCENT_CPU: {
-      if (this->percent_cpu > 99.9) {
-         snprintf(buffer, n, "100. "); 
+      if (this->percent_cpu > 999.9) {
+         snprintf(buffer, n, "%4d ", (unsigned int)this->percent_cpu); 
+      } else if (this->percent_cpu > 99.9) {
+         snprintf(buffer, n, "%3d. ", (unsigned int)this->percent_cpu); 
       } else {
          snprintf(buffer, n, "%4.1f ", this->percent_cpu);
       }
@@ -392,11 +400,111 @@ void Process_writeField(Process* this, RichString* str, ProcessField field) {
    case VEID: snprintf(buffer, n, "%5u ", this->veid); break;
    case VPID: snprintf(buffer, n, "%5u ", this->vpid); break;
    #endif
+   #ifdef HAVE_VSERVER
+   case VXID: snprintf(buffer, n, "%5u ", this->vxid); break;
+   #endif
+   #ifdef HAVE_TASKSTATS
+   case RCHAR:  snprintf(buffer, n, "%10llu ", this->io_rchar); break;
+   case WCHAR:  snprintf(buffer, n, "%10llu ", this->io_wchar); break;   
+   case SYSCR:  snprintf(buffer, n, "%10llu ", this->io_syscr); break;   
+   case SYSCW:  snprintf(buffer, n, "%10llu ", this->io_syscw); break; 
+   case RBYTES: snprintf(buffer, n, "%10llu ", this->io_read_bytes); break; 
+   case WBYTES: snprintf(buffer, n, "%10llu ", this->io_write_bytes); break; 
+   case CNCLWB: snprintf(buffer, n, "%10llu ", this->io_cancelled_write_bytes); break; 
+   case IO_READ_RATE:  Process_outputRate(this, str, attr, buffer, n, this->io_rate_read_bps); return;
+   case IO_WRITE_RATE: Process_outputRate(this, str, attr, buffer, n, this->io_rate_write_bps); return;
+   case IO_RATE: Process_outputRate(this, str, attr, buffer, n, this->io_rate_read_bps + this->io_rate_write_bps); return;
+   #endif
+
    default:
       snprintf(buffer, n, "- ");
    }
    RichString_append(str, attr, buffer);
-   return;
+}
+
+static void Process_display(Object* cast, RichString* out) {
+   Process* this = (Process*) cast;
+   ProcessField* fields = this->pl->fields;
+   RichString_init(out);
+   for (int i = 0; fields[i]; i++)
+      Process_writeField(this, out, fields[i]);
+   if (this->pl->shadowOtherUsers && this->st_uid != Process_getuid)
+      RichString_setAttr(out, CRT_colors[PROCESS_SHADOW]);
+   if (this->tag == true)
+      RichString_setAttr(out, CRT_colors[PROCESS_TAG]);
+   assert(out->len > 0);
+}
+
+void Process_delete(Object* cast) {
+   Process* this = (Process*) cast;
+   assert (this != NULL);
+   if (this->comm) free(this->comm);
+   free(this);
+}
+
+Process* Process_new(struct ProcessList_ *pl) {
+   Process* this = calloc(sizeof(Process), 1);
+   Object_setClass(this, PROCESS_CLASS);
+   ((Object*)this)->display = Process_display;
+   ((Object*)this)->delete = Process_delete;
+   this->pid = 0;
+   this->pl = pl;
+   this->tag = false;
+   this->updated = false;
+   this->utime = 0;
+   this->stime = 0;
+   this->comm = NULL;
+   this->indent = 0;
+   if (Process_getuid == -1) Process_getuid = getuid();
+   return this;
+}
+
+Process* Process_clone(Process* this) {
+   Process* clone = malloc(sizeof(Process));
+   #if HAVE_TASKSTATS
+   this->io_rchar = 0;
+   this->io_wchar = 0;
+   this->io_syscr = 0;
+   this->io_syscw = 0;
+   this->io_read_bytes = 0;
+   this->io_rate_read_bps = 0;
+   this->io_rate_read_time = 0;
+   this->io_write_bytes = 0;
+   this->io_rate_write_bps = 0;
+   this->io_rate_write_time = 0;
+   this->io_cancelled_write_bytes = 0;
+   #endif
+   memcpy(clone, this, sizeof(Process));
+   this->comm = NULL;
+   this->pid = 0;
+   return clone;
+}
+
+void Process_toggleTag(Process* this) {
+   this->tag = this->tag == true ? false : true;
+}
+
+bool Process_setPriority(Process* this, int priority) {
+   int old_prio = getpriority(PRIO_PROCESS, this->pid);
+   int err = setpriority(PRIO_PROCESS, this->pid, priority);
+   if (err == 0 && old_prio != getpriority(PRIO_PROCESS, this->pid)) {
+      this->nice = priority;
+   }
+   return (err == 0);
+}
+
+unsigned long Process_getAffinity(Process* this) {
+   unsigned long mask = 0;
+   plpa_sched_getaffinity(this->pid, sizeof(unsigned long), (plpa_cpu_set_t*) &mask);
+   return mask;
+}
+
+bool Process_setAffinity(Process* this, unsigned long mask) {
+   return (plpa_sched_setaffinity(this->pid, sizeof(unsigned long), (plpa_cpu_set_t*) &mask) == 0);
+}
+
+void Process_sendSignal(Process* this, int signal) {
+   kill(this->pid, signal);
 }
 
 int Process_pidCompare(const void* v1, const void* v2) {
@@ -415,6 +523,7 @@ int Process_compare(const void* v1, const void* v2) {
       p2 = (Process*)v1;
       p1 = (Process*)v2;
    }
+   long long diff;
    switch (pl->sortKey) {
    case PID:
       return (p1->pid - p2->pid);
@@ -462,45 +571,26 @@ int Process_compare(const void* v1, const void* v2) {
    case VPID:
       return (p1->vpid - p2->vpid);
    #endif
+   #ifdef HAVE_VSERVER
+   case VXID:
+      return (p1->vxid - p2->vxid);
+   #endif
+   #ifdef HAVE_TASKSTATS
+   case RCHAR:  diff = p2->io_rchar - p1->io_rchar; goto test_diff;
+   case WCHAR:  diff = p2->io_wchar - p1->io_wchar; goto test_diff;
+   case SYSCR:  diff = p2->io_syscr - p1->io_syscr; goto test_diff;
+   case SYSCW:  diff = p2->io_syscw - p1->io_syscw; goto test_diff;
+   case RBYTES: diff = p2->io_read_bytes - p1->io_read_bytes; goto test_diff;
+   case WBYTES: diff = p2->io_write_bytes - p1->io_write_bytes; goto test_diff;
+   case CNCLWB: diff = p2->io_cancelled_write_bytes - p1->io_cancelled_write_bytes; goto test_diff;
+   case IO_READ_RATE:  diff = p2->io_rate_read_bps - p1->io_rate_read_bps; goto test_diff;
+   case IO_WRITE_RATE: diff = p2->io_rate_write_bps - p1->io_rate_write_bps; goto test_diff;
+   case IO_RATE: diff = (p2->io_rate_read_bps + p2->io_rate_write_bps) - (p1->io_rate_read_bps + p1->io_rate_write_bps); goto test_diff;
+   #endif
+
    default:
       return (p1->pid - p2->pid);
    }
-
-}
-
-char* Process_printField(ProcessField field) {
-   switch (field) {
-   case PID: return "  PID ";
-   case PPID: return " PPID ";
-   case PGRP: return " PGRP ";
-   case SESSION: return " SESN ";
-   case TTY_NR: return "  TTY ";
-   case TGID: return " TGID ";
-   case TPGID: return "TPGID ";
-   case COMM: return "Command ";
-   case STATE: return "S ";
-   case PRIORITY: return "PRI ";
-   case NICE: return " NI ";
-   case M_DRS: return " DATA ";
-   case M_DT: return " DIRTY ";
-   case M_LRS: return " LIB ";
-   case M_TRS: return " CODE ";
-   case M_SIZE: return " VIRT ";
-   case M_RESIDENT: return "  RES ";
-   case M_SHARE: return "  SHR ";
-   case ST_UID: return " UID ";
-   case USER: return "USER     ";
-   case UTIME: return " UTIME+  ";
-   case STIME: return " STIME+  ";
-   case TIME: return "  TIME+  ";
-   case PERCENT_CPU: return "CPU% ";
-   case PERCENT_MEM: return "MEM% ";
-   case PROCESSOR: return "CPU ";
-   case NLWP: return "NLWP ";
-   #ifdef HAVE_OPENVZ
-   case VEID: return " VEID ";
-   case VPID: return " VPID ";
-   #endif
-   default: return "- ";
-   }
+   test_diff:
+   return (diff > 0) ? 1 : (diff < 0 ? -1 : 0);
 }

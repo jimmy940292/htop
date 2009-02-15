@@ -7,7 +7,7 @@ Upstream Author: Hisham Muhammad <lode@gobolinux.org>
 
 Copyright:
 
-Copyright 2004, 2005 Hisham Muhammad <lode@gobolinux.org>
+Copyright (C) 2004, 2005 Hisham Muhammad <lode@gobolinux.org>
 
 License:
 
@@ -17,5 +17,5 @@ Free Software Foundation; either version 2, or (at your option) any
 later version.
 
 On Debian systems, the complete text of the GNU General Public License
-can be found in the file `/usr/share/common-licenses/GPL'.
+can be found in the file `/usr/share/common-licenses/GPL-2'.
 

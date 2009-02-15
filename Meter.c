@@ -18,6 +18,7 @@ in the source distribution for its full text.
 #include "ListItem.h"
 #include "String.h"
 #include "ProcessList.h"
+#include "RichString.h"
 
 #include "debug.h"
 #include <assert.h>
@@ -95,7 +96,9 @@ typedef enum {
 #include "TasksMeter.h"
 #include "LoadAverageMeter.h"
 #include "UptimeMeter.h"
+#include "BatteryMeter.h"
 #include "ClockMeter.h"
+
 
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
@@ -119,46 +122,8 @@ MeterType* Meter_types[] = {
    &SwapMeter,
    &TasksMeter,
    &UptimeMeter,
+   &BatteryMeter,
    &AllCPUsMeter,
-   NULL
-};
-
-static MeterMode BarMeterMode = {
-   .uiName = "Bar",
-   .h = 1,
-   .draw = BarMeterMode_draw,
-};
-
-static MeterMode TextMeterMode = {
-   .uiName = "Text",
-   .h = 1,
-   .draw = TextMeterMode_draw,
-};
-
-#ifdef USE_FUNKY_MODES
-
-static MeterMode GraphMeterMode = {
-   .uiName = "Graph",
-   .h = 3,
-   .draw = GraphMeterMode_draw,
-};
-
-static MeterMode LEDMeterMode = {
-   .uiName = "LED",
-   .h = 3,
-   .draw = LEDMeterMode_draw,
-};
-
-#endif
-
-MeterMode* Meter_modes[] = {
-   NULL,
-   &BarMeterMode,
-   &TextMeterMode,
-#ifdef USE_FUNKY_MODES
-   &GraphMeterMode,
-   &LEDMeterMode,
-#endif
    NULL
 };
 
@@ -253,7 +218,7 @@ ListItem* Meter_toListItem(Meter* this) {
 
 /* ---------- TextMeterMode ---------- */
 
-void TextMeterMode_draw(Meter* this, int x, int y, int w) {
+static void TextMeterMode_draw(Meter* this, int x, int y, int w) {
    MeterType* type = this->type;
    char buffer[METER_BUFFER_LEN];
    type->setValues(this, buffer, METER_BUFFER_LEN - 1);
@@ -266,22 +231,22 @@ void TextMeterMode_draw(Meter* this, int x, int y, int w) {
    Meter_displayToStringBuffer(this, buffer);
    mvhline(y, x, ' ', CRT_colors[DEFAULT_COLOR]);
    attrset(CRT_colors[RESET_COLOR]);
-   mvaddchstr(y, x, Meter_stringBuffer.chstr);
+   RichString_printVal(Meter_stringBuffer, y, x);
 }
 
 /* ---------- BarMeterMode ---------- */
 
 static char BarMeterMode_characters[] = "|#*@$%&";
 
-void BarMeterMode_draw(Meter* this, int x, int y, int w) {
+static void BarMeterMode_draw(Meter* this, int x, int y, int w) {
    MeterType* type = this->type;
    char buffer[METER_BUFFER_LEN];
    type->setValues(this, buffer, METER_BUFFER_LEN - 1);
 
    w -= 2;
    attrset(CRT_colors[METER_TEXT]);
-   mvaddstr(y, x, this->caption);
-   int captionLen = strlen(this->caption);
+   int captionLen = 3;
+   mvaddnstr(y, x, this->caption, captionLen);
    x += captionLen;
    w -= captionLen;
    attrset(CRT_colors[BAR_BORDER]);
@@ -361,7 +326,7 @@ static int GraphMeterMode_colors[21] = {
 
 static char* GraphMeterMode_characters = "^`'-.,_~'`-.,_~'`-.,_";
 
-void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
+static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
 
    if (!this->drawBuffer) this->drawBuffer = calloc(sizeof(double), METER_BUFFER_LEN);
    double* drawBuffer = (double*) this->drawBuffer;
@@ -407,7 +372,7 @@ static void LEDMeterMode_drawDigit(int x, int y, int n) {
       mvaddstr(y+i, x, LEDMeterMode_digits[i][n]);
 }
 
-void LEDMeterMode_draw(Meter* this, int x, int y, int w) {
+static void LEDMeterMode_draw(Meter* this, int x, int y, int w) {
    MeterType* type = this->type;
    char buffer[METER_BUFFER_LEN];
    type->setValues(this, buffer, METER_BUFFER_LEN - 1);
@@ -418,7 +383,7 @@ void LEDMeterMode_draw(Meter* this, int x, int y, int w) {
    mvaddstr(y+2, x, this->caption);
    int xx = x + strlen(this->caption);
    for (int i = 0; i < Meter_stringBuffer.len; i++) {
-      char c = Meter_stringBuffer.chstr[i];
+      char c = RichString_getCharVal(Meter_stringBuffer, i);
       if (c >= '0' && c <= '9') {
          LEDMeterMode_drawDigit(xx, y, c-48);
          xx += 4;
@@ -431,3 +396,42 @@ void LEDMeterMode_draw(Meter* this, int x, int y, int w) {
 }
 
 #endif
+
+static MeterMode BarMeterMode = {
+   .uiName = "Bar",
+   .h = 1,
+   .draw = BarMeterMode_draw,
+};
+
+static MeterMode TextMeterMode = {
+   .uiName = "Text",
+   .h = 1,
+   .draw = TextMeterMode_draw,
+};
+
+#ifdef USE_FUNKY_MODES
+
+static MeterMode GraphMeterMode = {
+   .uiName = "Graph",
+   .h = 3,
+   .draw = GraphMeterMode_draw,
+};
+
+static MeterMode LEDMeterMode = {
+   .uiName = "LED",
+   .h = 3,
+   .draw = LEDMeterMode_draw,
+};
+
+#endif
+
+MeterMode* Meter_modes[] = {
+   NULL,
+   &BarMeterMode,
+   &TextMeterMode,
+#ifdef USE_FUNKY_MODES
+   &GraphMeterMode,
+   &LEDMeterMode,
+#endif
+   NULL
+};

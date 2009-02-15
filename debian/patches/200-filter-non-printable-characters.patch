@@ -1,0 +1,14 @@
+Filters non-printable characters from process names. See #504144 in Debian BTS.
+Index: htop/RichString.c
+===================================================================
+--- htop.orig/RichString.c	2008-12-06 11:13:19.679940957 +0200
++++ htop/RichString.c	2008-12-06 11:14:57.454712750 +0200
+@@ -89,7 +89,7 @@
+ inline void RichString_appendn(RichString* this, int attrs, char* data_c, int len) {
+    int last = MIN(RICHSTRING_MAXLEN - 1, len + this->len);
+    for (int i = this->len, j = 0; i < last; i++, j++)
+-      this->chstr[i] = data_c[j] | attrs;
++      this->chstr[i] = (isprint(data_c[j]) ? data_c[j] : '?') | attrs;
+    this->chstr[last] = 0;
+    this->len = last;
+ }

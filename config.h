@@ -4,12 +4,18 @@
 /* Define to 1 if the `closedir' function returns void instead of `int'. */
 /* #undef CLOSEDIR_VOID */
 
+/* Define if ancient vserver support enabled. */
+/* #undef HAVE_ANCIENT_VSERVER */
+
 /* Define to 1 if you have the <curses.h> header file. */
 #define HAVE_CURSES_H 1
 
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
 #define HAVE_DIRENT_H 1
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#define HAVE_DLFCN_H 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -19,6 +25,9 @@
 
 /* Define to 1 if you have the `ncurses' library (-lncurses). */
 #define HAVE_LIBNCURSES 1
+
+/* Define to 1 if you have the `ncursesw' library (-lncursesw). */
+/* #undef HAVE_LIBNCURSESW */
 
 /* Define to 1 if your system has a GNU libc compatible `malloc' function, and
    to 0 otherwise. */
@@ -88,8 +97,14 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 1
 
+/* Define if taskstats support enabled. */
+#define HAVE_TASKSTATS 1
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
+
+/* Define if vserver support enabled. */
+/* #undef HAVE_VSERVER */
 
 /* Define to 1 if the system has the type `_Bool'. */
 #define HAVE__BOOL 1
@@ -97,6 +112,9 @@
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
 #define LSTAT_FOLLOWS_SLASHED_SYMLINK 1
+
+/* Define to 1 if your C compiler doesn't accept -c and -o together. */
+/* #undef NO_MINUS_C_MINUS_O */
 
 /* Name of package */
 #define PACKAGE "htop"
@@ -108,13 +126,19 @@
 #define PACKAGE_NAME "htop"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "htop 0.7"
+#define PACKAGE_STRING "htop 0.8.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "htop"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.7"
+#define PACKAGE_VERSION "0.8.1"
+
+/* The PLPA symbol prefix */
+#define PLPA_SYM_PREFIX plpa_
+
+/* The PLPA symbol prefix in all caps */
+#define PLPA_SYM_PREFIX_CAPS PLPA_
 
 /* Path of proc filesystem */
 #define PROCDIR "/proc"
@@ -126,13 +150,25 @@
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "0.7"
+#define VERSION "0.8.1"
+
+/* Emulated value */
+/* #undef __NR_sched_getaffinity */
+
+/* Emulated value */
+/* #undef __NR_sched_setaffinity */
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
 
 /* Define to `int' if <sys/types.h> doesn't define. */
 /* #undef gid_t */
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+/* #undef inline */
+#endif
 
 /* Define to rpl_malloc if the replacement function should be used. */
 /* #undef malloc */

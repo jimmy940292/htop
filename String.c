@@ -18,10 +18,6 @@ in the source distribution for its full text.
 #define String_startsWith(s, match) (strstr((s), (match)) == (s))
 }*/
 
-inline void String_delete(char* s) {
-   free(s);
-}
-
 inline char* String_copy(char* orig) {
    return strdup(orig);
 }
@@ -47,53 +43,6 @@ char* String_trim(char* in) {
    strncpy(out, in, len);
    out[len] = '\0';
    return out;
-}
-
-char* String_copyUpTo(char* orig, char upTo) {
-   int len;
-   
-   int origLen = strlen(orig);
-   char* at = strchr(orig, upTo);
-   if (at != NULL)
-      len = at - orig;
-   else
-      len = origLen;
-   char* copy = (char*) malloc(len+1);
-   strncpy(copy, orig, len);
-   copy[len] = '\0';
-   return copy;
-}
-
-char* String_sub(char* orig, int from, int to) {
-   char* copy;
-   int len;
-   
-   len = strlen(orig);
-   if (to > len)
-      to = len;
-   if (from > len)
-      to = len;
-   len = to-from+1;
-   copy = (char*) malloc(len+1);
-   strncpy(copy, orig+from, len);
-   copy[len] = '\0';
-   return copy;
-}
-
-void String_println(char* s) {
-   printf("%s\n", s);
-}
-
-void String_print(char* s) {
-   printf("%s", s);
-}
-
-void String_printInt(int i) {
-   printf("%i", i);
-}
-
-void String_printPointer(void* p) {
-   printf("%p", p);
 }
 
 inline int String_eq(const char* s1, const char* s2) {
@@ -144,10 +93,6 @@ void String_freeArray(char** s) {
    free(s);
 }
 
-int String_startsWith_i(char* s, char* match) {
-   return (strncasecmp(s, match, strlen(match)) == 0);
-}
-
 int String_contains_i(char* s, char* match) {
    int lens = strlen(s);
    int lenmatch = strlen(match);
@@ -157,4 +102,31 @@ int String_contains_i(char* s, char* match) {
       s++;
    }
    return 0;
+}
+
+char* String_getToken(const char* line, const unsigned short int numMatch) {
+   const unsigned short int len = strlen(line);
+   char inWord = 0;
+   unsigned short int count = 0;
+   char match[50];
+
+   unsigned short int foundCount = 0;
+
+   for (unsigned short int i = 0; i < len; i++) {
+      char lastState = inWord;
+      inWord = line[i] == ' ' ? 0:1;
+
+      if (lastState == 0 && inWord == 1)
+         count++;
+    
+      if(inWord == 1){
+         if (count == numMatch && line[i] != ' ' && line[i] != '\0' && line[i] != '\n' && line[i] != EOF) {
+            match[foundCount] = line[i];
+            foundCount++;
+         }
+      }
+   }
+
+   match[foundCount] = '\0';
+   return((char*)strdup(match));
 }

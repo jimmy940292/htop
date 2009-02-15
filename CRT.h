@@ -58,6 +58,7 @@ typedef enum ColorElements_ {
    METER_VALUE,
    LED_COLOR,
    UPTIME,
+   BATTERY,
    TASKS_TOTAL,
    TASKS_RUNNING,
    SWAP,
@@ -70,6 +71,8 @@ typedef enum ColorElements_ {
    PROCESS_BASENAME,
    PROCESS_HIGH_PRIORITY,
    PROCESS_LOW_PRIORITY,
+   PROCESS_THREAD,
+   PROCESS_THREAD_BASENAME,
    BAR_BORDER,
    BAR_SHADOW,
    GRAPH_1,
@@ -124,10 +127,6 @@ int CRT_readKey();
 void CRT_disableDelay();
 
 void CRT_enableDelay();
-
-void CRT_handleSIGSEGV(int signal);
-
-void CRT_handleSIGTERM(int signal);
 
 void CRT_setColors(int colorScheme);
 

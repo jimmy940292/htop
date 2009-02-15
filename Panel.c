@@ -31,6 +31,8 @@ typedef enum HandlerResult_ {
    BREAK_LOOP
 } HandlerResult;
 
+#define EVENT_SETSELECTED -1
+
 typedef HandlerResult(*Panel_EventHandler)(Panel*, int);
 
 struct Panel_ {
@@ -222,6 +224,9 @@ void Panel_setSelected(Panel* this, int selected) {
 
    selected = MAX(0, MIN(Vector_size(this->items) - 1, selected));
    this->selected = selected;
+   if (this->eventHandler) {
+      this->eventHandler(this, EVENT_SETSELECTED);
+   }
 }
 
 void Panel_draw(Panel* this, bool focus) {
@@ -260,8 +265,8 @@ void Panel_draw(Panel* this, bool focus) {
       attrset(attr);
       mvhline(y, x, ' ', this->w);
       if (scrollH < this->header.len) {
-         mvaddchnstr(y, x, this->header.chstr + scrollH,
-                     MIN(this->header.len - scrollH, this->w));
+         RichString_printoffnVal(this->header, y, x, scrollH,
+            MIN(this->header.len - scrollH, this->w));
       }
       attrset(CRT_colors[RESET_COLOR]);
       y++;
@@ -284,12 +289,12 @@ void Panel_draw(Panel* this, bool focus) {
             RichString_setAttr(&itemRef, highlight);
             mvhline(y + j, x+0, ' ', this->w);
             if (amt > 0)
-               mvaddchnstr(y+j, x+0, itemRef.chstr + scrollH, amt);
+               RichString_printoffnVal(itemRef, y+j, x+0, scrollH, amt);
             attrset(CRT_colors[RESET_COLOR]);
          } else {
             mvhline(y+j, x+0, ' ', this->w);
             if (amt > 0)
-               mvaddchnstr(y+j, x+0, itemRef.chstr + scrollH, amt);
+               RichString_printoffnVal(itemRef, y+j, x+0, scrollH, amt);
          }
       }
       for (int i = y + (last - first); i < y + this->h; i++)
@@ -307,12 +312,14 @@ void Panel_draw(Panel* this, bool focus) {
       newObj->display(newObj, &newRef);
       mvhline(y+ this->oldSelected - this->scrollV, x+0, ' ', this->w);
       if (scrollH < oldRef.len)
-         mvaddchnstr(y+ this->oldSelected - this->scrollV, x+0, oldRef.chstr + this->scrollH, MIN(oldRef.len - scrollH, this->w));
+         RichString_printoffnVal(oldRef, y+this->oldSelected - this->scrollV, x,
+            this->scrollH, MIN(oldRef.len - scrollH, this->w));
       attrset(highlight);
       mvhline(y+this->selected - this->scrollV, x+0, ' ', this->w);
       RichString_setAttr(&newRef, highlight);
       if (scrollH < newRef.len)
-         mvaddchnstr(y+this->selected - this->scrollV, x+0, newRef.chstr + this->scrollH, MIN(newRef.len - scrollH, this->w));
+         RichString_printoffnVal(newRef, y+this->selected - this->scrollV, x,
+            this->scrollH, MIN(newRef.len - scrollH, this->w));
       attrset(CRT_colors[RESET_COLOR]);
    }
    this->oldSelected = this->selected;

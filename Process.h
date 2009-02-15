@@ -14,6 +14,7 @@ in the source distribution for its full text.
 #include "Object.h"
 #include "CRT.h"
 #include "String.h"
+#include "RichString.h"
 
 #include "debug.h"
 
@@ -29,6 +30,8 @@ in the source distribution for its full text.
 #include <stdbool.h>
 #include <pwd.h>
 #include <sched.h>
+
+#include <plpa.h>
 
 // This works only with glibc 2.1+. On earlier versions
 // the behavior is similar to have a hardcoded page size.
@@ -47,6 +50,12 @@ typedef enum ProcessField_ {
    USER, TIME, NLWP, TGID,
    #ifdef HAVE_OPENVZ
    VEID, VPID,
+   #endif
+   #ifdef HAVE_VSERVER
+   VXID,
+   #endif
+   #ifdef HAVE_TASKSTATS
+   RCHAR, WCHAR, SYSCR, SYSCW, RBYTES, WBYTES, CNCLWB, IO_READ_RATE, IO_WRITE_RATE, IO_RATE,
    #endif
    LAST_PROCESSFIELD
 } ProcessField;
@@ -120,6 +129,22 @@ typedef struct Process_ {
    unsigned int veid;
    unsigned int vpid;
    #endif
+   #ifdef HAVE_VSERVER
+   unsigned int vxid;
+   #endif
+   #ifdef HAVE_TASKSTATS
+   unsigned long long io_rchar;
+   unsigned long long io_wchar;
+   unsigned long long io_syscr;
+   unsigned long long io_syscw;
+   unsigned long long io_read_bytes;
+   unsigned long long io_write_bytes;
+   unsigned long long io_cancelled_write_bytes;
+   double io_rate_read_bps;
+   unsigned long long io_rate_read_time;
+   double io_rate_write_bps;
+   unsigned long long io_rate_write_time;   
+   #endif
 } Process;
 
 
@@ -131,34 +156,30 @@ extern char* PROCESS_CLASS;
 
 extern char *Process_fieldNames[];
 
-Process* Process_new(struct ProcessList_ *pl);
-
-Process* Process_clone(Process* this);
-
-void Process_delete(Object* cast);
-
-void Process_display(Object* cast, RichString* out);
-
-void Process_toggleTag(Process* this);
-
-void Process_setPriority(Process* this, int priority);
-
-unsigned long Process_getAffinity(Process* this);
-
-void Process_setAffinity(Process* this, unsigned long mask);
-
-void Process_sendSignal(Process* this, int signal);
+extern char *Process_fieldTitles[];
 
 #define ONE_K 1024
 #define ONE_M (ONE_K * ONE_K)
 #define ONE_G (ONE_M * ONE_K)
 
-void Process_writeField(Process* this, RichString* str, ProcessField field);
+void Process_delete(Object* cast);
+
+Process* Process_new(struct ProcessList_ *pl);
+
+Process* Process_clone(Process* this);
+
+void Process_toggleTag(Process* this);
+
+bool Process_setPriority(Process* this, int priority);
+
+unsigned long Process_getAffinity(Process* this);
+
+bool Process_setAffinity(Process* this, unsigned long mask);
+
+void Process_sendSignal(Process* this, int signal);
 
 int Process_pidCompare(const void* v1, const void* v2);
 
 int Process_compare(const void* v1, const void* v2);
-
-char* Process_printField(ProcessField field);
 
 #endif

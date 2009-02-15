@@ -27,39 +27,6 @@ typedef struct Settings_ {
 
 }*/
 
-Settings* Settings_new(ProcessList* pl, Header* header) {
-   Settings* this = malloc(sizeof(Settings));
-   this->pl = pl;
-   this->header = header;
-   char* home;
-   char* rcfile;
-   home = getenv("HOME_ETC");
-   if (!home) home = getenv("HOME");
-   if (!home) home = "";
-   rcfile = getenv("HOMERC");
-   if (!rcfile)
-      this->userSettings = String_cat(home, "/.htoprc");
-   else
-      this->userSettings = String_copy(rcfile);
-   this->colorScheme = 0;
-   this->changed = false;
-   this->delay = DEFAULT_DELAY;
-   bool ok = Settings_read(this, this->userSettings);
-   if (!ok) {
-      this->changed = true;
-      // TODO: how to get SYSCONFDIR correctly through Autoconf?
-      char* systemSettings = String_cat(SYSCONFDIR, "/htoprc");
-      ok = Settings_read(this, systemSettings);
-      free(systemSettings);
-      if (!ok) {
-         Header_defaultMeters(this->header);
-         pl->hideKernelThreads = true;
-         pl->highlightMegabytes = true;
-      }
-   }
-   return this;
-}
-
 void Settings_delete(Settings* this) {
    free(this->userSettings);
    free(this);
@@ -88,7 +55,7 @@ static void Settings_readMeterModes(Settings* this, char* line, HeaderSide side)
    String_freeArray(ids);
 }
 
-bool Settings_read(Settings* this, char* fileName) {
+static bool Settings_read(Settings* this, char* fileName) {
    // TODO: implement File object and make
    // file I/O object-oriented.
    FILE* fd;
@@ -96,7 +63,7 @@ bool Settings_read(Settings* this, char* fileName) {
    if (fd == NULL) {
       return false;
    }
-   const int maxLine = 512;
+   const int maxLine = 65535;
    char buffer[maxLine];
    bool readMeters = false;
    while (!feof(fd)) {
@@ -137,6 +104,8 @@ bool Settings_read(Settings* this, char* fileName) {
          this->pl->highlightBaseName = atoi(option[1]);
       } else if (String_eq(option[0], "highlight_megabytes")) {
          this->pl->highlightMegabytes = atoi(option[1]);
+      } else if (String_eq(option[0], "highlight_threads")) {
+         this->pl->highlightThreads = atoi(option[1]);
       } else if (String_eq(option[0], "header_margin")) {
          this->header->margin = atoi(option[1]);
       } else if (String_eq(option[0], "expand_system_time")) {
@@ -198,6 +167,7 @@ bool Settings_write(Settings* this) {
    fprintf(fd, "shadow_other_users=%d\n", (int) this->pl->shadowOtherUsers);
    fprintf(fd, "highlight_base_name=%d\n", (int) this->pl->highlightBaseName);
    fprintf(fd, "highlight_megabytes=%d\n", (int) this->pl->highlightMegabytes);
+   fprintf(fd, "highlight_threads=%d\n", (int) this->pl->highlightThreads);
    fprintf(fd, "tree_view=%d\n", (int) this->pl->treeView);
    fprintf(fd, "header_margin=%d\n", (int) this->header->margin);
    fprintf(fd, "detailed_cpu_time=%d\n", (int) this->pl->detailedCPUTime);
@@ -227,4 +197,38 @@ bool Settings_write(Settings* this) {
    fprintf(fd, "\n");
    fclose(fd);
    return true;
+}
+
+Settings* Settings_new(ProcessList* pl, Header* header) {
+   Settings* this = malloc(sizeof(Settings));
+   this->pl = pl;
+   this->header = header;
+   char* home;
+   char* rcfile;
+   home = getenv("HOME_ETC");
+   if (!home) home = getenv("HOME");
+   if (!home) home = "";
+   rcfile = getenv("HOMERC");
+   if (!rcfile)
+      this->userSettings = String_cat(home, "/.htoprc");
+   else
+      this->userSettings = String_copy(rcfile);
+   this->colorScheme = 0;
+   this->changed = false;
+   this->delay = DEFAULT_DELAY;
+   bool ok = Settings_read(this, this->userSettings);
+   if (!ok) {
+      this->changed = true;
+      // TODO: how to get SYSCONFDIR correctly through Autoconf?
+      char* systemSettings = String_cat(SYSCONFDIR, "/htoprc");
+      ok = Settings_read(this, systemSettings);
+      free(systemSettings);
+      if (!ok) {
+         Header_defaultMeters(this->header);
+         pl->hideKernelThreads = true;
+         pl->highlightMegabytes = true;
+         pl->highlightThreads = false;
+      }
+   }
+   return this;
 }

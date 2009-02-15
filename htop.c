@@ -1,6 +1,6 @@
 /*
 htop - htop.c
-(C) 2004-2006 Hisham H. Muhammad
+(C) 2004-2008 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -11,6 +11,7 @@ in the source distribution for its full text.
 #include <sys/param.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <locale.h>
 
 #include "ProcessList.h"
 #include "CRT.h"
@@ -34,16 +35,16 @@ in the source distribution for its full text.
 
 #define INCSEARCH_MAX 40
 
-void printVersionFlag() {
+static void printVersionFlag() {
    clear();
-   printf("htop " VERSION " - (C) 2004-2006 Hisham Muhammad.\n");
+   printf("htop " VERSION " - (C) 2004-2008 Hisham Muhammad.\n");
    printf("Released under the GNU GPL.\n\n");
    exit(0);
 }
 
-void printHelpFlag() {
+static void printHelpFlag() {
    clear();
-   printf("htop " VERSION " - (C) 2004-2006 Hisham Muhammad.\n");
+   printf("htop " VERSION " - (C) 2004-2008 Hisham Muhammad.\n");
    printf("Released under the GNU GPL.\n\n");
    printf("-d DELAY     Delay between updates, in tenths of seconds\n\n");
    printf("-u USERNAME  Show only processes of a given user\n\n");
@@ -53,10 +54,14 @@ void printHelpFlag() {
    exit(0);
 }
 
-void showHelp(ProcessList* pl) {
+static void showHelp(ProcessList* pl) {
    clear();
    attrset(CRT_colors[HELP_BOLD]);
-   mvaddstr(0, 0, "htop " VERSION " - (C) 2004-2006 Hisham Muhammad.");
+
+   for (int i = 0; i < LINES-1; i++)
+      mvhline(i, 0, ' ', COLS);
+
+   mvaddstr(0, 0, "htop " VERSION " - (C) 2004-2008 Hisham Muhammad.");
    mvaddstr(1, 0, "Released under the GNU GPL. See 'man' page for more info.");
 
    attrset(CRT_colors[DEFAULT_COLOR]);
@@ -139,10 +144,12 @@ void showHelp(ProcessList* pl) {
    clear();
 }
 
+static char* CategoriesFunctions[10] = {"      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "Done  "};
+
 static void Setup_run(Settings* settings, int headerHeight) {
    ScreenManager* scr = ScreenManager_new(0, headerHeight, 0, -1, HORIZONTAL, true);
    CategoriesPanel* panelCategories = CategoriesPanel_new(settings, scr);
-   ScreenManager_add(scr, (Panel*) panelCategories, NULL, 16);
+   ScreenManager_add(scr, (Panel*) panelCategories, FunctionBar_new(10, CategoriesFunctions, NULL, NULL), 16);
    CategoriesPanel_makeMetersPage(panelCategories);
    Panel* panelFocus;
    int ch;
@@ -151,18 +158,21 @@ static void Setup_run(Settings* settings, int headerHeight) {
 }
 
 static bool changePriority(Panel* panel, int delta) {
+   bool ok = true;
    bool anyTagged = false;
    for (int i = 0; i < Panel_getSize(panel); i++) {
       Process* p = (Process*) Panel_get(panel, i);
       if (p->tag) {
-         Process_setPriority(p, p->nice + delta);
+         ok = Process_setPriority(p, p->nice + delta) && ok;
          anyTagged = true;
       }
    }
    if (!anyTagged) {
       Process* p = (Process*) Panel_getSelected(panel);
-      Process_setPriority(p, p->nice + delta);
+      ok = Process_setPriority(p, p->nice + delta) && ok;
    }
+   if (!ok)
+      beep();
    return anyTagged;
 }
 
@@ -193,18 +203,26 @@ static Object* pickFromList(Panel* panel, Panel* list, int x, int y, char** keyL
    return NULL;
 }
 
-void addUserToList(int key, void* userCast, void* panelCast) {
+static void addUserToList(int key, void* userCast, void* panelCast) {
    char* user = (char*) userCast;
    Panel* panel = (Panel*) panelCast;
    Panel_add(panel, (Object*) ListItem_new(user, key));
 }
 
-void setUserOnly(const char* userName, bool* userOnly, uid_t* userId) {
+static void setUserOnly(const char* userName, bool* userOnly, uid_t* userId) {
    struct passwd* user = getpwnam(userName);
    if (user) {
       *userOnly = true;
       *userId = user->pw_uid;
    }
+}
+
+static inline void setSortKey(ProcessList* pl, ProcessField sortKey, Panel* panel, Settings* settings) {
+   pl->sortKey = sortKey;
+   pl->direction = 1;
+   pl->treeView = false;
+   settings->changed = true;
+   Panel_setRichHeader(panel, ProcessList_printHeader(pl));
 }
 
 int main(int argc, char** argv) {
@@ -213,6 +231,12 @@ int main(int argc, char** argv) {
    bool userOnly = false;
    uid_t userId = 0;
    int sortKey = 0;
+
+   char *lc_ctype = getenv("LC_CTYPE");
+   if(lc_ctype != NULL)
+      setlocale(LC_CTYPE, lc_ctype);
+   else
+      setlocale(LC_CTYPE, getenv("LC_ALL"));
 
    int arg = 1;
    while (arg < argc) {
@@ -274,10 +298,6 @@ int main(int argc, char** argv) {
    
    Header* header = Header_new(pl);
    settings = Settings_new(pl, header);
-   if (sortKey > 0) {
-      pl->sortKey = sortKey;
-      pl->treeView = false;
-   }
    int headerHeight = Header_calculateHeight(header);
 
    // FIXME: move delay code to settings
@@ -287,6 +307,11 @@ int main(int argc, char** argv) {
    CRT_init(settings->delay, settings->colorScheme);
    
    panel = Panel_new(0, headerHeight, COLS, LINES - headerHeight - 2, PROCESS_CLASS, false, NULL);
+   if (sortKey > 0) {
+      pl->sortKey = sortKey;
+      pl->treeView = false;
+      pl->direction = 1;
+   }
    Panel_setRichHeader(panel, ProcessList_printHeader(pl));
    
    char* searchFunctions[3] = {"Next  ", "Exit  ", " Search: "};
@@ -433,7 +458,18 @@ int main(int argc, char** argv) {
          MEVENT mevent;
          int ok = getmouse(&mevent);
          if (ok == OK) {
-            if (mevent.y >= panel->y + 1 && mevent.y < LINES - 1) {
+            if (mevent.y == panel->y) {
+               int x = panel->scrollH + mevent.x + 1;
+               ProcessField field = ProcessList_keyAt(pl, x);
+               if (field == pl->sortKey) {
+                  ProcessList_invertSortOrder(pl);
+                  pl->treeView = false;
+               } else {
+                  setSortKey(pl, field, panel, settings);
+               }
+               refreshTimeout = 0;
+               continue;
+            } else if (mevent.y >= panel->y + 1 && mevent.y < LINES - 1) {
                Panel_setSelected(panel, mevent.y - panel->y + panel->scrollV - 1);
                doRefresh = false;
                refreshTimeout = resetRefreshTimeout;
@@ -460,19 +496,13 @@ int main(int argc, char** argv) {
       case 'M':
       {
          refreshTimeout = 0;
-         pl->sortKey = PERCENT_MEM;
-         pl->treeView = false;
-         settings->changed = true;
-         Panel_setRichHeader(panel, ProcessList_printHeader(pl));
+         setSortKey(pl, PERCENT_MEM, panel, settings);
          break;
       }
       case 'T':
       {
          refreshTimeout = 0;
-         pl->sortKey = TIME;
-         pl->treeView = false;
-         settings->changed = true;
-         Panel_setRichHeader(panel, ProcessList_printHeader(pl));
+         setSortKey(pl, TIME, panel, settings);
          break;
       }
       case 'U':
@@ -487,10 +517,7 @@ int main(int argc, char** argv) {
       case 'P':
       {
          refreshTimeout = 0;
-         pl->sortKey = PERCENT_CPU;
-         pl->treeView = false;
-         settings->changed = true;
-         Panel_setRichHeader(panel, ProcessList_printHeader(pl));
+         setSortKey(pl, PERCENT_CPU, panel, settings);
          break;
       }
       case KEY_F(1):
@@ -608,20 +635,25 @@ int main(int argc, char** argv) {
          
          Panel* affinityPanel = AffinityPanel_new(pl->processorCount, curr);
 
-         char* fuFunctions[2] = {"Toggle ", "Done  "};
-         pickFromList(panel, affinityPanel, 15, headerHeight, fuFunctions, defaultBar);
-         unsigned long new = AffinityPanel_getAffinity(affinityPanel);
-         bool anyTagged = false;
-         for (int i = 0; i < Panel_getSize(panel); i++) {
-            Process* p = (Process*) Panel_get(panel, i);
-            if (p->tag) {
-               Process_setAffinity(p, new);
-               anyTagged = true;
+         char* fuFunctions[2] = {"Set    ", "Cancel "};
+         void* set = pickFromList(panel, affinityPanel, 15, headerHeight, fuFunctions, defaultBar);
+         if (set) {
+            unsigned long new = AffinityPanel_getAffinity(affinityPanel);
+            bool anyTagged = false;
+            bool ok = true;
+            for (int i = 0; i < Panel_getSize(panel); i++) {
+               Process* p = (Process*) Panel_get(panel, i);
+               if (p->tag) {
+                  ok = Process_setAffinity(p, new) && ok;
+                  anyTagged = true;
+               }
             }
-         }
-         if (!anyTagged) {
-            Process* p = (Process*) Panel_getSelected(panel);
-            Process_setAffinity(p, new);
+            if (!anyTagged) {
+               Process* p = (Process*) Panel_getSelected(panel);
+               ok = Process_setAffinity(p, new) && ok;
+            }
+            if (!ok)
+               beep();
          }
          ((Object*)affinityPanel)->delete((Object*)affinityPanel);
          Panel_setRichHeader(panel, ProcessList_printHeader(pl));
@@ -644,7 +676,7 @@ int main(int argc, char** argv) {
          char* fuFunctions[2] = {"Sort  ", "Cancel "};
          ProcessField* fields = pl->fields;
          for (int i = 0; fields[i]; i++) {
-            char* name = String_trim(Process_printField(fields[i]));
+            char* name = String_trim(Process_fieldTitles[fields[i]]);
             Panel_add(sortPanel, (Object*) ListItem_new(name, fields[i]));
             if (fields[i] == pl->sortKey)
                Panel_setSelected(sortPanel, i);
@@ -652,12 +684,12 @@ int main(int argc, char** argv) {
          }
          ListItem* field = (ListItem*) pickFromList(panel, sortPanel, 15, headerHeight, fuFunctions, defaultBar);
          if (field) {
-            pl->treeView = false;
             settings->changed = true;
-            pl->sortKey = field->key;
+            setSortKey(pl, field->key, panel, settings);
+         } else {
+            Panel_setRichHeader(panel, ProcessList_printHeader(pl));
          }
          ((Object*)sortPanel)->delete((Object*)sortPanel);
-         Panel_setRichHeader(panel, ProcessList_printHeader(pl));
          refreshTimeout = 0;
          break;
       }
@@ -697,7 +729,8 @@ int main(int argc, char** argv) {
          break;
       case 'H':
          refreshTimeout = 0;
-         pl->hideThreads = !pl->hideThreads;
+         pl->hideUserlandThreads = !pl->hideUserlandThreads;
+         pl->hideThreads = pl->hideUserlandThreads;
          settings->changed = true;
          break;
       case 'K':

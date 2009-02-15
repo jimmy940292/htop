@@ -4,7 +4,7 @@
 #define HEADER_htop
 /*
 htop - htop.h
-(C) 2004-2006 Hisham H. Muhammad
+(C) 2004-2008 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -15,6 +15,7 @@ in the source distribution for its full text.
 #include <sys/param.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <locale.h>
 
 #include "ProcessList.h"
 #include "CRT.h"
@@ -37,16 +38,6 @@ in the source distribution for its full text.
 //#link m
 
 #define INCSEARCH_MAX 40
-
-void printVersionFlag();
-
-void printHelpFlag();
-
-void showHelp(ProcessList* pl);
-
-void addUserToList(int key, void* userCast, void* panelCast);
-
-void setUserOnly(const char* userName, bool* userOnly, uid_t* userId);
 
 int main(int argc, char** argv);
 

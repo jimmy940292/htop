@@ -3,12 +3,18 @@
 /* Define to 1 if the `closedir' function returns void instead of `int'. */
 #undef CLOSEDIR_VOID
 
+/* Define if ancient vserver support enabled. */
+#undef HAVE_ANCIENT_VSERVER
+
 /* Define to 1 if you have the <curses.h> header file. */
 #undef HAVE_CURSES_H
 
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
 #undef HAVE_DIRENT_H
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -18,6 +24,9 @@
 
 /* Define to 1 if you have the `ncurses' library (-lncurses). */
 #undef HAVE_LIBNCURSES
+
+/* Define to 1 if you have the `ncursesw' library (-lncursesw). */
+#undef HAVE_LIBNCURSESW
 
 /* Define to 1 if your system has a GNU libc compatible `malloc' function, and
    to 0 otherwise. */
@@ -87,8 +96,14 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Define if taskstats support enabled. */
+#undef HAVE_TASKSTATS
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define if vserver support enabled. */
+#undef HAVE_VSERVER
 
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
@@ -96,6 +111,9 @@
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
 #undef LSTAT_FOLLOWS_SLASHED_SYMLINK
+
+/* Define to 1 if your C compiler doesn't accept -c and -o together. */
+#undef NO_MINUS_C_MINUS_O
 
 /* Name of package */
 #undef PACKAGE
@@ -115,6 +133,12 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* The PLPA symbol prefix */
+#undef PLPA_SYM_PREFIX
+
+/* The PLPA symbol prefix in all caps */
+#undef PLPA_SYM_PREFIX_CAPS
+
 /* Path of proc filesystem */
 #undef PROCDIR
 
@@ -127,11 +151,23 @@
 /* Version number of package */
 #undef VERSION
 
+/* Emulated value */
+#undef __NR_sched_getaffinity
+
+/* Emulated value */
+#undef __NR_sched_setaffinity
+
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
 
 /* Define to `int' if <sys/types.h> doesn't define. */
 #undef gid_t
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif
 
 /* Define to rpl_malloc if the replacement function should be used. */
 #undef malloc

@@ -1,4 +1,35 @@
 
+What's new in version 0.8.1
+
+* Linux-VServer support
+  (thanks to Jonathan Sambrook and Benedikt Bohm)
+* Battery meter
+  (thanks to Ian Page Hands)
+* BUGFIX: Fix collection of IO stats in multithreaded processes
+  (thanks to Gerhard Heift)
+* Remove assertion that fails on hardened kernels
+  (thanks to Wolfram Schlich for the report)
+
+What's new in version 0.8
+
+* Ability to change sort column with the mouse by
+  clicking column titles (click again to invert order)
+* Add support for Linux per-process IO statistics,
+  enabled with the --enable-taskstats flag, which
+  requires a kernel compiled with taskstats support.
+  (thanks to Tobias Oetiker)
+* Add Unicode support, enabled with the --enable-unicode
+  flag, which requires libncursesw.
+  (thanks to Sergej Pupykin)
+* BUGFIX: Fix display of CPU count for threaded processes.
+  When user threads are hidden, process now shows the
+  sum of processor usage for all processors. When user
+  threads are displayed, each thread shows its own
+  processor usage, including the root thread.
+  (thanks to Bert Wesarg for the report)
+* BUGFIX: avoid crashing when using many meters
+  (thanks to David Cho for the report)
+
 What's new in version 0.7
 
 * CPU affinity configuration ('a' key)

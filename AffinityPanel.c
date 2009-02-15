@@ -7,6 +7,24 @@
 #include "debug.h"
 #include <assert.h>
 
+static HandlerResult AffinityPanel_eventHandler(Panel* this, int ch) {
+   HandlerResult result = IGNORED;
+   CheckItem* selected = (CheckItem*) Panel_getSelected(this);
+   switch(ch) {
+   case KEY_MOUSE:
+   case ' ':
+      CheckItem_set(selected, ! (CheckItem_get(selected)) );
+      result = HANDLED;
+      break;
+   case 0x0a:
+   case 0x0d:
+   case KEY_ENTER:
+      result = BREAK_LOOP;
+      break;
+   }
+   return result;
+}
+
 Panel* AffinityPanel_new(int processorCount, unsigned long mask) {
    Panel* this = Panel_new(1, 1, 1, 1, CHECKITEM_CLASS, true, ListItem_compare);
    this->eventHandler = AffinityPanel_eventHandler;
@@ -28,18 +46,4 @@ unsigned long AffinityPanel_getAffinity(Panel* this) {
          mask = mask | (1 << i);
    }
    return mask;
-}
-
-HandlerResult AffinityPanel_eventHandler(Panel* this, int ch) {
-   HandlerResult result = IGNORED;
-   CheckItem* selected = (CheckItem*) Panel_getSelected(this);
-   switch(ch) {
-   case 0x0a:
-   case 0x0d:
-   case KEY_ENTER:
-   case ' ':
-      CheckItem_set(selected, ! (CheckItem_get(selected)) );
-      result = HANDLED;
-   }
-   return result;
 }
