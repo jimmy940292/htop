@@ -1,9 +1,23 @@
+htop (0.8.1-4) unstable; urgency=low
+
+  * debian/patches:
+    - New 600-openvz-veid-on-kernels-gt-2.6.18.patch: fix determining veid on
+      openvz-enabled kernels greater than 2.6.18. Patch by
+      Thorsten Schifferdecker <tsd@debian.systs.org>. (Closes: #516846)
+    - New 610-rename-veid-to-ctid.patch: openvz: renames 'veid' -> 'ctid' since
+      it's now a preferred term. Patch by
+      Thorsten Schifferdecker <tsd@debian.systs.org>. (Closes: #516847)
+    - New 700-ltrace-support.patch: add ltrace(1) support in addition to strace
+      support. Patch by <knotor@users.sourceforge.net>.
+    - New 800-tree-view-with-userland-threads.patch: patch to fix tree view when
+      userland threads are hidden, taken from Ubuntu.
+
+ -- Eugene V. Lyubimkin <jackyf.devel@gmail.com>  Mon, 02 Mar 2009 23:17:04 +0200
+
 htop (0.8.1-3) unstable; urgency=low
 
   * debian/rules:
     - Don't ship empty directories in the package.
-  * debian/control:
-    - Allow DM uploads.
 
  -- Eugene V. Lyubimkin <jackyf.devel@gmail.com>  Sun, 15 Feb 2009 13:56:41 +0200
 

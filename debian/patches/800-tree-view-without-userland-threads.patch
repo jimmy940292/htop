@@ -1,0 +1,15 @@
+Index: htop/ProcessList.c
+===================================================================
+--- htop.orig/ProcessList.c	2009-02-25 23:08:35.396191440 +0200
++++ htop/ProcessList.c	2009-02-25 23:10:26.525680664 +0200
+@@ -563,9 +563,7 @@
+                process->pid = pid;
+             }
+          }
+-         if (parent) {
+-            process->tgid = parent->pid;
+-         }
++         process->tgid = parent ? parent->pid : pid;
+ 
+          if (showUserlandThreads && (!parent || pid != parent->pid)) {
+             char subdirname[MAX_NAME+1];

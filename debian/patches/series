@@ -1,2 +1,6 @@
 010-make-desktop-file-valid.patch
 200-filter-non-printable-characters.patch
+600-openvz-veid-on-kernels-gt-2.6.18.patch -p1
+610-rename-veid-to-ctid.patch -p1
+700-ltrace-support.patch -p1
+800-tree-view-without-userland-threads.patch
