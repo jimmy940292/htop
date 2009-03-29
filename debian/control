@@ -3,7 +3,7 @@ Section: utils
 Priority: optional
 Maintainer: Eugene V. Lyubimkin <jackyf.devel@gmail.com>
 Build-Depends: debhelper (>= 7), libncurses5-dev, autotools-dev, quilt (>= 0.40), python-minimal
-Standards-Version: 3.8.0
+Standards-Version: 3.8.1
 DM-Upload-Allowed: yes
 Homepage: http://htop.sourceforge.net
 

@@ -1,4 +1,7 @@
 010-make-desktop-file-valid.patch
+100-upstream-sort-by-processor-and-session.patch
+110-upstream-fix-page-size-on-BSD.patch
+120-upstream-explain-cpu-bars-in-monochrome-mode.patch
 200-filter-non-printable-characters.patch
 600-openvz-veid-on-kernels-gt-2.6.18.patch -p1
 610-rename-veid-to-ctid.patch -p1

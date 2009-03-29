@@ -1,3 +1,23 @@
+htop (0.8.1-5) unstable; urgency=low
+
+  * debian/patches:
+    - New 100-upstream-sort-by-processor-and-session.patch, cherry-picked from
+      upstream svn: allow sorting by 'processor' and 'session' columns.
+      (Closes: #501317)
+    - New debian/patches/110-upstream-fix-page-size-on-BSD.patch,
+      cherry-picked from upstream svn: fix page size on BSD systems.
+      (Closes: #485277)
+    - New debian/patches/120-upstream-explain-cpu-bars-in-monochrome-mode.patch,
+      cherry-picked from upstream svn: document meanings of chars in CPU bars
+      in monochrome mode. (Closes: #477222)
+    - 600-openvz-veid-on-kernels-gt-2.6.18.patch: added a description.
+    - 610-rename-veid-to-ctid.patch: added a description.
+    - 800-tree-view-without-userland-threads.patch: added a description.
+  * debian/control:
+    - Bump 'Standards-Version' to 3.8.1, no changes needed.
+
+ -- Eugene V. Lyubimkin <jackyf.devel@gmail.com>  Sun, 29 Mar 2009 19:49:53 +0300
+
 htop (0.8.1-4) unstable; urgency=low
 
   * debian/patches:
