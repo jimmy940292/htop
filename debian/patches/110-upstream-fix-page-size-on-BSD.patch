@@ -1,8 +1,8 @@
 Fix page size on BSD systems.
 Index: htop/Process.c
 ===================================================================
---- htop.orig/Process.c	2009-03-29 20:03:00.601034016 +0300
-+++ htop/Process.c	2009-03-29 20:03:56.029033456 +0300
+--- htop.orig/Process.c	2009-03-29 22:51:01.865040249 +0300
++++ htop/Process.c	2009-03-29 22:51:02.933034296 +0300
 @@ -33,8 +33,9 @@
  // This works only with glibc 2.1+. On earlier versions
  // the behavior is similar to have a hardcoded page size.
@@ -35,3 +35,16 @@ Index: htop/Process.c
     case ST_UID: snprintf(buffer, n, "%4d ", this->st_uid); break;
     case USER: {
        if (Process_getuid != this->st_uid)
+Index: htop/ProcessList.c
+===================================================================
+--- htop.orig/ProcessList.c	2009-03-29 22:48:20.445032821 +0300
++++ htop/ProcessList.c	2009-03-29 22:51:02.933034296 +0300
+@@ -698,7 +698,7 @@
+             period * 100.0;
+          process->percent_cpu = MAX(MIN(percent_cpu, processors*100.0), 0.0);
+ 
+-         process->percent_mem = (process->m_resident * PAGE_SIZE) / 
++         process->percent_mem = (process->m_resident * PAGE_SIZE_KB) / 
+             (float)(this->totalMem) * 
+             100.0;
+ 

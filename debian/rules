@@ -20,6 +20,7 @@ config.status: configure $(QUILT_STAMPFN)
 
 build: build-stamp
 build-stamp: config.status
+	scripts/MakeHeader.py Process.c
 	dh build --before dh_auto_configure
 	dh build --after dh_auto_configure
 	touch build-stamp

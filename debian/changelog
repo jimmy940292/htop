@@ -1,3 +1,14 @@
+htop (0.8.1-6) unstable; urgency=low
+
+  * debian/patches:
+    - debian/patches/110-upstream-fix-page-size-on-BSD.patch was accidentally
+      incorrectly applied, causing zeroes in memory columns. Fixed.
+  * debian/rules:
+    - File Process.c somewhy is not regenerated during normal build process.
+      Regenerate it by hand.
+
+ -- Eugene V. Lyubimkin <jackyf.devel@gmail.com>  Sun, 29 Mar 2009 22:37:49 +0300
+
 htop (0.8.1-5) unstable; urgency=low
 
   * debian/patches:
