@@ -99,8 +99,10 @@ static void showHelp(ProcessList* pl) {
    addattrstr(CRT_colors[BAR_BORDER], "]");
    attrset(CRT_colors[DEFAULT_COLOR]);
    mvaddstr(6,0, "Type and layout of header meters are configurable in the setup screen.");
-   mvaddstr(7, 0, "Status: R: running; S: sleeping; T: traced/stopped; Z: zombie; D: disk sleep");
-
+   if (CRT_colorScheme == COLORSCHEME_MONOCHROME) {
+      mvaddstr(7, 0, "In monochrome, meters are displayed through different chars, in order: |#*@$%&");
+   }
+   mvaddstr( 8, 0, " Status: R: running; S: sleeping; T: traced/stopped; Z: zombie; D: disk sleep");
    mvaddstr( 9, 0, " Arrows: scroll process list             F5 t: tree view");
    mvaddstr(10, 0, " Digits: incremental PID search             u: show processes of a single user");
    mvaddstr(11, 0, "   F3 /: incremental name search            H: hide/show user threads");
@@ -110,9 +112,11 @@ static void showHelp(ProcessList* pl) {
    mvaddstr(15, 0, "   F9 k: kill process/tagged processes      P: sort by CPU%");
    mvaddstr(16, 0, " + [ F7: lower priority (+ nice)            M: sort by MEM%");
    mvaddstr(17, 0, " - ] F8: higher priority (root only)        T: sort by TIME");
+#ifdef HAVE_PLPA
    if (pl->processorCount > 1)
       mvaddstr(18, 0, "      a: set CPU affinity                F4 I: invert sort order");
    else
+#endif
       mvaddstr(18, 0, "                                         F4 I: invert sort order");
    mvaddstr(19, 0, "   F2 S: setup                           F6 >: select sort column");
    mvaddstr(20, 0, "   F1 h: show this help screen");
@@ -129,8 +133,10 @@ static void showHelp(ProcessList* pl) {
    mvaddstr(16, 0, " + [ F7"); mvaddstr(16,40, "    M");
    mvaddstr(17, 0, " - ] F8"); mvaddstr(17,40, "    T");
                                mvaddstr(18,40, " F4 I");
+#if HAVE_PLPA
    if (pl->processorCount > 1)
       mvaddstr(18, 0, "      a:");
+#endif
    mvaddstr(19, 0, "   F2 S"); mvaddstr(19,40, " F6 >");
    mvaddstr(20, 0, "   F1 h");
    mvaddstr(21, 0, "  F10 q"); mvaddstr(21,40, "    s");
@@ -282,6 +288,7 @@ int main(int argc, char** argv) {
    int refreshTimeout = 0;
    int resetRefreshTimeout = 5;
    bool doRefresh = true;
+   bool doRecalculate = false;
    Settings* settings;
    
    Panel* killPanel = NULL;
@@ -353,8 +360,10 @@ int main(int argc, char** argv) {
          int currScrollV = panel->scrollV;
          if (follow)
             currPid = ProcessList_get(pl, currPos)->pid;
-         if (recalculate)
+         if (recalculate || doRecalculate) {
             ProcessList_scan(pl);
+            doRecalculate = false;
+         }
          if (refreshTimeout == 0) {
             ProcessList_sort(pl);
             refreshTimeout = 1;
@@ -625,6 +634,7 @@ int main(int argc, char** argv) {
          refreshTimeout = 0;
          break;
       }
+#ifdef HAVE_PLPA
       case 'a':
       {
          if (pl->processorCount == 1)
@@ -660,6 +670,7 @@ int main(int argc, char** argv) {
          refreshTimeout = 0;
          break;
       }
+#endif
       case KEY_F(10):
       case 'q':
          quit = 1;
@@ -728,12 +739,14 @@ int main(int argc, char** argv) {
          settings->changed = true;
          break;
       case 'H':
+         doRecalculate = true;
          refreshTimeout = 0;
          pl->hideUserlandThreads = !pl->hideUserlandThreads;
          pl->hideThreads = pl->hideUserlandThreads;
          settings->changed = true;
          break;
       case 'K':
+         doRecalculate = true;
          refreshTimeout = 0;
          pl->hideKernelThreads = !pl->hideKernelThreads;
          settings->changed = true;

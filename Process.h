@@ -31,13 +31,16 @@ in the source distribution for its full text.
 #include <pwd.h>
 #include <sched.h>
 
+#ifdef HAVE_PLPA
 #include <plpa.h>
+#endif
 
 // This works only with glibc 2.1+. On earlier versions
 // the behavior is similar to have a hardcoded page size.
 #ifndef PAGE_SIZE
-#define PAGE_SIZE ( sysconf(_SC_PAGESIZE) / 1024 )
+#define PAGE_SIZE ( sysconf(_SC_PAGESIZE) )
 #endif
+#define PAGE_SIZE_KB ( PAGE_SIZE / ONE_K )
 
 #define PROCESS_COMM_LEN 300
 
@@ -49,7 +52,7 @@ typedef enum ProcessField_ {
    PROCESSOR, M_SIZE, M_RESIDENT, M_SHARE, M_TRS, M_DRS, M_LRS, M_DT, ST_UID, PERCENT_CPU, PERCENT_MEM,
    USER, TIME, NLWP, TGID,
    #ifdef HAVE_OPENVZ
-   VEID, VPID,
+   CTID, VPID,
    #endif
    #ifdef HAVE_VSERVER
    VXID,
@@ -126,7 +129,7 @@ typedef struct Process_ {
    float percent_mem;
    char* user;
    #ifdef HAVE_OPENVZ
-   unsigned int veid;
+   unsigned int ctid;
    unsigned int vpid;
    #endif
    #ifdef HAVE_VSERVER
@@ -172,9 +175,11 @@ void Process_toggleTag(Process* this);
 
 bool Process_setPriority(Process* this, int priority);
 
+#ifdef HAVE_PLPA
 unsigned long Process_getAffinity(Process* this);
 
 bool Process_setAffinity(Process* this, unsigned long mask);
+#endif
 
 void Process_sendSignal(Process* this, int signal);
 

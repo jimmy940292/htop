@@ -11,7 +11,17 @@ DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 config.status: configure $(QUILT_STAMPFN)
 	dh_testdir
-	cp /usr/share/misc/config.sub /usr/share/misc/config.guess .
+	
+	[ -r config.sub.orig ] || \
+		cp -f config.sub config.sub.orig
+	[ -r config.guess.orig ] || \
+		cp -f config.guess config.guess.orig
+	
+	[ ! -r /usr/share/misc/config.sub ] || \
+		cp -f /usr/share/misc/config.sub config.sub
+	[ ! -r /usr/share/misc/config.guess ] || \
+		cp -f /usr/share/misc/config.guess config.guess
+	
 	CFLAGS="$(CFLAGS)" LDFLAGS="$(INSTALL_PROGRAM)" ./configure \
 		   --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
 		   --prefix=/usr --mandir=\$${prefix}/share/man \
@@ -31,8 +41,11 @@ clean: unpatch
 	rm -f build-stamp 
 	
 	([ -f Makefile ] && $(MAKE) distclean) || true
+	[ ! -r config.guess.orig ] || \
+		mv -f config.guess.orig config.guess || :
+	[ ! -r config.sub.orig ] || \
+		mv -f config.sub.orig config.sub || :
 	
-	dh_clean config.sub config.guess
 	dh_clean
 
 install: build

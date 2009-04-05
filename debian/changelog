@@ -1,3 +1,25 @@
+htop (0.8.1+svn149-1) unstable; urgency=low
+
+  * New upstream development snapshot:
+    - Allow building withough PLPA support. (Closes: #521861)
+  * debian/patches:
+    - 010-make-desktop-file-valid.patch: deleted, merged upstream.
+    - 100-upstream-sort-by-processor-and-session.patch: deleted, merged
+      upstream.
+    - 110-upstream-fix-page-size-on-BSD.patch: deleted, merged upstream.
+    - 120-upstream-explain-cpu-bars-in-monochrome-mode.patch: deleted, merged
+      upstream.
+    - 200-filter-non-printable-characters.patch: deleted, upstream has own
+      version of this patch.
+    - 610-rename-veid-to-ctid.patch: deleted, merged upstream.
+    - 600-openvz-veid-on-kernels-gt-2.6.18.patch: refreshed.
+    - 800-tree-view-without-userland-threads.patch: deleted, merged upstream.
+    - 700-ltrace-support.patch: refreshed, added the description.
+  * debian/rules:
+    - Deal more robustly with config.{sub,guess} files, thanks to Roger Leigh.
+
+ -- Eugene V. Lyubimkin <jackyf.devel@gmail.com>  Sun, 05 Apr 2009 11:51:34 +0300
+
 htop (0.8.1-6) unstable; urgency=low
 
   * debian/patches:

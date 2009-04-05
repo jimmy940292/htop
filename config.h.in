@@ -44,6 +44,9 @@
 /* Define if openvz support enabled. */
 #undef HAVE_OPENVZ
 
+/* Have plpa */
+#undef HAVE_PLPA
+
 /* Define to 1 if your system has a GNU libc compatible `realloc' function,
    and to 0 otherwise. */
 #undef HAVE_REALLOC

@@ -1,8 +1,9 @@
-diff --git a/TraceScreen.c b/TraceScreen.c
-index 072c26d..087e6cc 100644
---- a/TraceScreen.c
-+++ b/TraceScreen.c
-@@ -23,11 +23,17 @@ in the source distribution for its full text.
+Add support for 'ltrace' in addition to 'strace' support.
+Index: htop/TraceScreen.c
+===================================================================
+--- htop.orig/TraceScreen.c	2009-04-05 11:17:49.000000000 +0300
++++ htop/TraceScreen.c	2009-04-05 12:26:08.935062271 +0300
+@@ -23,11 +23,17 @@
  
  /*{
  
@@ -20,7 +21,7 @@ index 072c26d..087e6cc 100644
  } TraceScreen;
  
  }*/
-@@ -38,9 +44,10 @@ static char* tbKeys[3] = {"F4", "F5", "Esc"};
+@@ -38,9 +44,10 @@
  
  static int tbEvents[3] = {KEY_F(4), KEY_F(5), 27};
  
@@ -32,7 +33,7 @@ index 072c26d..087e6cc 100644
     this->display = Panel_new(0, 1, COLS, LINES-2, LISTITEM_CLASS, true, ListItem_compare);
     this->bar = FunctionBar_new(3, tbFunctions, tbKeys, tbEvents);
     this->tracing = true;
-@@ -56,7 +63,14 @@ void TraceScreen_delete(TraceScreen* this) {
+@@ -56,7 +63,14 @@
  static void TraceScreen_draw(TraceScreen* this) {
     attrset(CRT_colors[PANEL_HEADER_FOCUS]);
     mvhline(0, 0, ' ', COLS);
@@ -48,7 +49,7 @@ index 072c26d..087e6cc 100644
     attrset(CRT_colors[DEFAULT_COLOR]);
     FunctionBar_draw(this->bar, NULL);
  }
-@@ -73,15 +87,24 @@ void TraceScreen_run(TraceScreen* this) {
+@@ -73,15 +87,24 @@
        dup2(fdpair[1], STDERR_FILENO);
        fcntl(fdpair[1], F_SETFL, O_NONBLOCK);
        sprintf(buffer, "%d", this->process->pid);
@@ -77,7 +78,7 @@ index 072c26d..087e6cc 100644
     TraceScreen_draw(this);
     CRT_disableDelay();
     bool contLine = false;
-@@ -90,13 +113,13 @@ void TraceScreen_run(TraceScreen* this) {
+@@ -90,13 +113,13 @@
     while (looping) {
        fd_set fds;
        FD_ZERO(&fds);
@@ -94,7 +95,7 @@ index 072c26d..087e6cc 100644
        if (nread && this->tracing) {
           char* line = buffer;
           buffer[nread] = '\0';
-@@ -164,6 +187,6 @@ void TraceScreen_run(TraceScreen* this) {
+@@ -164,6 +187,6 @@
     }
     kill(child, SIGTERM);
     waitpid(child, NULL, 0);
@@ -102,11 +103,11 @@ index 072c26d..087e6cc 100644
 +   fclose(trace);
     CRT_enableDelay();
  }
-diff --git a/TraceScreen.h b/TraceScreen.h
-index d2904a7..cad4450 100644
---- a/TraceScreen.h
-+++ b/TraceScreen.h
-@@ -25,15 +25,21 @@ in the source distribution for its full text.
+Index: htop/TraceScreen.h
+===================================================================
+--- htop.orig/TraceScreen.h	2009-04-05 11:17:49.000000000 +0300
++++ htop/TraceScreen.h	2009-04-05 12:26:08.935062271 +0300
+@@ -25,15 +25,21 @@
  #include "FunctionBar.h"
  
  
@@ -129,11 +130,11 @@ index d2904a7..cad4450 100644
  
  void TraceScreen_delete(TraceScreen* this);
  
-diff --git a/htop.1 b/htop.1
-index 57c7012..27ae732 100644
---- a/htop.1
-+++ b/htop.1
-@@ -35,6 +35,11 @@ Trace process system calls: if strace(1) is installed, pressing this key
+Index: htop/htop.1
+===================================================================
+--- htop.orig/htop.1	2009-04-05 11:17:49.000000000 +0300
++++ htop/htop.1	2009-04-05 12:26:08.935062271 +0300
+@@ -35,6 +35,11 @@
  will attach it to the currently selected process, presenting a live
  update of system calls issued by the process.
  .TP
@@ -145,11 +146,11 @@ index 57c7012..27ae732 100644
  .B F1, h
  Help screen
  .TP
-diff --git a/htop.c b/htop.c
-index c74b6b3..42d1aca 100644
---- a/htop.c
-+++ b/htop.c
-@@ -117,6 +117,7 @@ static void showHelp(ProcessList* pl) {
+Index: htop/htop.c
+===================================================================
+--- htop.orig/htop.c	2009-04-05 11:48:46.352047326 +0300
++++ htop/htop.c	2009-04-05 12:26:08.935062271 +0300
+@@ -121,6 +121,7 @@
     mvaddstr(19, 0, "   F2 S: setup                           F6 >: select sort column");
     mvaddstr(20, 0, "   F1 h: show this help screen");
     mvaddstr(21, 0, "  F10 q: quit                               s: trace syscalls with strace");
@@ -157,7 +158,7 @@ index c74b6b3..42d1aca 100644
  
     attrset(CRT_colors[HELP_BOLD]);
     mvaddstr( 9, 0, " Arrows"); mvaddstr( 9,40, " F5 t");
-@@ -134,10 +135,11 @@ static void showHelp(ProcessList* pl) {
+@@ -140,10 +141,11 @@
     mvaddstr(19, 0, "   F2 S"); mvaddstr(19,40, " F6 >");
     mvaddstr(20, 0, "   F1 h");
     mvaddstr(21, 0, "  F10 q"); mvaddstr(21,40, "    s");
@@ -170,7 +171,7 @@ index c74b6b3..42d1aca 100644
     attrset(CRT_colors[DEFAULT_COLOR]);
     refresh();
     CRT_readKey();
-@@ -542,9 +544,20 @@ int main(int argc, char** argv) {
+@@ -551,9 +553,20 @@
           Panel_onKey(panel, KEY_DOWN);
           break;
        }
@@ -192,5 +193,3 @@ index c74b6b3..42d1aca 100644
           TraceScreen_run(ts);
           TraceScreen_delete(ts);
           clear();
-
- 	  	 

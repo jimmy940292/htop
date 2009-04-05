@@ -28,13 +28,16 @@ in the source distribution for its full text.
 #include <pwd.h>
 #include <sched.h>
 
+#ifdef HAVE_PLPA
 #include <plpa.h>
+#endif
 
 // This works only with glibc 2.1+. On earlier versions
 // the behavior is similar to have a hardcoded page size.
 #ifndef PAGE_SIZE
-#define PAGE_SIZE ( sysconf(_SC_PAGESIZE) / 1024 )
+#define PAGE_SIZE ( sysconf(_SC_PAGESIZE) )
 #endif
+#define PAGE_SIZE_KB ( PAGE_SIZE / ONE_K )
 
 #define PROCESS_COMM_LEN 300
 
@@ -47,7 +50,7 @@ typedef enum ProcessField_ {
    PROCESSOR, M_SIZE, M_RESIDENT, M_SHARE, M_TRS, M_DRS, M_LRS, M_DT, ST_UID, PERCENT_CPU, PERCENT_MEM,
    USER, TIME, NLWP, TGID,
    #ifdef HAVE_OPENVZ
-   VEID, VPID,
+   CTID, VPID,
    #endif
    #ifdef HAVE_VSERVER
    VXID,
@@ -124,7 +127,7 @@ typedef struct Process_ {
    float percent_mem;
    char* user;
    #ifdef HAVE_OPENVZ
-   unsigned int veid;
+   unsigned int ctid;
    unsigned int vpid;
    #endif
    #ifdef HAVE_VSERVER
@@ -163,7 +166,7 @@ char *Process_fieldNames[] = {
    "M_TRS", "M_DRS", "M_LRS", "M_DT", "ST_UID", "PERCENT_CPU", "PERCENT_MEM",
    "USER", "TIME", "NLWP", "TGID", 
 #ifdef HAVE_OPENVZ
-   "VEID", "VPID",
+   "CTID", "VPID",
 #endif
 #ifdef HAVE_VSERVER
    "VXID",
@@ -185,7 +188,7 @@ char *Process_fieldTitles[] = {
    " CODE ", " DATA ", " LIB ", " DIRTY ", " UID ", "CPU% ", "MEM% ",
    "USER     ", "  TIME+  ", "NLWP ", " TGID ",
 #ifdef HAVE_OPENVZ
-   " VEID ", " VPID ",
+   " CTID ", " VPID ",
 #endif
 #ifdef HAVE_VSERVER
    " VXID ",
@@ -351,13 +354,13 @@ static void Process_writeField(Process* this, RichString* str, ProcessField fiel
            : attr;
       break;
    }
-   case M_DRS: Process_printLargeNumber(this, str, this->m_drs * PAGE_SIZE); return;
-   case M_DT: Process_printLargeNumber(this, str, this->m_dt * PAGE_SIZE); return;
-   case M_LRS: Process_printLargeNumber(this, str, this->m_lrs * PAGE_SIZE); return;
-   case M_TRS: Process_printLargeNumber(this, str, this->m_trs * PAGE_SIZE); return;
-   case M_SIZE: Process_printLargeNumber(this, str, this->m_size * PAGE_SIZE); return;
-   case M_RESIDENT: Process_printLargeNumber(this, str, this->m_resident * PAGE_SIZE); return;
-   case M_SHARE: Process_printLargeNumber(this, str, this->m_share * PAGE_SIZE); return;
+   case M_DRS: Process_printLargeNumber(this, str, this->m_drs * PAGE_SIZE_KB); return;
+   case M_DT: Process_printLargeNumber(this, str, this->m_dt * PAGE_SIZE_KB); return;
+   case M_LRS: Process_printLargeNumber(this, str, this->m_lrs * PAGE_SIZE_KB); return;
+   case M_TRS: Process_printLargeNumber(this, str, this->m_trs * PAGE_SIZE_KB); return;
+   case M_SIZE: Process_printLargeNumber(this, str, this->m_size * PAGE_SIZE_KB); return;
+   case M_RESIDENT: Process_printLargeNumber(this, str, this->m_resident * PAGE_SIZE_KB); return;
+   case M_SHARE: Process_printLargeNumber(this, str, this->m_share * PAGE_SIZE_KB); return;
    case ST_UID: snprintf(buffer, n, "%4d ", this->st_uid); break;
    case USER: {
       if (Process_getuid != this->st_uid)
@@ -397,7 +400,7 @@ static void Process_writeField(Process* this, RichString* str, ProcessField fiel
       break;
    }
    #ifdef HAVE_OPENVZ
-   case VEID: snprintf(buffer, n, "%5u ", this->veid); break;
+   case CTID: snprintf(buffer, n, "%5u ", this->ctid); break;
    case VPID: snprintf(buffer, n, "%5u ", this->vpid); break;
    #endif
    #ifdef HAVE_VSERVER
@@ -493,6 +496,7 @@ bool Process_setPriority(Process* this, int priority) {
    return (err == 0);
 }
 
+#ifdef HAVE_PLPA
 unsigned long Process_getAffinity(Process* this) {
    unsigned long mask = 0;
    plpa_sched_getaffinity(this->pid, sizeof(unsigned long), (plpa_cpu_set_t*) &mask);
@@ -502,6 +506,7 @@ unsigned long Process_getAffinity(Process* this) {
 bool Process_setAffinity(Process* this, unsigned long mask) {
    return (plpa_sched_setaffinity(this->pid, sizeof(unsigned long), (plpa_cpu_set_t*) &mask) == 0);
 }
+#endif
 
 void Process_sendSignal(Process* this, int signal) {
    kill(this->pid, signal);
@@ -533,6 +538,10 @@ int Process_compare(const void* v1, const void* v2) {
       return strcmp(p1->user, p2->user);
    case PRIORITY:
       return (p1->priority - p2->priority);
+   case PROCESSOR:
+      return (p1->processor - p2->processor);
+   case SESSION:
+      return (p1->session - p2->session);
    case STATE:
       return (p1->state - p2->state);
    case NICE:
@@ -566,8 +575,8 @@ int Process_compare(const void* v1, const void* v2) {
    case NLWP:
       return (p1->nlwp - p2->nlwp);
    #ifdef HAVE_OPENVZ
-   case VEID:
-      return (p1->veid - p2->veid);
+   case CTID:
+      return (p1->ctid - p2->ctid);
    case VPID:
       return (p1->vpid - p2->vpid);
    #endif

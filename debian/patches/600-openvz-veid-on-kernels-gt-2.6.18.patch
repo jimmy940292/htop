@@ -1,10 +1,11 @@
 Fix determining OpenVZ VEID on Linux kernels >= 2.6.18.
-diff -Naur htop-0.8.1.orig/ProcessList.c htop-0.8.1/ProcessList.c
---- htop-0.8.1.orig/ProcessList.c	2008-09-23 08:23:14.000000000 +0200
-+++ htop-0.8.1/ProcessList.c	2009-02-24 00:09:37.000000000 +0100
-@@ -625,20 +625,28 @@
+Index: htop/ProcessList.c
+===================================================================
+--- htop.orig/ProcessList.c	2009-04-05 11:48:46.340045591 +0300
++++ htop/ProcessList.c	2009-04-05 12:22:08.819047243 +0300
+@@ -623,20 +623,28 @@
                 process->vpid = process->pid;
-                process->veid = 0;
+                process->ctid = 0;
              } else {
 -               snprintf(statusfilename, MAX_NAME, "%s/%s/stat", dirname, name);
 +               snprintf(statusfilename, MAX_NAME, "%s/%s/status", dirname, name);
@@ -18,27 +19,27 @@ diff -Naur htop-0.8.1.orig/ProcessList.c htop-0.8.1/ProcessList.c
 -                  "%*u %*u %*u %*u %*u %*u %*u %*u "
 -                  "%*u %*u %*u %*u %*u %*u %*u %*u "
 -                  "%*u %*u %*u %*u %*u %*u %*u "
--                  "%u %u",
--                  &process->vpid, &process->veid);
+-                  "%*u %*u %u %u",
+-                  &process->vpid, &process->ctid);
 -               fclose(status);
-+               else {
-+                  char buffer[256];
-+                  process->veid = 0;
-+                  while (!feof(status)) {
-+                     char* ok = fgets(buffer, 255, status);
-+                     if (!ok)
-+                        break;
++			   else {
++				   char buffer[256];
++				   process->ctid = 0;
++				   while (!feof(status)) {
++					   char* ok = fgets(buffer, 255, status);
++					   if (!ok)
++						   break;
 +
-+                     if (String_startsWith(buffer, "envID:")) {
-+                        int veid;
-+                        int ok = ProcessList_read(this, buffer, "envID:\t%d", &veid);
-+                        if (ok >= 1) {
-+                           process->veid = veid;
-+                        }
-+                     }
-+                  }
-+                  fclose(status);
-+               }
++					   if (String_startsWith(buffer, "envID:")) {
++						   int ctid;
++						   int ok = ProcessList_read(this, buffer, "envID:\t%d", &ctid);
++						   if (ok >= 1) {
++							   process->ctid = ctid;
++						   }
++					   }
++				   }
++				   fclose(status);
++			   }
              }
              #endif
  

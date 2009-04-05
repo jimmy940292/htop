@@ -563,9 +563,7 @@ static bool ProcessList_processEntries(ProcessList* this, char* dirname, Process
                process->pid = pid;
             }
          }
-         if (parent) {
-            process->tgid = parent->pid;
-         }
+         process->tgid = parent ? parent->pid : pid;
 
          if (showUserlandThreads && (!parent || pid != parent->pid)) {
             char subdirname[MAX_NAME+1];
@@ -623,7 +621,7 @@ static bool ProcessList_processEntries(ProcessList* this, char* dirname, Process
             #ifdef HAVE_OPENVZ
             if (access("/proc/vz", R_OK) != 0) {
                process->vpid = process->pid;
-               process->veid = 0;
+               process->ctid = 0;
             } else {
                snprintf(statusfilename, MAX_NAME, "%s/%s/stat", dirname, name);
                status = ProcessList_fopen(this, statusfilename, "r");
@@ -636,8 +634,8 @@ static bool ProcessList_processEntries(ProcessList* this, char* dirname, Process
                   "%*u %*u %*u %*u %*u %*u %*u %*u "
                   "%*u %*u %*u %*u %*u %*u %*u %*u "
                   "%*u %*u %*u %*u %*u %*u %*u "
-                  "%u %u",
-                  &process->vpid, &process->veid);
+                  "%*u %*u %u %u",
+                  &process->vpid, &process->ctid);
                fclose(status);
             }
             #endif
@@ -698,7 +696,7 @@ static bool ProcessList_processEntries(ProcessList* this, char* dirname, Process
             period * 100.0;
          process->percent_cpu = MAX(MIN(percent_cpu, processors*100.0), 0.0);
 
-         process->percent_mem = (process->m_resident * PAGE_SIZE) / 
+         process->percent_mem = (process->m_resident * PAGE_SIZE_KB) / 
             (float)(this->totalMem) * 
             100.0;
 
