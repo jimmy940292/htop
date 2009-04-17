@@ -1,7 +1,14 @@
+htop (0.8.1+svn149-2) unstable; urgency=low
+
+  * debian/rules:
+    - Build with VServer support. (Closes: #522905)
+
+ -- Eugene V. Lyubimkin <jackyf.devel@gmail.com>  Fri, 17 Apr 2009 21:54:45 +0300
+
 htop (0.8.1+svn149-1) unstable; urgency=low
 
   * New upstream development snapshot:
-    - Allow building withough PLPA support. (Closes: #521861)
+    - Allow building without PLPA support. (Closes: #521861)
   * debian/patches:
     - 010-make-desktop-file-valid.patch: deleted, merged upstream.
     - 100-upstream-sort-by-processor-and-session.patch: deleted, merged
