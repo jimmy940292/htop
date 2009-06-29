@@ -1,3 +1,25 @@
+htop (0.8.3-1) unstable; urgency=low
+
+  * New upstream release:
+    - 0.8.2 (LP: #385862):
+      - Integrated lsof output. (Closes: #426003)
+      - Handling of absend CPU should work now. (Closes: #494057, #476273)
+      - Fixed a crash when sorting by USER column. (Closes: #526362)
+      - Fixed display of gigabyte-sized values.
+      - Fixed incremental search. (Closes: #521376)
+      - Option to display hostname in the meters area.
+    - 0.8.3
+  * debian/control:
+    - Suggested strace and ltrace. (Closes: #530449)
+    - Bumped Standards-Version to 3.8.2, no changes needed.
+  * debian/patches:
+    - 700-ltrace-support.patch: modified to not contradict with new upstream
+      release, the hotkey for ltrace output changed from 'l' to 'L'.
+  * debian/README:
+    - Added with note about ltrace support.
+
+ -- Eugene V. Lyubimkin <jackyf.devel@gmail.com>  Mon, 29 Jun 2009 13:08:39 +0300
+
 htop (0.8.1+svn149-2) unstable; urgency=low
 
   * debian/rules:
