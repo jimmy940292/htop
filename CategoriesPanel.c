@@ -23,17 +23,17 @@ typedef struct CategoriesPanel_ {
 
 }*/
 
-static char* MetersFunctions[] = {"      ", "      ", "      ", "Type  ", "      ", "      ", "MoveUp", "MoveDn", "Remove", "Done  ", NULL};
+static const char* MetersFunctions[] = {"      ", "      ", "      ", "Type  ", "      ", "      ", "MoveUp", "MoveDn", "Remove", "Done  ", NULL};
 
-static char* AvailableMetersFunctions[] = {"      ", "      ", "      ", "      ", "Add L ", "Add R ", "      ", "      ", "      ", "Done  ", NULL};
+static const char* AvailableMetersFunctions[] = {"      ", "      ", "      ", "      ", "Add L ", "Add R ", "      ", "      ", "      ", "Done  ", NULL};
 
-static char* DisplayOptionsFunctions[] = {"      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "Done  ", NULL};
+static const char* DisplayOptionsFunctions[] = {"      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "Done  ", NULL};
 
-static char* ColumnsFunctions[] = {"      ", "      ", "      ", "      ", "      ", "      ", "MoveUp", "MoveDn", "Remove", "Done  ", NULL};
+static const char* ColumnsFunctions[] = {"      ", "      ", "      ", "      ", "      ", "      ", "MoveUp", "MoveDn", "Remove", "Done  ", NULL};
 
-static char* ColorsFunctions[] = {"      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "Done  ", NULL};
+static const char* ColorsFunctions[] = {"      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "Done  ", NULL};
 
-static char* AvailableColumnsFunctions[] = {"      ", "      ", "      ", "      ", "Add   ", "      ", "      ", "      ", "      ", "Done  ", NULL};
+static const char* AvailableColumnsFunctions[] = {"      ", "      ", "      ", "      ", "Add   ", "      ", "      ", "      ", "      ", "Done  ", NULL};
 
 static void CategoriesPanel_delete(Object* object) {
    Panel* super = (Panel*) object;
@@ -79,7 +79,9 @@ static HandlerResult CategoriesPanel_eventHandler(Panel* super, int ch) {
          result = HANDLED;
          break;
       case KEY_UP:
+      case KEY_CTRLP:
       case KEY_DOWN:
+      case KEY_CTRLN:
       case KEY_NPAGE:
       case KEY_PPAGE:
       case KEY_HOME:

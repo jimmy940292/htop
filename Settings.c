@@ -1,6 +1,6 @@
 /*
 htop - Settings.c
-(C) 2004-2006 Hisham H. Muhammad
+(C) 2004-2010 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -63,12 +63,10 @@ static bool Settings_read(Settings* this, char* fileName) {
    if (fd == NULL) {
       return false;
    }
-   const int maxLine = 65535;
+   const int maxLine = 2048;
    char buffer[maxLine];
    bool readMeters = false;
-   while (!feof(fd)) {
-      buffer[0] = '\0';
-      fgets(buffer, maxLine, fd);
+   while (fgets(buffer, maxLine, fd)) {
       char** option = String_split(buffer, '=');
       if (String_eq(option[0], "fields")) {
          char* trim = String_trim(option[1]);
@@ -100,6 +98,8 @@ static bool Settings_read(Settings* this, char* fileName) {
          this->pl->hideUserlandThreads = atoi(option[1]);
       } else if (String_eq(option[0], "shadow_other_users")) {
          this->pl->shadowOtherUsers = atoi(option[1]);
+      } else if (String_eq(option[0], "show_thread_names")) {
+         this->pl->showThreadNames = atoi(option[1]);
       } else if (String_eq(option[0], "highlight_base_name")) {
          this->pl->highlightBaseName = atoi(option[1]);
       } else if (String_eq(option[0], "highlight_megabytes")) {
@@ -165,6 +165,7 @@ bool Settings_write(Settings* this) {
    fprintf(fd, "hide_kernel_threads=%d\n", (int) this->pl->hideKernelThreads);
    fprintf(fd, "hide_userland_threads=%d\n", (int) this->pl->hideUserlandThreads);
    fprintf(fd, "shadow_other_users=%d\n", (int) this->pl->shadowOtherUsers);
+   fprintf(fd, "show_thread_names=%d\n", (int) this->pl->showThreadNames);
    fprintf(fd, "highlight_base_name=%d\n", (int) this->pl->highlightBaseName);
    fprintf(fd, "highlight_megabytes=%d\n", (int) this->pl->highlightMegabytes);
    fprintf(fd, "highlight_threads=%d\n", (int) this->pl->highlightThreads);
@@ -203,7 +204,7 @@ Settings* Settings_new(ProcessList* pl, Header* header) {
    Settings* this = malloc(sizeof(Settings));
    this->pl = pl;
    this->header = header;
-   char* home;
+   const char* home;
    char* rcfile;
    home = getenv("HOME_ETC");
    if (!home) home = getenv("HOME");

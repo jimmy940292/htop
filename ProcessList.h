@@ -30,9 +30,11 @@ in the source distribution for its full text.
 #include <stdbool.h>
 #include <sys/utsname.h>
 #include <stdarg.h>
+#include <math.h>
 
 #include "debug.h"
 #include <assert.h>
+
 
 #ifndef PROCDIR
 #define PROCDIR "/proc"
@@ -54,50 +56,49 @@ in the source distribution for its full text.
 #define MAX_READ 2048
 #endif
 
-#ifndef PER_PROCESSOR_FIELDS
-#define PER_PROCESSOR_FIELDS 22
-#endif
 
 
-
-#ifdef DEBUG_PROC
-typedef int(*vxscanf)(void*, const char*, va_list);
-#endif
+typedef struct CPUData_ {
+   unsigned long long int totalTime;
+   unsigned long long int userTime;
+   unsigned long long int systemTime;
+   unsigned long long int systemAllTime;
+   unsigned long long int idleAllTime;
+   unsigned long long int idleTime;
+   unsigned long long int niceTime;
+   unsigned long long int ioWaitTime;
+   unsigned long long int irqTime;
+   unsigned long long int softIrqTime;
+   unsigned long long int stealTime;
+   unsigned long long int guestTime;
+   
+   unsigned long long int totalPeriod;
+   unsigned long long int userPeriod;
+   unsigned long long int systemPeriod;
+   unsigned long long int systemAllPeriod;
+   unsigned long long int idleAllPeriod;
+   unsigned long long int idlePeriod;
+   unsigned long long int nicePeriod;
+   unsigned long long int ioWaitPeriod;
+   unsigned long long int irqPeriod;
+   unsigned long long int softIrqPeriod;
+   unsigned long long int stealPeriod;
+   unsigned long long int guestPeriod;
+} CPUData;
 
 typedef struct ProcessList_ {
    Vector* processes;
    Vector* processes2;
    Hashtable* processTable;
-   Process* prototype;
    UsersTable* usersTable;
 
-   int processorCount;
+   int cpuCount;
    int totalTasks;
+   int userlandThreads;
+   int kernelThreads;
    int runningTasks;
 
-   // Must match number of PER_PROCESSOR_FIELDS constant
-   unsigned long long int* totalTime;
-   unsigned long long int* userTime;
-   unsigned long long int* systemTime;
-   unsigned long long int* systemAllTime;
-   unsigned long long int* idleAllTime;
-   unsigned long long int* idleTime;
-   unsigned long long int* niceTime;
-   unsigned long long int* ioWaitTime;
-   unsigned long long int* irqTime;
-   unsigned long long int* softIrqTime;
-   unsigned long long int* stealTime;
-   unsigned long long int* totalPeriod;
-   unsigned long long int* userPeriod;
-   unsigned long long int* systemPeriod;
-   unsigned long long int* systemAllPeriod;
-   unsigned long long int* idleAllPeriod;
-   unsigned long long int* idlePeriod;
-   unsigned long long int* nicePeriod;
-   unsigned long long int* ioWaitPeriod;
-   unsigned long long int* irqPeriod;
-   unsigned long long int* softIrqPeriod;
-   unsigned long long int* stealPeriod;
+   CPUData* cpus;
 
    unsigned long long int totalMem;
    unsigned long long int usedMem;
@@ -114,6 +115,8 @@ typedef struct ProcessList_ {
    int direction;
    bool hideThreads;
    bool shadowOtherUsers;
+   bool showThreadNames;
+   bool showingThreadNames;
    bool hideKernelThreads;
    bool hideUserlandThreads;
    bool treeView;
@@ -121,26 +124,8 @@ typedef struct ProcessList_ {
    bool highlightMegabytes;
    bool highlightThreads;
    bool detailedCPUTime;
-   #ifdef DEBUG_PROC
-   FILE* traceFile;
-   #endif
 
 } ProcessList;
-
-#ifdef DEBUG_PROC
-
-#define ProcessList_read(this, buffer, format, ...) ProcessList_xread(this, (vxscanf) vsscanf, buffer, format, ## __VA_ARGS__ )
-#define ProcessList_fread(this, file, format, ...)  ProcessList_xread(this, (vxscanf) vfscanf, file, format, ## __VA_ARGS__ )
-
-#else
-
-#ifndef ProcessList_read
-#define ProcessList_fopen(this, path, mode) fopen(path, mode)
-#define ProcessList_read(this, buffer, format, ...) sscanf(buffer, format, ## __VA_ARGS__ )
-#define ProcessList_fread(this, file, format, ...) fscanf(file, format, ## __VA_ARGS__ )
-#endif
-
-#endif
 
 ProcessList* ProcessList_new(UsersTable* usersTable);
 
@@ -148,9 +133,9 @@ void ProcessList_delete(ProcessList* this);
 
 void ProcessList_invertSortOrder(ProcessList* this);
 
-RichString ProcessList_printHeader(ProcessList* this);
+void ProcessList_printHeader(ProcessList* this, RichString* header);
 
-Process* ProcessList_get(ProcessList* this, int index);
+Process* ProcessList_get(ProcessList* this, int idx);
 
 int ProcessList_size(ProcessList* this);
 
@@ -160,8 +145,23 @@ void ProcessList_sort(ProcessList* this);
 
 #endif
 
+#ifdef HAVE_OPENVZ
+
+#endif
+
+#ifdef HAVE_CGROUP
+
+#endif
+
+#ifdef HAVE_VSERVER
+
+#endif
+
+
 void ProcessList_scan(ProcessList* this);
 
 ProcessField ProcessList_keyAt(ProcessList* this, int at);
+
+void ProcessList_expandTree(ProcessList* this);
 
 #endif

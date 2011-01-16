@@ -1,3 +1,23 @@
+htop (0.9-1) experimental; urgency=low
+
+  * New upstream release. (Closes: #610229)
+    - Fixed by-process IO stats in some cases. (Closes: #526070)
+    - Do not display nan% as CPU load sometimes. (Closes: #590535)
+  * debian/patches:
+    - 600-openvz-veid-on-kernels-gt-2.6.18.patch: ported to new upstream
+      version.
+    - 700-ltrace-support.patch: refreshed.
+  * debian/control:
+    - Bumped Standards-Version to 3.9.1, no changes needed.
+    - Updated my mail address.
+    - Removed 'DM-Upload-Allowed' flag as not needed anymore.
+  * debian/copyright:
+    - Updated author copyright years.
+  * debian/watch:
+    - Removed 'uupdate' option, not needed for my workflow.
+
+ -- Eugene V. Lyubimkin <jackyf@debian.org>  Sun, 16 Jan 2011 19:36:07 +0200
+
 htop (0.8.3-1) unstable; urgency=low
 
   * New upstream release:

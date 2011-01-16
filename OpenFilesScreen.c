@@ -26,7 +26,7 @@ in the source distribution for its full text.
 typedef struct OpenFiles_ProcessData_ {
    char* data[256];
    struct OpenFiles_FileData_* files;
-   bool failed;
+   int error;
 } OpenFiles_ProcessData;
 
 typedef struct OpenFiles_FileData_ {
@@ -43,17 +43,17 @@ typedef struct OpenFilesScreen_ {
 
 }*/
 
-static char* tbFunctions[] = {"Refresh", "Done   ", NULL};
+static const char* ofsFunctions[] = {"Refresh", "Done   ", NULL};
 
-static char* tbKeys[] = {"F5", "Esc"};
+static const char* ofsKeys[] = {"F5", "Esc"};
 
-static int tbEvents[] = {KEY_F(5), 27};
+static int ofsEvents[] = {KEY_F(5), 27};
 
 OpenFilesScreen* OpenFilesScreen_new(Process* process) {
    OpenFilesScreen* this = (OpenFilesScreen*) malloc(sizeof(OpenFilesScreen));
    this->process = process;
    this->display = Panel_new(0, 1, COLS, LINES-3, LISTITEM_CLASS, true, ListItem_compare);
-   this->bar = FunctionBar_new(tbFunctions, tbKeys, tbEvents);
+   this->bar = FunctionBar_new(ofsFunctions, ofsKeys, ofsEvents);
    this->tracing = true;
    return this;
 }
@@ -75,23 +75,26 @@ static void OpenFilesScreen_draw(OpenFilesScreen* this) {
 
 static OpenFiles_ProcessData* OpenFilesScreen_getProcessData(int pid) {
    char command[1025];
-   snprintf(command, 1024, "lsof -p %d -F 2> /dev/null", pid);
+   snprintf(command, 1024, "lsof -P -p %d -F 2> /dev/null", pid);
    FILE* fd = popen(command, "r");
    OpenFiles_ProcessData* process = calloc(sizeof(OpenFiles_ProcessData), 1);
    OpenFiles_FileData* file = NULL;
    OpenFiles_ProcessData* item = process;
-   process->failed = true;
    bool anyRead = false;
+   if (!fd) {
+      process->error = 127;
+      return process;
+   }
    while (!feof(fd)) {
       int cmd = fgetc(fd);
-      if (cmd == EOF && !anyRead) {
-         process->failed = true;
+      if (cmd == EOF && !anyRead)
+         break;
+      anyRead = true;
+      char* entry = malloc(1024);
+      if (!fgets(entry, 1024, fd)) {
+         free(entry);
          break;
       }
-      anyRead = true;
-      process->failed = false;
-      char* entry = malloc(1024);
-      if (!fgets(entry, 1024, fd)) break;
       char* newline = strrchr(entry, '\n');
       *newline = '\0';
       if (cmd == 'f') {
@@ -106,17 +109,19 @@ static OpenFiles_ProcessData* OpenFilesScreen_getProcessData(int pid) {
       }
       item->data[cmd] = entry;
    }
-   pclose(fd);
+   process->error = pclose(fd);
    return process;
 }
 
 static void OpenFilesScreen_scan(OpenFilesScreen* this) {
    Panel* panel = this->display;
-   int index = MAX(Panel_getSelectedIndex(panel), 0);
+   int idx = MAX(Panel_getSelectedIndex(panel), 0);
    Panel_prune(panel);
    OpenFiles_ProcessData* process = OpenFilesScreen_getProcessData(this->process->pid);
-   if (process->failed) {
+   if (process->error == 127) {
       Panel_add(panel, (Object*) ListItem_new("Could not execute 'lsof'. Please make sure it is available in your $PATH.", 0));
+   } else if (process->error == 1) {
+      Panel_add(panel, (Object*) ListItem_new("Failed listing open files.", 0));
    } else {
       OpenFiles_FileData* file = process->files;
       while (file) {
@@ -142,7 +147,7 @@ static void OpenFilesScreen_scan(OpenFilesScreen* this) {
    }
    free(process);
    Vector_sort(panel->items);
-   Panel_setSelected(panel, index);
+   Panel_setSelected(panel, idx);
 }
 
 void OpenFilesScreen_run(OpenFilesScreen* this) {

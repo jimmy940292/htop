@@ -1,4 +1,4 @@
-.TH "htop" "1" "0.8.3" "Bartosz Fenski <fenio@o2.pl>" "Utils"
+.TH "htop" "1" "0.9" "Bartosz Fenski <fenio@o2.pl>" "Utils"
 .SH "NAME"
 htop \- interactive process viewer
 .SH "SYNTAX"
@@ -95,6 +95,10 @@ If none is tagged, sends to the currently selected process.
 .TP
 .B F10, q
 Quit
+.TP
+.B +, - 
+When in tree view mode, expand or collapse subtree. When a subtree is collapsed
+a "+" sign shows to the left of the process name.
 .TP
 .B a (on multiprocessor machines)
 Set CPU affinity: mark which CPUs a process is allowed to use.

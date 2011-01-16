@@ -4,7 +4,7 @@
 #define HEADER_SignalItem
 /*
 htop - SignalItem.h
-(C) 2004-2006 Hisham H. Muhammad
+(C) 2004-2010 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -21,7 +21,7 @@ in the source distribution for its full text.
 
 typedef struct Signal_ {
    Object super;
-   char* name;
+   const char* name;
    int number;
 } Signal;
 

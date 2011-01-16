@@ -6,6 +6,9 @@
 /* Define if ancient vserver support enabled. */
 #undef HAVE_ANCIENT_VSERVER
 
+/* Define if cgroup support enabled. */
+#undef HAVE_CGROUP
+
 /* Define to 1 if you have the <curses.h> header file. */
 #undef HAVE_CURSES_H
 
@@ -108,6 +111,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define to 1 if you have the <valgrind/valgrind.h> header file. */
+#undef HAVE_VALGRIND_VALGRIND_H
+
 /* Define if vserver support enabled. */
 #undef HAVE_VSERVER
 
@@ -117,6 +123,10 @@
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
 #undef LSTAT_FOLLOWS_SLASHED_SYMLINK
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
 
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 #undef NO_MINUS_C_MINUS_O
@@ -139,11 +149,17 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Whether we are in debugging more or not */
+#undef PLPA_DEBUG
+
 /* The PLPA symbol prefix */
 #undef PLPA_SYM_PREFIX
 
 /* The PLPA symbol prefix in all caps */
 #undef PLPA_SYM_PREFIX_CAPS
+
+/* Whether we want Valgrind support or not */
+#undef PLPA_WANT_VALGRIND_SUPPORT
 
 /* Path of proc filesystem */
 #undef PROCDIR
@@ -156,6 +172,10 @@
 
 /* Version number of package */
 #undef VERSION
+
+/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
+   `char[]'. */
+#undef YYTEXT_POINTER
 
 /* Emulated value */
 #undef __NR_sched_getaffinity

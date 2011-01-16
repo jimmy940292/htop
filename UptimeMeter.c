@@ -1,6 +1,6 @@
 /*
 htop
-(C) 2004-2006 Hisham H. Muhammad
+(C) 2004-2010 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -19,7 +19,7 @@ int UptimeMeter_attributes[] = {
 };
 
 static void UptimeMeter_setValues(Meter* this, char* buffer, int len) {
-   double uptime;
+   double uptime = 0;
    FILE* fd = fopen(PROCDIR "/uptime", "r");
    fscanf(fd, "%lf", &uptime);
    fclose(fd);

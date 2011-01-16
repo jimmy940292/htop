@@ -4,7 +4,7 @@
 #define HEADER_Vector
 /*
 htop
-(C) 2004-2006 Hisham H. Muhammad
+(C) 2004-2010 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -21,8 +21,6 @@ in the source distribution for its full text.
 #ifndef DEFAULT_SIZE
 #define DEFAULT_SIZE -1
 #endif
-
-typedef void(*Vector_procedure)(void*);
 
 typedef struct Vector_ {
    Object **array;
@@ -49,19 +47,19 @@ void Vector_prune(Vector* this);
 
 void Vector_sort(Vector* this);
 
-void Vector_insert(Vector* this, int index, void* data_);
+void Vector_insert(Vector* this, int idx, void* data_);
 
-Object* Vector_take(Vector* this, int index);
+Object* Vector_take(Vector* this, int idx);
 
-Object* Vector_remove(Vector* this, int index);
+Object* Vector_remove(Vector* this, int idx);
 
-void Vector_moveUp(Vector* this, int index);
+void Vector_moveUp(Vector* this, int idx);
 
-void Vector_moveDown(Vector* this, int index);
+void Vector_moveDown(Vector* this, int idx);
 
-void Vector_set(Vector* this, int index, void* data_);
+void Vector_set(Vector* this, int idx, void* data_);
 
-extern Object* Vector_get(Vector* this, int index);
+extern Object* Vector_get(Vector* this, int idx);
 
 extern int Vector_size(Vector* this);
 
@@ -72,9 +70,5 @@ extern int Vector_size(Vector* this);
 void Vector_add(Vector* this, void* data_);
 
 extern int Vector_indexOf(Vector* this, void* search_, Object_Compare compare);
-
-/*
-
-*/
 
 #endif

@@ -1,6 +1,6 @@
 /*
 htop
-(C) 2004-2006 Hisham H. Muhammad
+(C) 2004-2010 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -17,6 +17,7 @@ int HostnameMeter_attributes[] = {
 };
 
 static void HostnameMeter_setValues(Meter* this, char* buffer, int size) {
+   (void) this;
    gethostname(buffer, size-1);
 }
 

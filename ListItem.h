@@ -4,7 +4,7 @@
 #define HEADER_ListItem
 /*
 htop - ListItem.h
-(C) 2004-2006 Hisham H. Muhammad
+(C) 2004-2010 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -30,7 +30,7 @@ extern char* LISTITEM_CLASS;
 #define LISTITEM_CLASS NULL
 #endif
 
-ListItem* ListItem_new(char* value, int key);
+ListItem* ListItem_new(const char* value, int key);
 
 void ListItem_append(ListItem* this, char* text);
 

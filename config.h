@@ -7,6 +7,9 @@
 /* Define if ancient vserver support enabled. */
 /* #undef HAVE_ANCIENT_VSERVER */
 
+/* Define if cgroup support enabled. */
+/* #undef HAVE_CGROUP */
+
 /* Define to 1 if you have the <curses.h> header file. */
 #define HAVE_CURSES_H 1
 
@@ -109,6 +112,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* Define to 1 if you have the <valgrind/valgrind.h> header file. */
+#define HAVE_VALGRIND_VALGRIND_H 1
+
 /* Define if vserver support enabled. */
 /* #undef HAVE_VSERVER */
 
@@ -118,6 +124,10 @@
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
 #define LSTAT_FOLLOWS_SLASHED_SYMLINK 1
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#define LT_OBJDIR ".libs/"
 
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 /* #undef NO_MINUS_C_MINUS_O */
@@ -132,19 +142,25 @@
 #define PACKAGE_NAME "htop"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "htop 0.8.3"
+#define PACKAGE_STRING "htop 0.9"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "htop"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.8.3"
+#define PACKAGE_VERSION "0.9"
+
+/* Whether we are in debugging more or not */
+#define PLPA_DEBUG 1
 
 /* The PLPA symbol prefix */
 #define PLPA_SYM_PREFIX plpa_
 
 /* The PLPA symbol prefix in all caps */
 #define PLPA_SYM_PREFIX_CAPS PLPA_
+
+/* Whether we want Valgrind support or not */
+#define PLPA_WANT_VALGRIND_SUPPORT 1
 
 /* Path of proc filesystem */
 #define PROCDIR "/proc"
@@ -156,7 +172,11 @@
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "0.8.3"
+#define VERSION "0.9"
+
+/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
+   `char[]'. */
+#define YYTEXT_POINTER 1
 
 /* Emulated value */
 /* #undef __NR_sched_getaffinity */

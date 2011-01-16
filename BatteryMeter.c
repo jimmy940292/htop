@@ -1,6 +1,6 @@
 /*
   htop
-  (C) 2004-2006 Hisham H. Muhammad
+  (C) 2004-2010 Hisham H. Muhammad
   Released under the GNU GPL, see the COPYING file
   in the source distribution for its full text.
 
@@ -28,14 +28,14 @@ int BatteryMeter_attributes[] = {
    BATTERY
 };
 
-static unsigned long int parseUevent(FILE * file, char *key) {
+static unsigned long int parseUevent(FILE * file, const char *key) {
    char line[100];
    unsigned long int dValue = 0;
 
    while (fgets(line, sizeof line, file)) {
       if (strncmp(line, key, strlen(key)) == 0) {
          char *value;
-         value = strtok(line, "=");
+         strtok(line, "=");
          value = strtok(NULL, "=");
          dValue = atoi(value);
          break;
@@ -117,12 +117,11 @@ static ACPresence chkIsOnline() {
 
    if (access(PROCDIR "/acpi/ac_adapter", F_OK) == 0) {
       const struct dirent *dirEntries;
-      char *power_supplyPath = PROCDIR "/acpi/ac_adapter";
+      const char *power_supplyPath = PROCDIR "/acpi/ac_adapter";
       DIR *power_supplyDir = opendir(power_supplyPath);
       char *entryName;
 
       if (!power_supplyDir) {
-         closedir(power_supplyDir);
          return AC_ERROR;
       }
 
@@ -171,7 +170,7 @@ static ACPresence chkIsOnline() {
 
    } else {
 
-      char *power_supplyPath = "/sys/class/power_supply";
+      const char *power_supplyPath = "/sys/class/power_supply";
 
       if (access("/sys/class/power_supply", F_OK) == 0) {
          const struct dirent *dirEntries;
@@ -235,18 +234,16 @@ static double getProcBatData() {
       return 0;
 
    double percent = totalFull > 0 ? ((double) totalRemain * 100) / (double) totalFull : 0;
-
    return percent;
 }
 
 static double getSysBatData() {
    const struct dirent *dirEntries;
-   char *power_supplyPath = "/sys/class/power_supply/";
+   const char *power_supplyPath = "/sys/class/power_supply/";
    DIR *power_supplyDir = opendir(power_supplyPath);
 
 
    if (!power_supplyDir) {
-      closedir(power_supplyDir);
       return 0;
    }
 
@@ -272,8 +269,27 @@ static double getSysBatData() {
          return 0;
       }
 
-      totalFull += parseUevent(file, "POWER_SUPPLY_ENERGY_FULL=");
-      totalRemain += parseUevent(file, "POWER_SUPPLY_ENERGY_NOW=");
+      if ((totalFull += parseUevent(file, "POWER_SUPPLY_ENERGY_FULL="))) {
+         totalRemain += parseUevent(file, "POWER_SUPPLY_ENERGY_NOW=");
+      } else {
+         //reset file pointer
+         if (fseek(file, 0, SEEK_SET) < 0) {
+            fclose(file);
+            return 0;
+         }
+      }
+
+      //Some systems have it as CHARGE instead of ENERGY.
+      if ((totalFull += parseUevent(file, "POWER_SUPPLY_CHARGE_FULL="))) {
+         totalRemain += parseUevent(file, "POWER_SUPPLY_CHARGE_NOW=");
+      } else {
+        //reset file pointer
+         if (fseek(file, 0, SEEK_SET) < 0) {
+            fclose(file);
+            return 0;
+         }
+      }
+
       fclose(file);
    }
 
@@ -284,6 +300,7 @@ static double getSysBatData() {
 
 static void BatteryMeter_setValues(Meter * this, char *buffer, int len) {
    double percent = getProcBatData();
+
    if (percent == 0) {
       percent = getSysBatData();
       if (percent == 0) {
@@ -294,7 +311,7 @@ static void BatteryMeter_setValues(Meter * this, char *buffer, int len) {
 
    this->values[0] = percent;
 
-   char *onAcText, *onBatteryText, *unknownText;
+   const char *onAcText, *onBatteryText, *unknownText;
 
    unknownText = "%.1f%%";
    if (this->mode == TEXT_METERMODE) {

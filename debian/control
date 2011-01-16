@@ -1,10 +1,9 @@
 Source: htop
 Section: utils
 Priority: optional
-Maintainer: Eugene V. Lyubimkin <jackyf.devel@gmail.com>
+Maintainer: Eugene V. Lyubimkin <jackyf@debian.org>
 Build-Depends: debhelper (>= 7), libncurses5-dev, autotools-dev, quilt (>= 0.40), python-minimal
-Standards-Version: 3.8.2
-DM-Upload-Allowed: yes
+Standards-Version: 3.9.1
 Homepage: http://htop.sourceforge.net
 
 Package: htop

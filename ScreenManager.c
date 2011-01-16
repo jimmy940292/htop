@@ -1,6 +1,6 @@
 /*
 htop
-(C) 2004-2006 Hisham H. Muhammad
+(C) 2004-2010 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -89,10 +89,10 @@ void ScreenManager_add(ScreenManager* this, Panel* item, FunctionBar* fuBar, int
    this->itemCount++;
 }
 
-Panel* ScreenManager_remove(ScreenManager* this, int index) {
-   assert(this->itemCount > index);
-   Panel* panel = (Panel*) Vector_remove(this->items, index);
-   Vector_remove(this->fuBars, index);
+Panel* ScreenManager_remove(ScreenManager* this, int idx) {
+   assert(this->itemCount > idx);
+   Panel* panel = (Panel*) Vector_remove(this->items, idx);
+   Vector_remove(this->fuBars, idx);
    this->fuBar = NULL;
    this->itemCount--;
    return panel;
@@ -184,6 +184,7 @@ void ScreenManager_run(ScreenManager* this, Panel** lastFocus, int* lastKey) {
          continue;
       }
       case KEY_LEFT:
+      case KEY_CTRLB:
          tryLeft:
          if (focus > 0)
             focus--;
@@ -192,6 +193,7 @@ void ScreenManager_run(ScreenManager* this, Panel** lastFocus, int* lastKey) {
             goto tryLeft;
          break;
       case KEY_RIGHT:
+      case KEY_CTRLF:
       case 9:
          tryRight:
          if (focus < this->itemCount - 1)

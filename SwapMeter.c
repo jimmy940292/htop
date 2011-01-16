@@ -1,6 +1,6 @@
 /*
 htop
-(C) 2004-2006 Hisham H. Muhammad
+(C) 2004-2010 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -34,8 +34,7 @@ static void SwapMeter_display(Object* cast, RichString* out) {
    char buffer[50];
    Meter* this = (Meter*)cast;
    long int swap = (long int) this->values[0];
-   RichString_init(out);
-   RichString_append(out, CRT_colors[METER_TEXT], ":");
+   RichString_write(out, CRT_colors[METER_TEXT], ":");
    sprintf(buffer, "%ldM ", (long int) this->total / 1024);
    RichString_append(out, CRT_colors[METER_VALUE], buffer);
    sprintf(buffer, "%ldk", swap);

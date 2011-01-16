@@ -1,7 +1,9 @@
 
 if HAVE_PLPA
-SUBDIRS = plpa-1.1
+SUBDIRS = plpa-1.3.2
 endif
+
+ACLOCAL_AMFLAGS=-I m4
 
 bin_PROGRAMS = htop
 dist_man_MANS = htop.1
@@ -12,7 +14,7 @@ applications_DATA = htop.desktop
 pixmapdir = $(datadir)/pixmaps
 pixmap_DATA = htop.png
 
-htop_CFLAGS = -pedantic -Wall -std=c99 -D_XOPEN_SOURCE_EXTENDED
+htop_CFLAGS = -pedantic -Wall -std=c99 -rdynamic -D_XOPEN_SOURCE_EXTENDED
 AM_CPPFLAGS = -DSYSCONFDIR=\"$(sysconfdir)\"
 
 myhtopsources = AvailableMetersPanel.c CategoriesPanel.c CheckItem.c \
@@ -38,7 +40,7 @@ SUFFIXES = .h
 BUILT_SOURCES = $(myhtopheaders)
 htop_SOURCES = $(myhtopheaders) $(myhtopsources) config.h debug.h
 if HAVE_PLPA
-htop_LDADD = $(top_builddir)/plpa-1.1/src/libplpa_included.la
+htop_LDADD = $(top_builddir)/plpa-1.3.2/src/libplpa/libplpa_included.la
 endif
 
 profile:
