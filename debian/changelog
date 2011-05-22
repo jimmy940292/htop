@@ -1,3 +1,15 @@
+htop (0.9-3) unstable; urgency=low
+
+  * debian/rules:
+    - Enable cgroups support. (Closes: #627545)
+  * debian/README.source:
+    - added with standard instructions how to use quilt.
+  * debian/control:
+    - Fixed spelling as suggested by lintian.
+    - Bumped Standards-Version to 3.9.2, no changes needed.
+
+ -- Eugene V. Lyubimkin <jackyf@debian.org>  Sun, 22 May 2011 12:05:09 +0300
+
 htop (0.9-2) unstable; urgency=low
 
   * Upload to unstable.

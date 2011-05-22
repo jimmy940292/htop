@@ -26,7 +26,8 @@ config.status: configure $(QUILT_STAMPFN)
 		   --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
 		   --prefix=/usr --mandir=\$${prefix}/share/man \
 		   --infodir=\$${prefix}/share/info \
-		   --enable-taskstats --enable-openvz --enable-vserver
+		   --enable-taskstats --enable-openvz --enable-vserver \
+		   --enable-cgroup
 
 build: build-stamp
 build-stamp: config.status
