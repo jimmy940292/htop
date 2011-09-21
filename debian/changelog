@@ -1,3 +1,13 @@
+htop (0.9-4) unstable; urgency=low
+
+  * debian/rules:
+    - Added 'build-arch' and 'build-indep' targets as suggested by Lintian.
+  * debian/patches:
+    - New patch 100-fix-cgroups-crash.patch fixing a crash when htop receives
+      an unexpected input from a cgroups file. (Closes: #628040)
+
+ -- Eugene V. Lyubimkin <jackyf@debian.org>  Wed, 21 Sep 2011 21:17:17 +0300
+
 htop (0.9-3) unstable; urgency=low
 
   * debian/rules:

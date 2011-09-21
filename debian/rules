@@ -30,6 +30,8 @@ config.status: configure $(QUILT_STAMPFN)
 		   --enable-cgroup
 
 build: build-stamp
+build-arch: build
+build-indep: build
 build-stamp: config.status
 	scripts/MakeHeader.py Process.c
 	dh build --before dh_auto_configure
