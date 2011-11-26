@@ -1,6 +1,6 @@
 /*
 htop - Settings.c
-(C) 2004-2010 Hisham H. Muhammad
+(C) 2004-2011 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -34,10 +34,10 @@ void Settings_delete(Settings* this) {
 
 static void Settings_readMeters(Settings* this, char* line, HeaderSide side) {
    char* trim = String_trim(line);
-   char** ids = String_split(trim, ' ');
+   int nIds;
+   char** ids = String_split(trim, ' ', &nIds);
    free(trim);
-   int i;
-   for (i = 0; ids[i] != NULL; i++) {
+   for (int i = 0; ids[i]; i++) {
       Header_createMeter(this->header, ids[i], side);
    }
    String_freeArray(ids);
@@ -45,17 +45,17 @@ static void Settings_readMeters(Settings* this, char* line, HeaderSide side) {
 
 static void Settings_readMeterModes(Settings* this, char* line, HeaderSide side) {
    char* trim = String_trim(line);
-   char** ids = String_split(trim, ' ');
+   int nIds;
+   char** ids = String_split(trim, ' ', &nIds);
    free(trim);
-   int i;
-   for (i = 0; ids[i] != NULL; i++) {
+   for (int i = 0; ids[i]; i++) {
       int mode = atoi(ids[i]);
       Header_setMode(this->header, i, mode, side);
    }
    String_freeArray(ids);
 }
 
-static bool Settings_read(Settings* this, char* fileName) {
+static bool Settings_read(Settings* this, char* fileName, int cpuCount) {
    // TODO: implement File object and make
    // file I/O object-oriented.
    FILE* fd;
@@ -67,13 +67,19 @@ static bool Settings_read(Settings* this, char* fileName) {
    char buffer[maxLine];
    bool readMeters = false;
    while (fgets(buffer, maxLine, fd)) {
-      char** option = String_split(buffer, '=');
+      int nOptions;
+      char** option = String_split(buffer, '=', &nOptions);
+      if (nOptions < 2) {
+         String_freeArray(option);
+         continue;
+      }
       if (String_eq(option[0], "fields")) {
          char* trim = String_trim(option[1]);
-         char** ids = String_split(trim, ' ');
+         int nIds;
+         char** ids = String_split(trim, ' ', &nIds);
          free(trim);
          int i, j;
-         for (j = 0, i = 0; i < LAST_PROCESSFIELD && ids[i] != NULL; i++) {
+         for (j = 0, i = 0; i < LAST_PROCESSFIELD && ids[i]; i++) {
             // This "+1" is for compatibility with the older enum format.
             int id = atoi(ids[i]) + 1;
             if (id > 0 && id < LAST_PROCESSFIELD) {
@@ -113,6 +119,8 @@ static bool Settings_read(Settings* this, char* fileName) {
          this->pl->detailedCPUTime = atoi(option[1]);
       } else if (String_eq(option[0], "detailed_cpu_time")) {
          this->pl->detailedCPUTime = atoi(option[1]);
+      } else if (String_eq(option[0], "cpu_count_from_zero")) {
+         this->pl->countCPUsFromZero = atoi(option[1]);
       } else if (String_eq(option[0], "delay")) {
          this->delay = atoi(option[1]);
       } else if (String_eq(option[0], "color_scheme")) {
@@ -136,7 +144,7 @@ static bool Settings_read(Settings* this, char* fileName) {
    }
    fclose(fd);
    if (!readMeters) {
-      Header_defaultMeters(this->header);
+      Header_defaultMeters(this->header, cpuCount);
    }
    return true;
 }
@@ -149,9 +157,8 @@ bool Settings_write(Settings* this) {
    if (fd == NULL) {
       return false;
    }
-   fprintf(fd, "# Beware! This file is rewritten every time htop exits.\n");
+   fprintf(fd, "# Beware! This file is rewritten by htop when settings are changed in the interface.\n");
    fprintf(fd, "# The parser is also very primitive, and not human-friendly.\n");
-   fprintf(fd, "# (I know, it's in the todo list).\n");
    fprintf(fd, "fields=");
    for (int i = 0; this->pl->fields[i]; i++) {
       // This "-1" is for compatibility with the older enum format.
@@ -172,6 +179,7 @@ bool Settings_write(Settings* this) {
    fprintf(fd, "tree_view=%d\n", (int) this->pl->treeView);
    fprintf(fd, "header_margin=%d\n", (int) this->header->margin);
    fprintf(fd, "detailed_cpu_time=%d\n", (int) this->pl->detailedCPUTime);
+   fprintf(fd, "cpu_count_from_zero=%d\n", (int) this->pl->countCPUsFromZero);
    fprintf(fd, "color_scheme=%d\n", (int) this->colorScheme);
    fprintf(fd, "delay=%d\n", (int) this->delay);
    fprintf(fd, "left_meters=");
@@ -200,7 +208,7 @@ bool Settings_write(Settings* this) {
    return true;
 }
 
-Settings* Settings_new(ProcessList* pl, Header* header) {
+Settings* Settings_new(ProcessList* pl, Header* header, int cpuCount) {
    Settings* this = malloc(sizeof(Settings));
    this->pl = pl;
    this->header = header;
@@ -217,15 +225,15 @@ Settings* Settings_new(ProcessList* pl, Header* header) {
    this->colorScheme = 0;
    this->changed = false;
    this->delay = DEFAULT_DELAY;
-   bool ok = Settings_read(this, this->userSettings);
+   bool ok = Settings_read(this, this->userSettings, cpuCount);
    if (!ok) {
       this->changed = true;
       // TODO: how to get SYSCONFDIR correctly through Autoconf?
       char* systemSettings = String_cat(SYSCONFDIR, "/htoprc");
-      ok = Settings_read(this, systemSettings);
+      ok = Settings_read(this, systemSettings, cpuCount);
       free(systemSettings);
       if (!ok) {
-         Header_defaultMeters(this->header);
+         Header_defaultMeters(this->header, cpuCount);
          pl->hideKernelThreads = true;
          pl->highlightMegabytes = true;
          pl->highlightThreads = false;

@@ -4,7 +4,7 @@
 #define HEADER_CRT
 /*
 htop - CRT.h
-(C) 2004-2010 Hisham H. Muhammad
+(C) 2004-2011 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -14,7 +14,9 @@ in the source distribution for its full text.
 #include <signal.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#ifdef HAVE_EXECINFO_H
 #include <execinfo.h>
+#endif
 
 #include "String.h"
 
@@ -116,6 +118,8 @@ extern int CRT_delay;
 extern int CRT_colorScheme;
 
 extern int CRT_colors[LAST_COLORELEMENT];
+
+extern int CRT_cursorX;
 
 char* CRT_termType;
 

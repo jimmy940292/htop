@@ -56,7 +56,26 @@ in the source distribution for its full text.
 #define MAX_READ 2048
 #endif
 
+#ifndef ProcessList_cpuId
+#define ProcessList_cpuId(pl, cpu) ((pl)->countCPUsFromZero ? (cpu) : (cpu)+1)
+#endif
 
+typedef enum TreeStr_ {
+   TREE_STR_HORZ,
+   TREE_STR_VERT,
+   TREE_STR_RTEE,
+   TREE_STR_BEND,
+   TREE_STR_TEND,
+   TREE_STR_OPEN,
+   TREE_STR_SHUT,
+   TREE_STR_COUNT
+} TreeStr;
+
+typedef enum TreeType_ {
+   TREE_TYPE_AUTO,
+   TREE_TYPE_ASCII,
+   TREE_TYPE_UTF8,
+} TreeType;
 
 typedef struct CPUData_ {
    unsigned long long int totalTime;
@@ -98,6 +117,10 @@ typedef struct ProcessList_ {
    int kernelThreads;
    int runningTasks;
 
+   #ifdef HAVE_LIBHWLOC
+   hwloc_topology_t topology;
+   bool topologyOk;
+   #endif
    CPUData* cpus;
 
    unsigned long long int totalMem;
@@ -124,8 +147,15 @@ typedef struct ProcessList_ {
    bool highlightMegabytes;
    bool highlightThreads;
    bool detailedCPUTime;
+   bool countCPUsFromZero;
+   const char **treeStr;
 
 } ProcessList;
+
+
+extern const char *ProcessList_treeStrAscii[TREE_STR_COUNT];
+
+extern const char *ProcessList_treeStrUtf8[TREE_STR_COUNT];
 
 ProcessList* ProcessList_new(UsersTable* usersTable);
 

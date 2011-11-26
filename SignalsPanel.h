@@ -4,7 +4,7 @@
 #define HEADER_SignalsPanel
 
 #include "Panel.h"
-#include "SignalItem.h"
+#include "ListItem.h"
 #include "RichString.h"
 
 #include "debug.h"
@@ -13,11 +13,13 @@
 #include <ctype.h>
 
 
+typedef struct SignalItem_ {
+   const char* name;
+   int number;
+} SignalItem;
+
 typedef struct SignalsPanel_ {
    Panel super;
-
-   int state;
-   Signal** signals;
 } SignalsPanel;
 
 

@@ -4,17 +4,17 @@
 #define HEADER_Process
 /*
 htop - Process.h
-(C) 2004-2010 Hisham H. Muhammad
+(C) 2004-2011 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
-#define _GNU_SOURCE
 #include "ProcessList.h"
 #include "Object.h"
 #include "CRT.h"
 #include "String.h"
 #include "RichString.h"
+#include "Affinity.h"
 
 #include "debug.h"
 
@@ -32,8 +32,8 @@ in the source distribution for its full text.
 #include <sched.h>
 #include <time.h>
 
-#ifdef HAVE_PLPA
-#include <plpa.h>
+#ifdef HAVE_LIBHWLOC
+#include <hwloc/linux.h>
 #endif
 
 // This works only with glibc 2.1+. On earlier versions
@@ -105,10 +105,10 @@ typedef struct Process_ {
    unsigned long int majflt;
    unsigned long int cmajflt;
    #endif
-   unsigned long int utime;
-   unsigned long int stime;
-   long int cutime;
-   long int cstime;
+   unsigned long long int utime;
+   unsigned long long int stime;
+   unsigned long long int cutime;
+   unsigned long long int cstime;
    long int priority;
    long int nice;
    long int nlwp;
@@ -181,6 +181,9 @@ extern const char *Process_fieldNames[];
 
 extern const char *Process_fieldTitles[];
 
+
+void Process_getMaxPid();
+
 #define ONE_K 1024
 #define ONE_M (ONE_K * ONE_K)
 #define ONE_G (ONE_M * ONE_K)
@@ -193,10 +196,18 @@ void Process_toggleTag(Process* this);
 
 bool Process_setPriority(Process* this, int priority);
 
-#ifdef HAVE_PLPA
-unsigned long Process_getAffinity(Process* this);
+#ifdef HAVE_LIBHWLOC
 
-bool Process_setAffinity(Process* this, unsigned long mask);
+Affinity* Process_getAffinity(Process* this);
+
+bool Process_setAffinity(Process* this, Affinity* affinity);
+
+#elif HAVE_NATIVE_AFFINITY
+
+Affinity* Process_getAffinity(Process* this);
+
+bool Process_setAffinity(Process* this, Affinity* affinity);
+
 #endif
 
 void Process_sendSignal(Process* this, int sgn);

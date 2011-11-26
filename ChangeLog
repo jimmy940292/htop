@@ -1,4 +1,31 @@
 
+What's new in version 1.0
+
+* Performance improvements
+* Support for splitting CPU meters into two or four columns
+  (thanks to Wim Heirman)
+* Switch from PLPA, which is now deprecated, to HWLOC.
+* Bring back support for native Linux sched_setaffinity,
+  so we don't have to use HWLOC where we don't need to.
+* Support for typing in user names and column fields in selection panels.
+* Support for UTF-8 tree drawing
+  (thanks to Bin Guo)
+* Option for counting CPUs from zero
+  (thanks to Sean Noonan)
+* Meters update in every screen (no longer halting while on Setup, etc.)
+* Stricter checks for command-line options
+  (thanks to Sebastian Pipping)
+* Incremental filtering
+  (thanks to Seth Heeren for the idea and initial implementation)
+* Try harder to find the ncurses header
+  (thanks to Moritz Barsnick)
+* Man page updates
+  (thanks to Vincent Launchbury)
+* BUGFIX: Support larger numbers for process times.
+  (thanks to Tristan Nakagawa for the report.)
+* BUGFIX: Segfault in BarMeterMode_draw() for small terminal widths
+  (patch by Sebastian Pipping)
+
 What's new in version 0.9
 
 * Add support for "steal"/guest CPU time measurement

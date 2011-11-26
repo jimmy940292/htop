@@ -13,13 +13,13 @@ Index: htop/ProcessList.c
     if (!file) 
        return;
 -   fscanf(file, 
--      "%*u %*s %*c %*u %*u %*u %*u %*u %*u %*u "
--      "%*u %*u %*u %*u %*u %*u %*u %*u "
--      "%*u %*u %*u %*u %*u %*u %*u %*u "
--      "%*u %*u %*u %*u %*u %*u %*u %*u "
--      "%*u %*u %*u %*u %*u %*u %*u %*u "
--      "%*u %*u %*u %*u %*u %*u %*u "
--      "%*u %*u %u %u",
+-      "%*32u %*32s %*1c %*32u %*32u %*32u %*32u %*32u %*32u %*32u "
+-      "%*32u %*32u %*32u %*32u %*32u %*32u %*32u %*32u "
+-      "%*32u %*32u %*32u %*32u %*32u %*32u %*32u %*32u "
+-      "%*32u %*32u %*32u %*32u %*32u %*32u %*32u %*32u "
+-      "%*32u %*32u %*32u %*32u %*32u %*32u %*32u %*32u "
+-      "%*32u %*32u %*32u %*32u %*32u %*32u %*32u "
+-      "%*32u %*32u %32u %32u",
 -      &process->vpid, &process->ctid);
 +
 +   char buffer[256];

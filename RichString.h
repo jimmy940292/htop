@@ -15,9 +15,13 @@
 
 #include "debug.h"
 #include <assert.h>
-#ifdef HAVE_LIBNCURSESW
+#ifdef HAVE_NCURSESW_CURSES_H
 #include <ncursesw/curses.h>
-#else
+#elif HAVE_NCURSES_NCURSES_H
+#include <ncurses/ncurses.h>
+#elif HAVE_NCURSES_H
+#include <ncurses.h>
+#elif HAVE_CURSES_H
 #include <curses.h>
 #endif
 

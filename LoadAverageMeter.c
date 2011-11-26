@@ -1,6 +1,6 @@
 /*
 htop
-(C) 2004-2010 Hisham H. Muhammad
+(C) 2004-2011 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -20,12 +20,15 @@ int LoadMeter_attributes[] = { LOAD };
 
 static inline void LoadAverageMeter_scan(double* one, double* five, double* fifteen) {
    int activeProcs, totalProcs, lastProc;
+   *one = 0; *five = 0; *fifteen = 0;
    FILE *fd = fopen(PROCDIR "/loadavg", "r");
-   int total = fscanf(fd, "%lf %lf %lf %d/%d %d", one, five, fifteen,
-      &activeProcs, &totalProcs, &lastProc);
-   (void) total;
-   assert(total == 6);
-   fclose(fd);
+   if (fd) {
+      int total = fscanf(fd, "%32lf %32lf %32lf %32d/%32d %32d", one, five, fifteen,
+         &activeProcs, &totalProcs, &lastProc);
+      (void) total;
+      assert(total == 6);
+      fclose(fd);
+   }
 }
 
 static void LoadAverageMeter_setValues(Meter* this, char* buffer, int size) {

@@ -132,19 +132,19 @@ Index: htop/TraceScreen.h
  
 Index: htop/htop.1
 ===================================================================
---- htop.orig/htop.1	2011-01-16 17:02:59.000000000 +0200
-+++ htop/htop.1	2011-01-16 18:15:07.000000000 +0200
+--- htop.orig/htop.1.in	2011-01-16 17:02:59.000000000 +0200
++++ htop/htop.1.in	2011-01-16 18:15:07.000000000 +0200
 @@ -54,6 +54,11 @@
  Display open files for a process: if lsof(1) is installed, pressing this key
  will display the list of file descriptors opened by the process.
  .TP
-+.B l
++.B L
 +Trace process library calls: if ltrace(1) is installed, pressing this key
 +will attach it to the currently selected process, presenting a live
 +update of library calls issued by the process.
 +.TP
- .B F1, h
- Help screen
+ .B F1, h, ?
+ Go to the help screen
  .TP
 Index: htop/htop.c
 ===================================================================

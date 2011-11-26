@@ -4,7 +4,7 @@
 #define HEADER_SwapMeter
 /*
 htop
-(C) 2004-2010 Hisham H. Muhammad
+(C) 2004-2011 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -22,8 +22,13 @@ in the source distribution for its full text.
 #include "debug.h"
 #include <assert.h>
 
+#define KILOBYTE 1
+#define MEGABYTE 1024
+#define GIGABYTE 1048576
+
 extern int SwapMeter_attributes[];
 
+/* NOTE: Value is in kilobytes */
 extern MeterType SwapMeter;
 
 #endif

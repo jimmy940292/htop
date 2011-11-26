@@ -1,3 +1,29 @@
+htop (1.0-1) unstable; urgency=low
+
+  * New upstream release.
+    - Don't die after a terminal resize. (Closes: #464852)
+    - Don't abort when a number of processes are removed from the list at
+      once. (Closes: #541417)
+    - Fixed the inconsistency in the documentation about "[" and "]" keys.
+      (Closes: #610329)
+  * debian/patches:
+    - 100-fix-cgroups-crash.patch: deleted, upstream fixed it in a different
+      way.
+    - 600-openvz-veid-on-kernels-gt-2.6.18.patch: ported to new upstream
+      version.
+    - 700-ltrace-support.patch: ported to new upstream version.
+    - 700-ltrace-support.patch: ltrace hotkey is 'L', not 'l'.
+  * debian/control:
+    - Add libhwloc-dev to Build-Depends on non-linux architectures.
+    - Add libncursesw5-dev to Build-Depends, enabling unicode support.
+  * debian/rules:
+    - Enable native affinity functions on linux architectures and use hwloc
+      library everywhere else.
+  * debian/copyright:
+    - Updated upstream copyright years.
+
+ -- Eugene V. Lyubimkin <jackyf@debian.org>  Sat, 26 Nov 2011 15:58:33 +0200
+
 htop (0.9-4) unstable; urgency=low
 
   * debian/rules:

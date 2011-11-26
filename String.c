@@ -1,6 +1,6 @@
 /*
 htop
-(C) 2004-2010 Hisham H. Muhammad
+(C) 2004-2011 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -55,7 +55,8 @@ inline int String_eq(const char* s1, const char* s2) {
    return (strcmp(s1, s2) == 0);
 }
 
-char** String_split(const char* s, char sep) {
+char** String_split(const char* s, char sep, int* n) {
+   *n = 0;
    const int rate = 10;
    char** out = (char**) malloc(sizeof(char*) * rate);
    int ctr = 0;
@@ -83,6 +84,7 @@ char** String_split(const char* s, char sep) {
    }
    out = realloc(out, sizeof(char*) * (ctr + 1));
    out[ctr] = NULL;
+   *n = ctr;
    return out;
 }
 

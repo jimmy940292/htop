@@ -1,5 +1,4 @@
 
-#define _GNU_SOURCE
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -90,7 +89,7 @@ void* DebugMemory_realloc(void* ptr, int size, char* file, int line, char* str) 
    return data;
 }
 
-void* DebugMemory_strdup(char* str, char* file, int line) {
+void* DebugMemory_strdup(const char* str, char* file, int line) {
    assert(str);
    char* data = strdup(str);
    DebugMemory_registerAllocation(data, file, line);
@@ -102,7 +101,7 @@ void* DebugMemory_strdup(char* str, char* file, int line) {
 }
 
 void DebugMemory_free(void* data, char* file, int line) {
-   assert(data);
+   if (!data) return;
    DebugMemory_registerDeallocation(data, file, line);
    if (singleton->file) {
       if (singleton->totals) fprintf(singleton->file, "%d\t", singleton->size);
@@ -209,7 +208,10 @@ void DebugMemory_report() {
       assert(walk->magic == 11061980);
       i++;
       fprintf(stderr, "%p %s:%d\n", walk->data, walk->file, walk->line);
+      DebugMemoryItem* old = walk;
       walk = walk->next;
+      free(old->file);
+      free(old);
    }
    fprintf(stderr, "Total:\n");
    fprintf(stderr, "%d allocations\n", singleton->allocations);
@@ -218,6 +220,7 @@ void DebugMemory_report() {
    fprintf(stderr, "%d non-freed blocks\n", i);
    if (singleton->file)
       fclose(singleton->file);
+   free(singleton);
 }
 
 #elif defined(DEBUGLITE)

@@ -4,7 +4,7 @@
 #define HEADER_htop
 /*
 htop - htop.h
-(C) 2004-2010 Hisham H. Muhammad
+(C) 2004-2011 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -22,7 +22,6 @@ in the source distribution for its full text.
 #include "CRT.h"
 #include "Panel.h"
 #include "UsersTable.h"
-#include "SignalItem.h"
 #include "RichString.h"
 #include "Settings.h"
 #include "ScreenManager.h"
@@ -41,7 +40,9 @@ in the source distribution for its full text.
 
 #define INCSEARCH_MAX 40
 
-#define COPYRIGHT "(C) 2004-2010 Hisham Muhammad"
+#define COPYRIGHT "(C) 2004-2011 Hisham Muhammad"
+
+typedef struct IncBuffer_;
 
 int main(int argc, char** argv);
 

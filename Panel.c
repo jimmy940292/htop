@@ -1,6 +1,6 @@
 /*
 htop - Panel.c
-(C) 2004-2010 Hisham H. Muhammad
+(C) 2004-2011 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -47,6 +47,7 @@ struct Panel_ {
    bool needsRedraw;
    RichString header;
    Panel_EventHandler eventHandler;
+   char* eventHandlerBuffer;
 };
 
 }*/
@@ -92,6 +93,7 @@ void Panel_init(Panel* this, int x, int y, int w, int h, char* type, bool owner)
    this->w = w;
    this->h = h;
    this->eventHandler = NULL;
+   this->eventHandlerBuffer = NULL;
    this->items = Vector_new(type, owner, DEFAULT_SIZE, ListItem_compare);
    this->scrollV = 0;
    this->scrollH = 0;
@@ -107,6 +109,7 @@ void Panel_init(Panel* this, int x, int y, int w, int h, char* type, bool owner)
 
 void Panel_done(Panel* this) {
    assert (this != NULL);
+   free(this->eventHandlerBuffer);
    Vector_delete(this->items);
    RichString_end(this->header);
 }
@@ -238,18 +241,11 @@ void Panel_setSelected(Panel* this, int selected) {
 void Panel_draw(Panel* this, bool focus) {
    assert (this != NULL);
 
-   int first, last;
    int itemCount = Vector_size(this->items);
    int scrollH = this->scrollH;
    int y = this->y; int x = this->x;
-   first = this->scrollV;
-
-   if (this->h > itemCount) {
-      last = this->scrollV + itemCount;
-      move(y + last, x + 0);
-   } else {
-      last = MIN(itemCount, this->scrollV + this->h);
-   }
+   int first = this->scrollV;
+   int last = MIN(itemCount, this->scrollV + MIN(itemCount, this->h));
    if (this->selected < first) {
       first = this->selected;
       this->scrollV = first;
@@ -410,4 +406,39 @@ bool Panel_onKey(Panel* this, int key) {
       return true;
    }
    return false;
+}
+
+
+HandlerResult Panel_selectByTyping(Panel* this, int ch) {
+   int size = Panel_size(this);
+   if (!this->eventHandlerBuffer)
+      this->eventHandlerBuffer = calloc(100, 1);
+
+   if (isalnum(ch)) {
+      int len = strlen(this->eventHandlerBuffer);
+      if (len < 99) {
+         this->eventHandlerBuffer[len] = ch;
+         this->eventHandlerBuffer[len+1] = '\0';
+      }
+      for (int try = 0; try < 2; try++) {
+         len = strlen(this->eventHandlerBuffer);
+         for (int i = 0; i < size; i++) {
+            char* cur = ((ListItem*) Panel_get(this, i))->value;
+            while (*cur == ' ') cur++;
+            if (strncasecmp(cur, this->eventHandlerBuffer, len) == 0) {
+               Panel_setSelected(this, i);
+               return HANDLED;
+            }
+         }
+         this->eventHandlerBuffer[0] = ch;
+         this->eventHandlerBuffer[1] = '\0';
+      }
+      return HANDLED;
+   } else if (ch != ERR) {
+      this->eventHandlerBuffer[0] = '\0';
+   }
+   if (ch == 13) {
+      return BREAK_LOOP;
+   }
+   return IGNORED;
 }

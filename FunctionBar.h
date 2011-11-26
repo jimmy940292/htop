@@ -4,7 +4,7 @@
 #define HEADER_FunctionBar
 /*
 htop - FunctionBar.h
-(C) 2004-2010 Hisham H. Muhammad
+(C) 2004-2011 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -43,10 +43,10 @@ void FunctionBar_delete(Object* cast);
 
 void FunctionBar_setLabel(FunctionBar* this, int event, const char* text);
 
-void FunctionBar_draw(FunctionBar* this, char* buffer);
+void FunctionBar_draw(const FunctionBar* this, char* buffer);
 
-void FunctionBar_drawAttr(FunctionBar* this, char* buffer, int attr);
+void FunctionBar_drawAttr(const FunctionBar* this, char* buffer, int attr);
 
-int FunctionBar_synthesizeEvent(FunctionBar* this, int pos);
+int FunctionBar_synthesizeEvent(const FunctionBar* this, int pos);
 
 #endif

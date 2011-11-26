@@ -1,6 +1,6 @@
 /*
 htop - htop.c
-(C) 2004-2010 Hisham H. Muhammad
+(C) 2004-2011 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -18,7 +18,6 @@ in the source distribution for its full text.
 #include "CRT.h"
 #include "Panel.h"
 #include "UsersTable.h"
-#include "SignalItem.h"
 #include "RichString.h"
 #include "Settings.h"
 #include "ScreenManager.h"
@@ -37,7 +36,7 @@ in the source distribution for its full text.
 
 #define INCSEARCH_MAX 40
 
-#define COPYRIGHT "(C) 2004-2010 Hisham Muhammad"
+#define COPYRIGHT "(C) 2004-2011 Hisham Muhammad"
 
 static void printVersionFlag() {
    fputs("htop " VERSION " - " COPYRIGHT "\n"
@@ -118,18 +117,18 @@ static void showHelp(ProcessList* pl) {
    mvaddstr( 9, 0, " Arrows: scroll process list             F5 t: tree view");
    mvaddstr(10, 0, " Digits: incremental PID search             u: show processes of a single user");
    mvaddstr(11, 0, "   F3 /: incremental name search            H: hide/show user threads");
-   mvaddstr(12, 0, "                                            K: hide/show kernel threads");
+   mvaddstr(12, 0, "   F4 \\: incremental name filtering         K: hide/show kernel threads");
    mvaddstr(13, 0, "  Space: tag processes                      F: cursor follows process");
    mvaddstr(14, 0, "      U: untag all processes              + -: expand/collapse tree");
    mvaddstr(15, 0, "   F9 k: kill process/tagged processes      P: sort by CPU%");
    mvaddstr(16, 0, "   ] F7: higher priority (root only)        M: sort by MEM%");
    mvaddstr(17, 0, "   [ F8: lower priority (+ nice)            T: sort by TIME");
-#ifdef HAVE_PLPA
+#if (HAVE_LIBHWLOC || HAVE_NATIVE_AFFINITY)
    if (pl->cpuCount > 1)
-      mvaddstr(18, 0, "      a: set CPU affinity                F4 I: invert sort order");
+      mvaddstr(18, 0, "      a: set CPU affinity                   I: invert sort order");
    else
 #endif
-      mvaddstr(18, 0, "                                         F4 I: invert sort order");
+      mvaddstr(18, 0, "                                            I: invert sort order");
    mvaddstr(19, 0, "   F2 S: setup                           F6 >: select sort column");
    mvaddstr(20, 0, "   F1 h: show this help screen              l: list open files with lsof");
    mvaddstr(21, 0, "  F10 q: quit                               s: trace syscalls with strace");
@@ -138,14 +137,14 @@ static void showHelp(ProcessList* pl) {
    mvaddstr( 9, 0, " Arrows"); mvaddstr( 9,40, " F5 t");
    mvaddstr(10, 0, " Digits"); mvaddstr(10,40, "    u");
    mvaddstr(11, 0, "   F3 /"); mvaddstr(11,40, "    H");
-                               mvaddstr(12,40, "    K");
+   mvaddstr(12, 0, "   F4 \\"); mvaddstr(12,40, "    K");
    mvaddstr(13, 0, "  Space"); mvaddstr(13,40, "    F");
    mvaddstr(14, 0, "      U"); mvaddstr(14,40, "  + -");
    mvaddstr(15, 0, "   F9 k"); mvaddstr(15,40, "    P");
-   mvaddstr(16, 0, "   [ F7"); mvaddstr(16,40, "    M");
-   mvaddstr(17, 0, "   ] F8"); mvaddstr(17,40, "    T");
+   mvaddstr(16, 0, "   ] F7"); mvaddstr(16,40, "    M");
+   mvaddstr(17, 0, "   [ F8"); mvaddstr(17,40, "    T");
                                mvaddstr(18,40, " F4 I");
-#if HAVE_PLPA
+#if (HAVE_LIBHWLOC || HAVE_NATIVE_AFFINITY)
    if (pl->cpuCount > 1)
       mvaddstr(18, 0, "      a:");
 #endif
@@ -164,8 +163,8 @@ static void showHelp(ProcessList* pl) {
 
 static const char* CategoriesFunctions[] = {"      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "Done  ", NULL};
 
-static void Setup_run(Settings* settings, int headerHeight) {
-   ScreenManager* scr = ScreenManager_new(0, headerHeight, 0, -1, HORIZONTAL, true);
+static void Setup_run(Settings* settings, const Header* header) {
+   ScreenManager* scr = ScreenManager_new(0, header->height, 0, -1, HORIZONTAL, header, true);
    CategoriesPanel* panelCategories = CategoriesPanel_new(settings, scr);
    ScreenManager_add(scr, (Panel*) panelCategories, FunctionBar_new(CategoriesFunctions, NULL, NULL), 16);
    CategoriesPanel_makeMetersPage(panelCategories);
@@ -194,19 +193,12 @@ static bool changePriority(Panel* panel, int delta) {
    return anyTagged;
 }
 
-static HandlerResult pickWithEnter(Panel* panel, int ch) {
-   (void) panel;
-   if (ch == 13)
-      return BREAK_LOOP;
-   return IGNORED;
-}
-
-static Object* pickFromVector(Panel* panel, Panel* list, int x, int y, const char** keyLabels, FunctionBar* prevBar) {
+static Object* pickFromVector(Panel* panel, Panel* list, int x, int y, const char** keyLabels, FunctionBar* prevBar, Header* header) {
    const char* fuKeys[] = {"Enter", "Esc", NULL};
    int fuEvents[] = {13, 27};
    if (!list->eventHandler)
-      Panel_setEventHandler(list, pickWithEnter);
-   ScreenManager* scr = ScreenManager_new(0, y, 0, -1, HORIZONTAL, false);
+      Panel_setEventHandler(list, Panel_selectByTyping);
+   ScreenManager* scr = ScreenManager_new(0, y, 0, -1, HORIZONTAL, header, false);
    ScreenManager_add(scr, list, FunctionBar_new(keyLabels, fuKeys, fuEvents), x - 1);
    ScreenManager_add(scr, panel, NULL, -1);
    Panel* panelFocus;
@@ -228,12 +220,14 @@ static void addUserToVector(int key, void* userCast, void* panelCast) {
    Panel_add(panel, (Object*) ListItem_new(user, key));
 }
 
-static void setUserOnly(const char* userName, bool* userOnly, uid_t* userId) {
+static bool setUserOnly(const char* userName, bool* userOnly, uid_t* userId) {
    struct passwd* user = getpwnam(userName);
    if (user) {
       *userOnly = true;
       *userId = user->pw_uid;
+      return true;
    }
+   return false;
 }
 
 static inline void setSortKey(ProcessList* pl, ProcessField sortKey, Panel* panel, Settings* settings) {
@@ -244,12 +238,24 @@ static inline void setSortKey(ProcessList* pl, ProcessField sortKey, Panel* pane
    ProcessList_printHeader(pl, Panel_getHeader(panel));
 }
 
+typedef struct IncBuffer_ {
+   char buffer[INCSEARCH_MAX];
+   int index;
+   FunctionBar* bar;
+} IncBuffer;
+
+static void IncBuffer_reset(IncBuffer* inc) {
+   inc->index = 0;
+   inc->buffer[0] = 0;
+}
+
 int main(int argc, char** argv) {
 
    int delay = -1;
    bool userOnly = false;
    uid_t userId = 0;
    int usecolors = 1;
+   TreeType treeType = TREE_TYPE_AUTO;
 
    int opt, opti=0;
    static struct option long_opts[] =
@@ -268,11 +274,13 @@ int main(int argc, char** argv) {
    char *lc_ctype = getenv("LC_CTYPE");
    if(lc_ctype != NULL)
       setlocale(LC_CTYPE, lc_ctype);
+   else if ((lc_ctype = getenv("LC_ALL")))
+      setlocale(LC_CTYPE, lc_ctype);
    else
-      setlocale(LC_CTYPE, getenv("LC_ALL"));
+      setlocale(LC_CTYPE, "");
 
    /* Parse arguments */
-   while ((opt = getopt_long_only(argc, argv, "hvCs:d:u:", long_opts, &opti))) {
+   while ((opt = getopt_long(argc, argv, "hvCs:d:u:", long_opts, &opti))) {
       if (opt == EOF) break;
       switch (opt) {
          case 'h':
@@ -282,7 +290,7 @@ int main(int argc, char** argv) {
             printVersionFlag();
             break;
          case 's':
-            if (strcmp(optarg, "help")) {
+            if (strcmp(optarg, "help") == 0) {
                for (int j = 1; j < LAST_PROCESSFIELD; j++)
                   printf ("%s\n", Process_fieldNames[j]);
                exit(0);
@@ -295,16 +303,25 @@ int main(int argc, char** argv) {
             }
             break;
          case 'd':
-            sscanf(optarg, "%d", &delay);
-            if (delay < 1) delay = 1;
-            if (delay > 100) delay = 100;
+            if (sscanf(optarg, "%d", &delay) == 1) {
+               if (delay < 1) delay = 1;
+               if (delay > 100) delay = 100;
+            } else {
+               fprintf(stderr, "Error: invalid delay value \"%s\".\n", optarg);
+               exit(1);
+            }
             break;
          case 'u':
-            setUserOnly(optarg, &userOnly, &userId);
+            if (!setUserOnly(optarg, &userOnly, &userId)) {
+               fprintf(stderr, "Error: invalid user \"%s\".\n", optarg);
+               exit(1);
+            }
             break;
          case 'C':
             usecolors=0;
             break;
+         default:
+            exit(1);
       }
    }
 
@@ -323,19 +340,15 @@ int main(int argc, char** argv) {
    Settings* settings;
    
    Panel* killPanel = NULL;
-
-   char incSearchBuffer[INCSEARCH_MAX];
-   int incSearchIndex = 0;
-   incSearchBuffer[0] = 0;
-   bool incSearchMode = false;
-
+   
    ProcessList* pl = NULL;
    UsersTable* ut = UsersTable_new();
 
    pl = ProcessList_new(ut);
+   Process_getMaxPid();
    
    Header* header = Header_new(pl);
-   settings = Settings_new(pl, header);
+   settings = Settings_new(pl, header, pl->cpuCount);
    int headerHeight = Header_calculateHeight(header);
 
    // FIXME: move delay code to settings
@@ -343,6 +356,34 @@ int main(int argc, char** argv) {
       settings->delay = delay;
    if (!usecolors) 
       settings->colorScheme = COLORSCHEME_MONOCHROME;
+
+   if (treeType == TREE_TYPE_AUTO) {
+#ifdef HAVE_LIBNCURSESW
+      char *locale = setlocale(LC_ALL, NULL);
+      if (locale == NULL || locale[0] == '\0')
+         locale = setlocale(LC_CTYPE, NULL);
+      if (locale != NULL &&
+          (strstr(locale, "UTF-8") ||
+           strstr(locale, "utf-8") ||
+           strstr(locale, "UTF8")  ||
+           strstr(locale, "utf8")))
+         treeType = TREE_TYPE_UTF8;
+      else
+         treeType = TREE_TYPE_ASCII;
+#else
+      treeType = TREE_TYPE_ASCII;
+#endif
+   }
+   switch (treeType) {
+   default:
+   case TREE_TYPE_ASCII:
+      pl->treeStr = ProcessList_treeStrAscii;
+      break;
+   case TREE_TYPE_UTF8:
+      pl->treeStr = ProcessList_treeStrUtf8;
+      break;
+   }
+
    
    CRT_init(settings->delay, settings->colorScheme);
    
@@ -353,13 +394,25 @@ int main(int argc, char** argv) {
       pl->direction = 1;
    }
    ProcessList_printHeader(pl, Panel_getHeader(panel));
-   
-   const char* searchFunctions[] = {"Next  ", "Exit  ", " Search: ", NULL};
+
+   IncBuffer incSearch, incFilter;
+   bool filtering = false;
+
+   memset(&incSearch, 0, sizeof(IncBuffer));
+   const char* searchFunctions[] = {"Next  ", "Cancel ", " Search: ", NULL};
    const char* searchKeys[] = {"F3", "Esc", "  "};
    int searchEvents[] = {KEY_F(3), 27, ERR};
-   FunctionBar* searchBar = FunctionBar_new(searchFunctions, searchKeys, searchEvents);
+   incSearch.bar = FunctionBar_new(searchFunctions, searchKeys, searchEvents);
+
+   memset(&incFilter, 0, sizeof(IncBuffer));
+   const char* filterFunctions[] = {"Done  ", "Clear ", " Filter: ", NULL};
+   const char* filterKeys[] = {"Enter", "Esc", "  "};
+   int filterEvents[] = {13, 27, ERR};
+   incFilter.bar = FunctionBar_new(filterFunctions, filterKeys, filterEvents);
    
-   const char* defaultFunctions[] = {"Help  ", "Setup ", "Search", "Invert", "Tree  ",
+   IncBuffer* incMode = NULL;
+   
+   const char* defaultFunctions[] = {"Help  ", "Setup ", "Search", "Filter", "Tree  ",
        "SortBy", "Nice -", "Nice +", "Kill  ", "Quit  ", NULL};
    FunctionBar* defaultBar = FunctionBar_new(defaultFunctions, NULL, NULL);
 
@@ -376,7 +429,7 @@ int main(int argc, char** argv) {
    double oldTime = 0.0;
    bool recalculate;
 
-   int ch = 0;
+   int ch = ERR;
    int closeTimeout = 0;
 
    while (!quit) {
@@ -386,6 +439,7 @@ int main(int argc, char** argv) {
       if (recalculate)
          oldTime = newTime;
       if (doRefresh) {
+
          int currPos = Panel_getSelectedIndex(panel);
          pid_t currPid = 0;
          int currScrollV = panel->scrollV;
@@ -403,8 +457,15 @@ int main(int argc, char** argv) {
          int size = ProcessList_size(pl);
          int idx = 0;
          for (int i = 0; i < size; i++) {
+            bool hidden = false;
             Process* p = ProcessList_get(pl, i);
-            if (p->show && (!userOnly || (p->st_uid == userId))) {
+
+            if ( (!p->show)
+               || (userOnly && (p->st_uid != userId))
+               || (filtering && !(String_contains_i(p->comm, incFilter.buffer))) )
+               hidden = true;
+
+            if (!hidden) {
                Panel_set(panel, idx, (Object*)p);
                if ((!follow && idx == currPos) || (follow && p->pid == currPid)) {
                   Panel_setSelected(panel, idx);
@@ -420,21 +481,24 @@ int main(int argc, char** argv) {
 
       Panel_draw(panel, true);
       int prev = ch;
+      if (incMode)
+         move(LINES-1, CRT_cursorX);
       ch = getch();
 
       if (ch == ERR) {
-         if (!incSearchMode)
+         if (!incMode)
             refreshTimeout--;
          if (prev == ch && !recalculate) {
             closeTimeout++;
-            if (closeTimeout == 10)
+            if (closeTimeout == 100) {
                break;
+            }
          } else
             closeTimeout = 0;
          continue;
       }
 
-      if (incSearchMode) {
+      if (incMode) {
          doRefresh = false;
          int size = Panel_size(panel);
          if (ch == KEY_F(3)) {
@@ -444,22 +508,40 @@ int main(int argc, char** argv) {
                if (i == size)
                   i = 0;
                Process* p = (Process*) Panel_get(panel, i);
-               if (String_contains_i(p->comm, incSearchBuffer)) {
+               if (String_contains_i(p->comm, incMode->buffer)) {
                   Panel_setSelected(panel, i);
                   break;
                }
                i++;
             }
             continue;
-         } else if (isprint((char)ch) && (incSearchIndex < INCSEARCH_MAX)) {
-            incSearchBuffer[incSearchIndex] = ch;
-            incSearchIndex++;
-            incSearchBuffer[incSearchIndex] = 0;
-         } else if ((ch == KEY_BACKSPACE || ch == 127) && (incSearchIndex > 0)) {
-            incSearchIndex--;
-            incSearchBuffer[incSearchIndex] = 0;
+         } else if (isprint((char)ch) && (incMode->index < INCSEARCH_MAX)) {
+            incMode->buffer[incMode->index] = ch;
+            incMode->index++;
+            incMode->buffer[incMode->index] = 0;
+            if (incMode == &incFilter) {
+               doRefresh = true;
+               if (incFilter.index == 1) filtering = true;
+            }
+         } else if ((ch == KEY_BACKSPACE || ch == 127) && (incMode->index > 0)) {
+            incMode->index--;
+            incMode->buffer[incMode->index] = 0;
+            if (incMode == &incFilter) {
+               doRefresh = true;
+               if (incFilter.index == 0) {
+                  filtering = false;
+                  IncBuffer_reset(incMode);
+               }
+            }
          } else {
-            incSearchMode = false;
+            if (incMode == &incFilter) {
+               doRefresh = true;
+               if (ch == 27) {
+                  filtering = false;
+                  IncBuffer_reset(incMode);
+               }
+            }
+            incMode = NULL;
             FunctionBar_draw(defaultBar, NULL);
             continue;
          }
@@ -467,16 +549,16 @@ int main(int argc, char** argv) {
          bool found = false;
          for (int i = 0; i < size; i++) {
             Process* p = (Process*) Panel_get(panel, i);
-            if (String_contains_i(p->comm, incSearchBuffer)) {
+            if (String_contains_i(p->comm, incSearch.buffer)) {
                Panel_setSelected(panel, i);
                found = true;
                break;
             }
          }
          if (found)
-            FunctionBar_draw(searchBar, incSearchBuffer);
+            FunctionBar_draw(incMode->bar, incMode->buffer);
          else
-            FunctionBar_drawAttr(searchBar, incSearchBuffer, CRT_colors[FAILED_SEARCH]);
+            FunctionBar_drawAttr(incMode->bar, incMode->buffer, CRT_colors[FAILED_SEARCH]);
          continue;
       }
       if (isdigit((char)ch)) {
@@ -495,38 +577,45 @@ int main(int argc, char** argv) {
          MEVENT mevent;
          int ok = getmouse(&mevent);
          if (ok == OK) {
-            if (mevent.y == panel->y) {
-               int x = panel->scrollH + mevent.x + 1;
-               ProcessField field = ProcessList_keyAt(pl, x);
-               if (field == pl->sortKey) {
-                  ProcessList_invertSortOrder(pl);
-                  pl->treeView = false;
-               } else {
-                  setSortKey(pl, field, panel, settings);
+            if (mevent.bstate & BUTTON1_CLICKED) {
+               if (mevent.y == panel->y) {
+                  int x = panel->scrollH + mevent.x + 1;
+                  ProcessField field = ProcessList_keyAt(pl, x);
+                  if (field == pl->sortKey) {
+                     ProcessList_invertSortOrder(pl);
+                     pl->treeView = false;
+                  } else {
+                     setSortKey(pl, field, panel, settings);
+                  }
+                  refreshTimeout = 0;
+                  continue;
+               } else if (mevent.y >= panel->y + 1 && mevent.y < LINES - 1) {
+                  Panel_setSelected(panel, mevent.y - panel->y + panel->scrollV - 1);
+                  doRefresh = false;
+                  refreshTimeout = resetRefreshTimeout;
+                  follow = true;
+                  continue;
+               } if (mevent.y == LINES - 1) {
+                  FunctionBar* bar;
+                  if (incMode) bar = incMode->bar;
+                  else bar = defaultBar;
+                  ch = FunctionBar_synthesizeEvent(bar, mevent.x);
                }
-               refreshTimeout = 0;
-               continue;
-            } else if (mevent.y >= panel->y + 1 && mevent.y < LINES - 1) {
-               Panel_setSelected(panel, mevent.y - panel->y + panel->scrollV - 1);
-               doRefresh = false;
-               refreshTimeout = resetRefreshTimeout;
-               follow = true;
-               continue;
-            } if (mevent.y == LINES - 1) {
-               FunctionBar* bar;
-               if (incSearchMode) bar = searchBar;
-               else bar = defaultBar;
-               ch = FunctionBar_synthesizeEvent(bar, mevent.x);
+            } else if (mevent.bstate & BUTTON4_CLICKED) {
+               ch = KEY_UP;
+            #if NCURSES_MOUSE_VERSION > 1
+            } else if (mevent.bstate & BUTTON5_CLICKED) {
+               ch = KEY_DOWN;
+            #endif
             }
-
          }
       }
 
       switch (ch) {
       case KEY_RESIZE:
          Panel_resize(panel, COLS, LINES-headerHeight-1);
-         if (incSearchMode)
-            FunctionBar_draw(searchBar, incSearchBuffer);
+         if (incMode)
+            FunctionBar_draw(incMode->bar, incMode->buffer);
          else
             FunctionBar_draw(defaultBar, NULL);
          break;
@@ -606,7 +695,7 @@ int main(int argc, char** argv) {
       case 'C':
       case KEY_F(2):
       {
-         Setup_run(settings, headerHeight);
+         Setup_run(settings, header);
          // TODO: shouldn't need this, colors should be dynamic
          ProcessList_printHeader(pl, Panel_getHeader(panel));
          headerHeight = Header_calculateHeight(header);
@@ -626,19 +715,19 @@ int main(int argc, char** argv) {
          Panel* usersPanel = Panel_new(0, 0, 0, 0, LISTITEM_CLASS, true, ListItem_compare);
          Panel_setHeader(usersPanel, "Show processes of:");
          UsersTable_foreach(ut, addUserToVector, usersPanel);
-         Vector_sort(usersPanel->items);
+         Vector_insertionSort(usersPanel->items);
          ListItem* allUsers = ListItem_new("All users", -1);
          Panel_insert(usersPanel, 0, (Object*) allUsers);
          const char* fuFunctions[] = {"Show    ", "Cancel ", NULL};
-         ListItem* picked = (ListItem*) pickFromVector(panel, usersPanel, 20, headerHeight, fuFunctions, defaultBar);
+         ListItem* picked = (ListItem*) pickFromVector(panel, usersPanel, 20, headerHeight, fuFunctions, defaultBar, header);
          if (picked) {
             if (picked == allUsers) {
                userOnly = false;
-               break;
             } else {
                setUserOnly(ListItem_getRef(picked), &userOnly, &userId);
             }
          }
+         Panel_delete((Object*)usersPanel);
          break;
       }
       case '+':
@@ -659,9 +748,9 @@ int main(int argc, char** argv) {
          }
          SignalsPanel_reset((SignalsPanel*) killPanel);
          const char* fuFunctions[] = {"Send  ", "Cancel ", NULL};
-         Signal* sgn = (Signal*) pickFromVector(panel, killPanel, 15, headerHeight, fuFunctions, defaultBar);
+         ListItem* sgn = (ListItem*) pickFromVector(panel, killPanel, 15, headerHeight, fuFunctions, defaultBar, header);
          if (sgn) {
-            if (sgn->number != 0) {
+            if (sgn->key != 0) {
                Panel_setHeader(panel, "Sending...");
                Panel_draw(panel, true);
                refresh();
@@ -669,13 +758,13 @@ int main(int argc, char** argv) {
                for (int i = 0; i < Panel_size(panel); i++) {
                   Process* p = (Process*) Panel_get(panel, i);
                   if (p->tag) {
-                     Process_sendSignal(p, sgn->number);
+                     Process_sendSignal(p, sgn->key);
                      anyTagged = true;
                   }
                }
                if (!anyTagged) {
                   Process* p = (Process*) Panel_getSelected(panel);
-                  Process_sendSignal(p, sgn->number);
+                  Process_sendSignal(p, sgn->key);
                }
                napms(500);
             }
@@ -684,37 +773,38 @@ int main(int argc, char** argv) {
          refreshTimeout = 0;
          break;
       }
-#ifdef HAVE_PLPA
+#if (HAVE_LIBHWLOC || HAVE_NATIVE_AFFINITY)
       case 'a':
       {
          if (pl->cpuCount == 1)
             break;
 
-         unsigned long curr = Process_getAffinity((Process*) Panel_getSelected(panel));
-         
-         Panel* affinityPanel = AffinityPanel_new(pl->cpuCount, curr);
+         Affinity* affinity = Process_getAffinity((Process*) Panel_getSelected(panel));
+         Panel* affinityPanel = AffinityPanel_new(pl, affinity);
+         Affinity_delete(affinity);
 
          const char* fuFunctions[] = {"Set    ", "Cancel ", NULL};
-         void* set = pickFromVector(panel, affinityPanel, 15, headerHeight, fuFunctions, defaultBar);
+         void* set = pickFromVector(panel, affinityPanel, 15, headerHeight, fuFunctions, defaultBar, header);
          if (set) {
-            unsigned long new = AffinityPanel_getAffinity(affinityPanel);
+            Affinity* affinity = AffinityPanel_getAffinity(affinityPanel);
             bool anyTagged = false;
             bool ok = true;
             for (int i = 0; i < Panel_size(panel); i++) {
                Process* p = (Process*) Panel_get(panel, i);
                if (p->tag) {
-                  ok = Process_setAffinity(p, new) && ok;
+                  ok = Process_setAffinity(p, affinity) && ok;
                   anyTagged = true;
                }
             }
             if (!anyTagged) {
                Process* p = (Process*) Panel_getSelected(panel);
-               ok = Process_setAffinity(p, new) && ok;
+               ok = Process_setAffinity(p, affinity) && ok;
             }
             if (!ok)
                beep();
+            Affinity_delete(affinity);
          }
-         ((Object*)affinityPanel)->delete((Object*)affinityPanel);
+         Panel_delete((Object*)affinityPanel);
          ProcessList_printHeader(pl, Panel_getHeader(panel));
          refreshTimeout = 0;
          break;
@@ -742,7 +832,7 @@ int main(int argc, char** argv) {
                Panel_setSelected(sortPanel, i);
             free(name);
          }
-         ListItem* field = (ListItem*) pickFromVector(panel, sortPanel, 15, headerHeight, fuFunctions, defaultBar);
+         ListItem* field = (ListItem*) pickFromVector(panel, sortPanel, 15, headerHeight, fuFunctions, defaultBar, header);
          if (field) {
             settings->changed = true;
             setSortKey(pl, field->key, panel, settings);
@@ -754,7 +844,6 @@ int main(int argc, char** argv) {
          break;
       }
       case 'I':
-      case KEY_F(4):
       {
          refreshTimeout = 0;
          settings->changed = true;
@@ -775,11 +864,17 @@ int main(int argc, char** argv) {
       }
       case KEY_F(3):
       case '/':
-         incSearchIndex = 0;
-         incSearchBuffer[0] = 0;
-         incSearchMode = true;
-         FunctionBar_draw(searchBar, incSearchBuffer);
+         incMode = &incSearch;
+         IncBuffer_reset(incMode);
+         FunctionBar_draw(incSearch.bar, incSearch.buffer);
          break;
+      case KEY_F(4):
+      case '\\':
+         incMode = &incFilter;
+         refreshTimeout = 0;
+         doRefresh = true;
+         FunctionBar_draw(incFilter.bar, incFilter.buffer);
+         continue;
       case 't':
       case KEY_F(5):
          refreshTimeout = 0;
@@ -818,16 +913,14 @@ int main(int argc, char** argv) {
       Settings_write(settings);
    Header_delete(header);
    ProcessList_delete(pl);
-   FunctionBar_delete((Object*)searchBar);
+   FunctionBar_delete((Object*)incFilter.bar);
+   FunctionBar_delete((Object*)incSearch.bar);
    FunctionBar_delete((Object*)defaultBar);
-   ((Object*)panel)->delete((Object*)panel);
+   Panel_delete((Object*)panel);
    if (killPanel)
       ((Object*)killPanel)->delete((Object*)killPanel);
    UsersTable_delete(ut);
    Settings_delete(settings);
-#ifdef HAVE_PLPA
-   plpa_finalize();
-#endif
    debug_done();
    return 0;
 }

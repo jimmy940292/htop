@@ -4,12 +4,11 @@
 #define HEADER_String
 /*
 htop
-(C) 2004-2010 Hisham H. Muhammad
+(C) 2004-2011 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
-#define _GNU_SOURCE
 #include <string.h>
 #include <strings.h>
 #include <stdlib.h>
@@ -27,7 +26,7 @@ char* String_trim(const char* in);
 
 extern int String_eq(const char* s1, const char* s2);
 
-char** String_split(const char* s, char sep);
+char** String_split(const char* s, char sep, int* n);
 
 void String_freeArray(char** s);
 

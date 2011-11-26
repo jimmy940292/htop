@@ -1,6 +1,6 @@
 /*
 htop
-(C) 2004-2010 Hisham H. Muhammad
+(C) 2004-2011 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -21,8 +21,10 @@ int UptimeMeter_attributes[] = {
 static void UptimeMeter_setValues(Meter* this, char* buffer, int len) {
    double uptime = 0;
    FILE* fd = fopen(PROCDIR "/uptime", "r");
-   fscanf(fd, "%lf", &uptime);
-   fclose(fd);
+   if (fd) {
+      fscanf(fd, "%64lf", &uptime);
+      fclose(fd);
+   }
    int totalseconds = (int) ceil(uptime);
    int seconds = totalseconds % 60;
    int minutes = (totalseconds/60) % 60;

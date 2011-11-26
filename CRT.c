@@ -1,6 +1,6 @@
 /*
 htop - CRT.c
-(C) 2004-2010 Hisham H. Muhammad
+(C) 2004-2011 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
@@ -11,7 +11,9 @@ in the source distribution for its full text.
 #include <signal.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#ifdef HAVE_EXECINFO_H
 #include <execinfo.h>
+#endif
 
 #include "String.h"
 
@@ -116,6 +118,8 @@ int CRT_colorScheme = 0;
 
 int CRT_colors[LAST_COLORELEMENT] = { 0 };
 
+int CRT_cursorX = 0;
+
 char* CRT_termType;
 
 void *backtraceArray[128];
@@ -125,12 +129,14 @@ static void CRT_handleSIGSEGV(int sgn) {
    CRT_done();
    #if __linux
    fprintf(stderr, "\n\nhtop " VERSION " aborting. Please report bug at http://htop.sf.net\n");
+   #ifdef HAVE_EXECINFO_H
+   size_t size = backtrace(backtraceArray, sizeof(backtraceArray) / sizeof(void *));
+   fprintf(stderr, "Backtrace: \n");
+   backtrace_symbols_fd(backtraceArray, size, 2);
+   #endif
    #else
    fprintf(stderr, "\n\nhtop " VERSION " aborting. Unsupported platform.\n");
    #endif
-   size_t size = backtrace(backtraceArray, sizeof(backtraceArray));
-   fprintf(stderr, "Backtrace: \n");
-   backtrace_symbols_fd(backtraceArray, size, 2);
    abort();
 }
 
