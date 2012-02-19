@@ -1,26 +1,22 @@
 /*
-htop
+htop - String.c
 (C) 2004-2011 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
-#define _GNU_SOURCE
 #include "String.h"
+
+#include "config.h"
+
 #include <string.h>
 #include <strings.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "debug.h"
-
 /*{
 #define String_startsWith(s, match) (strstr((s), (match)) == (s))
 }*/
-
-inline char* String_copy(const char* orig) {
-   return strdup(orig);
-}
 
 char* String_cat(const char* s1, const char* s2) {
    int l1 = strlen(s1);

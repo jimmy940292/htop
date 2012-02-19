@@ -2,9 +2,12 @@
 
 #ifndef HEADER_Affinity
 #define HEADER_Affinity
-
-#include "config.h"
-#include <stdlib.h>
+/*
+htop - Affinity.h
+(C) 2004-2011 Hisham H. Muhammad
+Released under the GNU GPL, see the COPYING file
+in the source distribution for its full text.
+*/
 
 
 typedef struct Affinity_ {

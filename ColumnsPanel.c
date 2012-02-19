@@ -1,14 +1,22 @@
+/*
+htop - ColumnsPanel.c
+(C) 2004-2011 Hisham H. Muhammad
+Released under the GNU GPL, see the COPYING file
+in the source distribution for its full text.
+*/
 
 #include "ColumnsPanel.h"
 
+#include "String.h"
+
+#include <assert.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+/*{
 #include "Panel.h"
 #include "Settings.h"
 #include "ScreenManager.h"
-
-#include "debug.h"
-#include <assert.h>
-
-/*{
 
 typedef struct ColumnsPanel_ {
    Panel super;
@@ -62,7 +70,8 @@ static HandlerResult ColumnsPanel_eventHandler(Panel* super, int ch) {
       }
       default:
       {
-         result = Panel_selectByTyping(super, ch);
+         if (isalpha(ch))
+            result = Panel_selectByTyping(super, ch);
          if (result == BREAK_LOOP)
             result = IGNORED;
          break;

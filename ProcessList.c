@@ -5,19 +5,13 @@ Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
-#ifndef CONFIG_H
-#define CONFIG_H
-#include "config.h"
-#endif
-
 #include "ProcessList.h"
-#include "Process.h"
-#include "Vector.h"
-#include "UsersTable.h"
-#include "Hashtable.h"
+
+#include "CRT.h"
 #include "String.h"
 
-#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/utsname.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -25,14 +19,19 @@ in the source distribution for its full text.
 #include <stdio.h>
 #include <signal.h>
 #include <stdbool.h>
-#include <sys/utsname.h>
 #include <stdarg.h>
 #include <math.h>
-
-#include "debug.h"
+#include <string.h>
+#include <time.h>
 #include <assert.h>
 
 /*{
+#include "Vector.h"
+#include "Hashtable.h"
+#include "UsersTable.h"
+#include "Panel.h"
+#include "Process.h"
+#include <sys/types.h>
 
 #ifndef PROCDIR
 #define PROCDIR "/proc"
@@ -108,6 +107,13 @@ typedef struct ProcessList_ {
    Vector* processes2;
    Hashtable* processTable;
    UsersTable* usersTable;
+
+   Panel* panel;
+   int following;
+   bool userOnly;
+   uid_t userId;
+   bool filtering;
+   const char* incFilter;
 
    int cpuCount;
    int totalTasks;
@@ -241,6 +247,10 @@ void ProcessList_delete(ProcessList* this) {
    free(this->cpus);
    free(this->fields);
    free(this);
+}
+
+void ProcessList_setPanel(ProcessList* this, Panel* panel) {
+   this->panel = panel;
 }
 
 void ProcessList_invertSortOrder(ProcessList* this) {
@@ -605,7 +615,7 @@ static bool ProcessList_readCmdlineFile(Process* process, const char* dirname, c
    command[amtRead] = '\0';
    fclose(file);
    free(process->comm);
-   process->comm = String_copy(command);
+   process->comm = strdup(command);
    return true;
 }
 
@@ -698,11 +708,11 @@ static bool ProcessList_processEntries(ProcessList* this, const char* dirname, P
 
       if (process->state == 'Z') {
          free(process->comm);
-         process->comm = String_copy(command);
+         process->comm = strdup(command);
       } else if (Process_isThread(process)) {
          if (this->showThreadNames || Process_isKernelThread(process) || process->state == 'Z') {
             free(process->comm);
-            process->comm = String_copy(command);
+            process->comm = strdup(command);
          } else if (this->showingThreadNames) {
             if (! ProcessList_readCmdlineFile(process, dirname, name))
                goto errorReadingProcess;
@@ -886,5 +896,47 @@ void ProcessList_expandTree(ProcessList* this) {
    for (int i = 0; i < size; i++) {
       Process* process = (Process*) Vector_get(this->processes, i);
       process->showChildren = true;
+   }
+}
+
+void ProcessList_rebuildPanel(ProcessList* this, bool flags, int following, bool userOnly, uid_t userId, bool filtering, const char* incFilter) {
+   if (!flags) {
+      following = this->following;
+      userOnly = this->userOnly;
+      userId = this->userId;
+      filtering = this->filtering;
+      incFilter = this->incFilter;
+   } else {
+      this->following = following;
+      this->userOnly = userOnly;
+      this->userId = userId;
+      this->filtering = filtering;
+      this->incFilter = incFilter;
+   }
+
+   int currPos = Panel_getSelectedIndex(this->panel);
+   pid_t currPid = following ? following : 0;
+   int currScrollV = this->panel->scrollV;
+
+   Panel_prune(this->panel);
+   int size = ProcessList_size(this);
+   int idx = 0;
+   for (int i = 0; i < size; i++) {
+      bool hidden = false;
+      Process* p = ProcessList_get(this, i);
+
+      if ( (!p->show)
+         || (userOnly && (p->st_uid != userId))
+         || (filtering && !(String_contains_i(p->comm, incFilter))) )
+         hidden = true;
+
+      if (!hidden) {
+         Panel_set(this->panel, idx, (Object*)p);
+         if ((following == -1 && idx == currPos) || (following != -1 && p->pid == currPid)) {
+            Panel_setSelected(this->panel, idx);
+            this->panel->scrollV = currScrollV;
+         }
+         idx++;
+      }
    }
 }

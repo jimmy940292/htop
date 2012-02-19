@@ -5,19 +5,18 @@ Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
-#include "Object.h"
 #include "FunctionBar.h"
+
 #include "CRT.h"
 
-#include "debug.h"
 #include <assert.h>
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <curses.h>
 
 /*{
+#include "Object.h"
 
 typedef struct FunctionBar_ {
    Object super;
@@ -54,8 +53,8 @@ FunctionBar* FunctionBar_new(const char** functions, const char** keys, int* eve
       this->events = malloc(sizeof(int) * 15);
       int i = 0;
       while (i < 15 && functions[i]) {
-         this->functions[i] = String_copy(functions[i]);
-         this->keys[i] = String_copy(keys[i]);
+         this->functions[i] = strdup(functions[i]);
+         this->keys[i] = strdup(keys[i]);
          this->events[i] = events[i];
          i++;
       }
@@ -89,7 +88,7 @@ void FunctionBar_setLabel(FunctionBar* this, int event, const char* text) {
    for (int i = 0; i < this->size; i++) {
       if (this->events[i] == event) {
          free(this->functions[i]);
-         this->functions[i] = String_copy(text);
+         this->functions[i] = strdup(text);
          break;
       }
    }

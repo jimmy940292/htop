@@ -3,24 +3,15 @@
 #ifndef HEADER_ScreenManager
 #define HEADER_ScreenManager
 /*
-htop
+htop - ScreenManager.h
 (C) 2004-2011 Hisham H. Muhammad
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
-#include "Panel.h"
-#include "Object.h"
+#include "FunctionBar.h"
 #include "Vector.h"
 #include "Header.h"
-#include "FunctionBar.h"
-
-#include "debug.h"
-#include <assert.h>
-#include <time.h>
-
-#include <stdbool.h>
-
 
 typedef enum Orientation_ {
    VERTICAL,
@@ -33,13 +24,14 @@ typedef struct ScreenManager_ {
    int x2;
    int y2;
    Orientation orientation;
-   Vector* items;
+   Vector* panels;
    Vector* fuBars;
-   int itemCount;
+   int panelCount;
    const FunctionBar* fuBar;
    const Header* header;
    time_t lastScan;
    bool owner;
+   bool allowFocusChange;
 } ScreenManager;
 
 

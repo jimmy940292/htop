@@ -10,15 +10,6 @@ in the source distribution for its full text.
 */
 
 #include "Hashtable.h"
-#include "String.h"
-
-#include <stdio.h>
-#include <strings.h>
-#include <pwd.h>
-#include <sys/types.h>
-
-#include "debug.h"
-#include <assert.h>
 
 typedef struct UsersTable_ {
    Hashtable* users;

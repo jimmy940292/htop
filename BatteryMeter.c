@@ -1,20 +1,25 @@
 /*
-  htop
-  (C) 2004-2011 Hisham H. Muhammad
-  Released under the GNU GPL, see the COPYING file
-  in the source distribution for its full text.
+htop - BatteryMeter.c
+(C) 2004-2011 Hisham H. Muhammad
+Released under the GNU GPL, see the COPYING file
+in the source distribution for its full text.
 
-  This "Meter" written by Ian P. Hands (iphands@gmail.com, ihands@redhat.com).
+This meter written by Ian P. Hands (iphands@gmail.com, ihands@redhat.com).
 */
 
 #include "BatteryMeter.h"
-#include "Meter.h"
+
 #include "ProcessList.h"
 #include "CRT.h"
 #include "String.h"
-#include "debug.h"
+
+#include <string.h>
+#include <stdlib.h>
+#include <dirent.h>
+#include <unistd.h>
 
 /*{
+#include "Meter.h"
 
 typedef enum ACPresence_ {
    AC_ABSENT,
@@ -45,17 +50,11 @@ static unsigned long int parseUevent(FILE * file, const char *key) {
 }
 
 static unsigned long int parseBatInfo(const char *fileName, const unsigned short int lineNum, const unsigned short int wordNum) {
-   DIR* batteryDir;
-   const struct dirent *dirEntries;
-
    const char batteryPath[] = PROCDIR "/acpi/battery/";
-   batteryDir = opendir(batteryPath);
-
-   if (batteryDir == NULL) {
+   DIR* batteryDir = opendir(batteryPath);
+   if (!batteryDir)
       return 0;
-   }
 
-   char *entryName;
    typedef struct listLbl {
       char *content;
       struct listLbl *next;
@@ -68,8 +67,8 @@ static unsigned long int parseBatInfo(const char *fileName, const unsigned short
       Some of this is based off of code found in kismet (they claim it came from gkrellm).
       Written for multi battery use...
     */
-   for (dirEntries = readdir((DIR *) batteryDir); dirEntries; dirEntries = readdir((DIR *) batteryDir)) {
-      entryName = (char *) dirEntries->d_name;
+   for (const struct dirent* dirEntries = readdir((DIR *) batteryDir); dirEntries; dirEntries = readdir((DIR *) batteryDir)) {
+      char* entryName = (char *) dirEntries->d_name;
 
       if (strncmp(entryName, "BAT", 3))
          continue;
@@ -117,22 +116,16 @@ static ACPresence chkIsOnline() {
    ACPresence isOn = AC_ERROR;
 
    if (access(PROCDIR "/acpi/ac_adapter", F_OK) == 0) {
-      const struct dirent *dirEntries;
       const char *power_supplyPath = PROCDIR "/acpi/ac_adapter";
       DIR *power_supplyDir = opendir(power_supplyPath);
-      char *entryName;
-
-      if (!power_supplyDir) {
+      if (!power_supplyDir)
          return AC_ERROR;
-      }
 
-      for (dirEntries = readdir((DIR *) power_supplyDir); dirEntries; dirEntries = readdir((DIR *) power_supplyDir)) {
-         entryName = (char *) dirEntries->d_name;
+      for (const struct dirent *dirEntries = readdir((DIR *) power_supplyDir); dirEntries; dirEntries = readdir((DIR *) power_supplyDir)) {
+         char* entryName = (char *) dirEntries->d_name;
 
-         if (strncmp(entryName, "A", 1)) {
+         if (entryName[0] != 'A')
             continue;
-         }
-
 
          char statePath[50];
          snprintf((char *) statePath, sizeof statePath, "%s/%s/state", power_supplyPath, entryName);
@@ -242,11 +235,8 @@ static double getSysBatData() {
    const struct dirent *dirEntries;
    const char *power_supplyPath = "/sys/class/power_supply/";
    DIR *power_supplyDir = opendir(power_supplyPath);
-
-
-   if (!power_supplyDir) {
+   if (!power_supplyDir)
       return 0;
-   }
 
    char *entryName;
 

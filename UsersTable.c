@@ -6,18 +6,20 @@ in the source distribution for its full text.
 */
 
 #include "UsersTable.h"
-#include "Hashtable.h"
-#include "String.h"
+
+#include "config.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <strings.h>
 #include <pwd.h>
 #include <sys/types.h>
-
-#include "debug.h"
+#include <stdlib.h>
 #include <assert.h>
 
 /*{
+#include "Hashtable.h"
+
 typedef struct UsersTable_ {
    Hashtable* users;
 } UsersTable;
@@ -40,7 +42,7 @@ char* UsersTable_getRef(UsersTable* this, unsigned int uid) {
    if (name == NULL) {
       struct passwd* userData = getpwuid(uid);
       if (userData != NULL) {
-         name = String_copy(userData->pw_name);
+         name = strdup(userData->pw_name);
          Hashtable_put(this->users, uid, name);
       }
    }

@@ -6,14 +6,17 @@ in the source distribution for its full text.
 */
 
 #include "ListItem.h"
-#include "String.h"
-#include "Object.h"
-#include "RichString.h"
-#include <string.h>
 
-#include "debug.h"
+#include "CRT.h"
+#include "String.h"
+#include "RichString.h"
+
+#include <string.h>
+#include <assert.h>
+#include <stdlib.h>
 
 /*{
+#include "Object.h"
 
 typedef struct ListItem_ {
    Object super;
@@ -49,7 +52,7 @@ ListItem* ListItem_new(const char* value, int key) {
    Object_setClass(this, LISTITEM_CLASS);
    ((Object*)this)->display = ListItem_display;
    ((Object*)this)->delete = ListItem_delete;
-   this->value = String_copy(value);
+   this->value = strdup(value);
    this->key = key;
    return this;
 }

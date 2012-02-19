@@ -1,16 +1,21 @@
+/*
+htop - RichString.c
+(C) 2004,2011 Hisham H. Muhammad
+Released under the GNU GPL, see the COPYING file
+in the source distribution for its full text.
+*/
 
 #include "RichString.h"
 
-#ifndef CONFIG_H
-#define CONFIG_H
-#include "config.h"
-#endif
-
 #include <stdlib.h>
 #include <string.h>
+
+#define RICHSTRING_MAXLEN 300
+
+/*{
+#include "config.h"
 #include <ctype.h>
 
-#include "debug.h"
 #include <assert.h>
 #ifdef HAVE_NCURSESW_CURSES_H
 #include <ncursesw/curses.h>
@@ -21,10 +26,6 @@
 #elif HAVE_CURSES_H
 #include <curses.h>
 #endif
-
-#define RICHSTRING_MAXLEN 300
-
-/*{
 
 #define RichString_size(this) ((this)->chlen)
 #define RichString_sizeVal(this) ((this).chlen)

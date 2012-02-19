@@ -65,21 +65,20 @@ am__objects_2 = htop-AvailableMetersPanel.$(OBJEXT) \
 	htop-CategoriesPanel.$(OBJEXT) htop-CheckItem.$(OBJEXT) \
 	htop-ClockMeter.$(OBJEXT) htop-ColorsPanel.$(OBJEXT) \
 	htop-ColumnsPanel.$(OBJEXT) htop-CPUMeter.$(OBJEXT) \
-	htop-CRT.$(OBJEXT) htop-DebugMemory.$(OBJEXT) \
-	htop-DisplayOptionsPanel.$(OBJEXT) htop-FunctionBar.$(OBJEXT) \
-	htop-Hashtable.$(OBJEXT) htop-Header.$(OBJEXT) \
-	htop-htop.$(OBJEXT) htop-ListItem.$(OBJEXT) \
-	htop-LoadAverageMeter.$(OBJEXT) htop-MemoryMeter.$(OBJEXT) \
-	htop-Meter.$(OBJEXT) htop-MetersPanel.$(OBJEXT) \
-	htop-Object.$(OBJEXT) htop-Panel.$(OBJEXT) \
-	htop-BatteryMeter.$(OBJEXT) htop-Process.$(OBJEXT) \
-	htop-ProcessList.$(OBJEXT) htop-RichString.$(OBJEXT) \
-	htop-ScreenManager.$(OBJEXT) htop-Settings.$(OBJEXT) \
-	htop-SignalsPanel.$(OBJEXT) htop-String.$(OBJEXT) \
-	htop-SwapMeter.$(OBJEXT) htop-TasksMeter.$(OBJEXT) \
-	htop-TraceScreen.$(OBJEXT) htop-UptimeMeter.$(OBJEXT) \
-	htop-UsersTable.$(OBJEXT) htop-Vector.$(OBJEXT) \
-	htop-AvailableColumnsPanel.$(OBJEXT) \
+	htop-CRT.$(OBJEXT) htop-DisplayOptionsPanel.$(OBJEXT) \
+	htop-FunctionBar.$(OBJEXT) htop-Hashtable.$(OBJEXT) \
+	htop-Header.$(OBJEXT) htop-htop.$(OBJEXT) \
+	htop-ListItem.$(OBJEXT) htop-LoadAverageMeter.$(OBJEXT) \
+	htop-MemoryMeter.$(OBJEXT) htop-Meter.$(OBJEXT) \
+	htop-MetersPanel.$(OBJEXT) htop-Object.$(OBJEXT) \
+	htop-Panel.$(OBJEXT) htop-BatteryMeter.$(OBJEXT) \
+	htop-Process.$(OBJEXT) htop-ProcessList.$(OBJEXT) \
+	htop-RichString.$(OBJEXT) htop-ScreenManager.$(OBJEXT) \
+	htop-Settings.$(OBJEXT) htop-SignalsPanel.$(OBJEXT) \
+	htop-String.$(OBJEXT) htop-SwapMeter.$(OBJEXT) \
+	htop-TasksMeter.$(OBJEXT) htop-TraceScreen.$(OBJEXT) \
+	htop-UptimeMeter.$(OBJEXT) htop-UsersTable.$(OBJEXT) \
+	htop-Vector.$(OBJEXT) htop-AvailableColumnsPanel.$(OBJEXT) \
 	htop-AffinityPanel.$(OBJEXT) htop-HostnameMeter.$(OBJEXT) \
 	htop-OpenFilesScreen.$(OBJEXT) htop-Affinity.$(OBJEXT)
 am_htop_OBJECTS = $(am__objects_1) $(am__objects_2)
@@ -264,11 +263,10 @@ applicationsdir = $(datadir)/applications
 applications_DATA = htop.desktop
 pixmapdir = $(datadir)/pixmaps
 pixmap_DATA = htop.png
-htop_CFLAGS = -pedantic -Wall -Wextra -std=c99 -rdynamic -D_XOPEN_SOURCE_EXTENDED
-AM_CFLAGS = 
-AM_CPPFLAGS = -DSYSCONFDIR=\"$(sysconfdir)\"
+htop_CFLAGS = -pedantic -Wall -Wextra -std=c99 -rdynamic -D_XOPEN_SOURCE_EXTENDED -DSYSCONFDIR=\"$(sysconfdir)\"
+AM_CPPFLAGS = -DNDEBUG
 myhtopsources = AvailableMetersPanel.c CategoriesPanel.c CheckItem.c \
-ClockMeter.c ColorsPanel.c ColumnsPanel.c CPUMeter.c CRT.c DebugMemory.c \
+ClockMeter.c ColorsPanel.c ColumnsPanel.c CPUMeter.c CRT.c \
 DisplayOptionsPanel.c FunctionBar.c Hashtable.c Header.c htop.c ListItem.c \
 LoadAverageMeter.c MemoryMeter.c Meter.c MetersPanel.c Object.c Panel.c \
 BatteryMeter.c Process.c ProcessList.c RichString.c ScreenManager.c Settings.c \
@@ -278,7 +276,7 @@ HostnameMeter.c OpenFilesScreen.c Affinity.c
 
 myhtopheaders = AvailableColumnsPanel.h AvailableMetersPanel.h \
 CategoriesPanel.h CheckItem.h ClockMeter.h ColorsPanel.h ColumnsPanel.h \
-CPUMeter.h CRT.h DebugMemory.h DisplayOptionsPanel.h FunctionBar.h \
+CPUMeter.h CRT.h DisplayOptionsPanel.h FunctionBar.h \
 Hashtable.h Header.h htop.h ListItem.h LoadAverageMeter.h MemoryMeter.h \
 BatteryMeter.h Meter.h MetersPanel.h Object.h Panel.h ProcessList.h RichString.h \
 ScreenManager.h Settings.h SignalsPanel.h String.h \
@@ -287,7 +285,7 @@ Process.h AffinityPanel.h HostnameMeter.h OpenFilesScreen.h Affinity.h
 
 SUFFIXES = .h
 BUILT_SOURCES = $(myhtopheaders)
-htop_SOURCES = $(myhtopheaders) $(myhtopsources) config.h debug.h
+htop_SOURCES = $(myhtopheaders) $(myhtopsources) config.h
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -411,7 +409,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-ClockMeter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-ColorsPanel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-ColumnsPanel.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-DebugMemory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-DisplayOptionsPanel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-FunctionBar.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-Hashtable.Po@am__quote@
@@ -572,20 +569,6 @@ htop-CRT.obj: CRT.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='CRT.c' object='htop-CRT.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -c -o htop-CRT.obj `if test -f 'CRT.c'; then $(CYGPATH_W) 'CRT.c'; else $(CYGPATH_W) '$(srcdir)/CRT.c'; fi`
-
-htop-DebugMemory.o: DebugMemory.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -MT htop-DebugMemory.o -MD -MP -MF $(DEPDIR)/htop-DebugMemory.Tpo -c -o htop-DebugMemory.o `test -f 'DebugMemory.c' || echo '$(srcdir)/'`DebugMemory.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/htop-DebugMemory.Tpo $(DEPDIR)/htop-DebugMemory.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='DebugMemory.c' object='htop-DebugMemory.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -c -o htop-DebugMemory.o `test -f 'DebugMemory.c' || echo '$(srcdir)/'`DebugMemory.c
-
-htop-DebugMemory.obj: DebugMemory.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -MT htop-DebugMemory.obj -MD -MP -MF $(DEPDIR)/htop-DebugMemory.Tpo -c -o htop-DebugMemory.obj `if test -f 'DebugMemory.c'; then $(CYGPATH_W) 'DebugMemory.c'; else $(CYGPATH_W) '$(srcdir)/DebugMemory.c'; fi`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/htop-DebugMemory.Tpo $(DEPDIR)/htop-DebugMemory.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='DebugMemory.c' object='htop-DebugMemory.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -c -o htop-DebugMemory.obj `if test -f 'DebugMemory.c'; then $(CYGPATH_W) 'DebugMemory.c'; else $(CYGPATH_W) '$(srcdir)/DebugMemory.c'; fi`
 
 htop-DisplayOptionsPanel.o: DisplayOptionsPanel.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -MT htop-DisplayOptionsPanel.o -MD -MP -MF $(DEPDIR)/htop-DisplayOptionsPanel.Tpo -c -o htop-DisplayOptionsPanel.o `test -f 'DisplayOptionsPanel.c' || echo '$(srcdir)/'`DisplayOptionsPanel.c
@@ -1455,22 +1438,16 @@ uninstall-man: uninstall-man1
 
 
 profile:
-	$(MAKE) all CFLAGS="-pg -O2"
+	$(MAKE) all CFLAGS="" AM_CPPFLAGS="-pg -O2"
 
 debug:
-	$(MAKE) all CFLAGS="-ggdb -DDEBUG"
-
-hardened-debug:
-	$(MAKE) all CFLAGS="-ggdb -DDEBUG" LDFLAGS="-nopie"
-
-debuglite:
-	$(MAKE) all CFLAGS="-ggdb -DDEBUGLITE"
+	$(MAKE) all CFLAGS="" AM_CPPFLAGS="-ggdb -DDEBUG"
 
 .c.h:
 	scripts/MakeHeader.py $<
 
 cppcheck:
-	cppcheck -q -v . --enable=all  -ihwloc-1.2.1 -DHAVE_CGROUP -DHAVE_OPENVZ -DHAVE_TASKSTATS
+	cppcheck -q -v . --enable=all -DHAVE_CGROUP -DHAVE_OPENVZ -DHAVE_TASKSTATS
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

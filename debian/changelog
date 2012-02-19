@@ -1,3 +1,11 @@
+htop (1.0.1-1) unstable; urgency=low
+
+  * New upstream release.
+    - Don't crash when trying to kill already finished process.
+      (Closes: #652563, 657675)
+
+ -- Eugene V. Lyubimkin <jackyf@debian.org>  Sun, 19 Feb 2012 10:24:46 +0200
+
 htop (1.0-1) unstable; urgency=low
 
   * New upstream release.

@@ -1,5 +1,12 @@
+/*
+htop - CategoriesPanel.c
+(C) 2004-2011 Hisham H. Muhammad
+Released under the GNU GPL, see the COPYING file
+in the source distribution for its full text.
+*/
 
 #include "CategoriesPanel.h"
+
 #include "AvailableMetersPanel.h"
 #include "MetersPanel.h"
 #include "DisplayOptionsPanel.h"
@@ -7,12 +14,13 @@
 #include "ColorsPanel.h"
 #include "AvailableColumnsPanel.h"
 
-#include "Panel.h"
-
-#include "debug.h"
 #include <assert.h>
+#include <stdlib.h>
 
 /*{
+#include "Panel.h"
+#include "Settings.h"
+#include "ScreenManager.h"
 
 typedef struct CategoriesPanel_ {
    Panel super;
