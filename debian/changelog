@@ -1,3 +1,11 @@
+htop (1.0.1-2) unstable; urgency=low
+
+  * debian/patches:
+    - New patch 200-dont-delete-htoprc-if-symlink.patch from upstream VCS.
+      (Closes: #662087)
+
+ -- Eugene V. Lyubimkin <jackyf@debian.org>  Mon, 30 Jul 2012 19:12:16 +0300
+
 htop (1.0.1-1) unstable; urgency=low
 
   * New upstream release.
