@@ -16,6 +16,8 @@ else
 	ARCH_DEPENDENT_CONFIGURE_PARAMS = --enable-hwloc
 endif
 
+CFLAGS = $(shell dpkg-buildflags --get CFLAGS)
+
 config.status: configure $(QUILT_STAMPFN)
 	dh_testdir
 	

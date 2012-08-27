@@ -3,7 +3,8 @@ Section: utils
 Priority: optional
 Maintainer: Eugene V. Lyubimkin <jackyf@debian.org>
 Build-Depends: debhelper (>= 7), libncurses5-dev, libncursesw5-dev,
-  autotools-dev, quilt (>= 0.40), python-minimal, libhwloc-dev [!linux-any]
+  autotools-dev, quilt (>= 0.40), python-minimal, libhwloc-dev [!linux-any],
+  dpkg-dev (>= 1.16.1)
 Standards-Version: 3.9.2
 Homepage: http://htop.sourceforge.net
 
