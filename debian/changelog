@@ -1,8 +1,17 @@
+htop (1.0.1-4) unstable; urgency=low
+
+  * debian/rules:
+    - Retrieve and pass also CPPFLAGS and LDFLAGS. Patch by Simon Ruderich.
+      (Closes: #685670)
+
+ -- Eugene V. Lyubimkin <jackyf@debian.org>  Sat, 01 Sep 2012 14:29:59 +0300
+
 htop (1.0.1-3) unstable; urgency=low
 
   * debian/rules:
     - Retrieve CFLAGS from dpkg-buildflags as dpkg-buildpackage stopped to
-      export them. (Closes: #685670)
+      export them. Thanks to Felix Geyer and Cyril Brulebois.
+      (Closes: #685670)
   * debian/control:
     - Build-depend on dpkg (>= 1.16.1) for using dpkg-buildflags.
 

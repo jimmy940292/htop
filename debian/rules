@@ -17,6 +17,8 @@ else
 endif
 
 CFLAGS = $(shell dpkg-buildflags --get CFLAGS)
+CPPFLAGS = $(shell dpkg-buildflags --get CPPFLAGS)
+LDFLAGS = $(shell dpkg-buildflags --get LDFLAGS)
 
 config.status: configure $(QUILT_STAMPFN)
 	dh_testdir
@@ -31,7 +33,7 @@ config.status: configure $(QUILT_STAMPFN)
 	[ ! -r /usr/share/misc/config.guess ] || \
 		cp -f /usr/share/misc/config.guess config.guess
 	
-	CFLAGS="$(CFLAGS)" LDFLAGS="$(INSTALL_PROGRAM)" ./configure \
+	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS) $(INSTALL_PROGRAM)" ./configure \
 		   --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
 		   --prefix=/usr --mandir=\$${prefix}/share/man \
 		   --infodir=\$${prefix}/share/info \
