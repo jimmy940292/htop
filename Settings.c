@@ -124,6 +124,8 @@ static bool Settings_read(Settings* this, char* fileName, int cpuCount) {
          this->pl->detailedCPUTime = atoi(option[1]);
       } else if (String_eq(option[0], "cpu_count_from_zero")) {
          this->pl->countCPUsFromZero = atoi(option[1]);
+      } else if (String_eq(option[0], "update_process_names")) {
+         this->pl->updateProcessNames = atoi(option[1]);
       } else if (String_eq(option[0], "delay")) {
          this->delay = atoi(option[1]);
       } else if (String_eq(option[0], "color_scheme")) {
@@ -183,6 +185,7 @@ bool Settings_write(Settings* this) {
    fprintf(fd, "header_margin=%d\n", (int) this->header->margin);
    fprintf(fd, "detailed_cpu_time=%d\n", (int) this->pl->detailedCPUTime);
    fprintf(fd, "cpu_count_from_zero=%d\n", (int) this->pl->countCPUsFromZero);
+   fprintf(fd, "update_process_names=%d\n", (int) this->pl->updateProcessNames);
    fprintf(fd, "color_scheme=%d\n", (int) this->colorScheme);
    fprintf(fd, "delay=%d\n", (int) this->delay);
    fprintf(fd, "left_meters=");
@@ -239,7 +242,9 @@ Settings* Settings_new(ProcessList* pl, Header* header, int cpuCount) {
       mkdir(htopDir, 0700);
       free(htopDir);
       free(configDir);
-      if (access(legacyDotfile, R_OK) != 0) {
+      struct stat st;
+      lstat(legacyDotfile, &st);
+      if (access(legacyDotfile, R_OK) != 0 || S_ISLNK(st.st_mode)) {
          free(legacyDotfile);
          legacyDotfile = NULL;
       }

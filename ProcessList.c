@@ -114,6 +114,7 @@ typedef struct ProcessList_ {
    uid_t userId;
    bool filtering;
    const char* incFilter;
+   Hashtable* pidWhiteList;
 
    int cpuCount;
    int totalTasks;
@@ -152,6 +153,7 @@ typedef struct ProcessList_ {
    bool highlightThreads;
    bool detailedCPUTime;
    bool countCPUsFromZero;
+   bool updateProcessNames;
    const char **treeStr;
 
 } ProcessList;
@@ -180,18 +182,21 @@ const char *ProcessList_treeStrUtf8[TREE_STR_COUNT] = {
    "\xe2\x94\x80", // TREE_STR_SHUT ─
 };
 
-ProcessList* ProcessList_new(UsersTable* usersTable) {
+ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* pidWhiteList) {
    ProcessList* this;
    this = calloc(sizeof(ProcessList), 1);
    this->processes = Vector_new(PROCESS_CLASS, true, DEFAULT_SIZE, Process_compare);
    this->processTable = Hashtable_new(140, false);
    this->usersTable = usersTable;
+   this->pidWhiteList = pidWhiteList;
    
    /* tree-view auxiliary buffers */
    this->processes2 = Vector_new(PROCESS_CLASS, true, DEFAULT_SIZE, Process_compare);
    
    FILE* file = fopen(PROCSTATFILE, "r");
-   assert(file != NULL);
+   if (file == NULL) {
+      CRT_fatalError("Cannot open " PROCSTATFILE);
+   }
    char buffer[256];
    int cpus = -1;
    do {
@@ -235,7 +240,9 @@ ProcessList* ProcessList_new(UsersTable* usersTable) {
    this->highlightMegabytes = false;
    this->detailedCPUTime = false;
    this->countCPUsFromZero = false;
+   this->updateProcessNames = false;
    this->treeStr = NULL;
+   this->following = -1;
 
    return this;
 }
@@ -265,7 +272,7 @@ void ProcessList_printHeader(ProcessList* this, RichString* header) {
    ProcessField* fields = this->fields;
    for (int i = 0; fields[i]; i++) {
       const char* field = Process_fieldTitles[fields[i]];
-      if (this->sortKey == fields[i])
+      if (!this->treeView && this->sortKey == fields[i])
          RichString_append(header, CRT_colors[PANEL_HIGHLIGHT_FOCUS], field);
       else
          RichString_append(header, CRT_colors[PANEL_HEADER_FOCUS], field);
@@ -598,6 +605,7 @@ static void ProcessList_readVServerData(Process* process, const char* dirname, c
 static bool ProcessList_readCmdlineFile(Process* process, const char* dirname, const char* name) {
    if (Process_isKernelThread(process))
       return true;
+
    char filename[MAX_NAME+1];
    snprintf(filename, MAX_NAME, "%s/%s/cmdline", dirname, name);
    FILE* file = fopen(filename, "r");
@@ -616,6 +624,7 @@ static bool ProcessList_readCmdlineFile(Process* process, const char* dirname, c
    fclose(file);
    free(process->comm);
    process->comm = strdup(command);
+
    return true;
 }
 
@@ -676,7 +685,8 @@ static bool ProcessList_processEntries(ProcessList* this, const char* dirname, P
       unsigned long long int lasttimes = (process->utime + process->stime);
       if (! ProcessList_readStatFile(process, dirname, name, command))
          goto errorReadingProcess;
-      int percent_cpu = (process->utime + process->stime - lasttimes) / period * 100.0;
+      Process_updateIOPriority(process);
+      float percent_cpu = (process->utime + process->stime - lasttimes) / period * 100.0;
       process->percent_cpu = MAX(MIN(percent_cpu, cpus*100.0), 0.0);
       if (isnan(process->percent_cpu)) process->percent_cpu = 0.0;
       process->percent_mem = (process->m_resident * PAGE_SIZE_KB) / (double)(this->totalMem) * 100.0;
@@ -704,6 +714,11 @@ static bool ProcessList_processEntries(ProcessList* this, const char* dirname, P
             goto errorReadingProcess;
 
          ProcessList_add(this, process);
+      } else {
+         if (this->updateProcessNames) {
+            if (! ProcessList_readCmdlineFile(process, dirname, name))
+               goto errorReadingProcess;
+         }
       }
 
       if (process->state == 'Z') {
@@ -752,7 +767,9 @@ void ProcessList_scan(ProcessList* this) {
    unsigned long long int swapFree = 0;
 
    FILE* file = fopen(PROCMEMINFOFILE, "r");
-   assert(file != NULL);
+   if (file == NULL) {
+      CRT_fatalError("Cannot open " PROCMEMINFOFILE);
+   }
    int cpus = this->cpuCount;
    {
       char buffer[128];
@@ -790,7 +807,9 @@ void ProcessList_scan(ProcessList* this) {
    fclose(file);
 
    file = fopen(PROCSTATFILE, "r");
-   assert(file != NULL);
+   if (file == NULL) {
+      CRT_fatalError("Cannot open " PROCSTATFILE);
+   }
    for (int i = 0; i <= cpus; i++) {
       char buffer[256];
       int cpuid;
@@ -915,7 +934,7 @@ void ProcessList_rebuildPanel(ProcessList* this, bool flags, int following, bool
    }
 
    int currPos = Panel_getSelectedIndex(this->panel);
-   pid_t currPid = following ? following : 0;
+   pid_t currPid = following != -1 ? following : 0;
    int currScrollV = this->panel->scrollV;
 
    Panel_prune(this->panel);
@@ -927,7 +946,8 @@ void ProcessList_rebuildPanel(ProcessList* this, bool flags, int following, bool
 
       if ( (!p->show)
          || (userOnly && (p->st_uid != userId))
-         || (filtering && !(String_contains_i(p->comm, incFilter))) )
+         || (filtering && !(String_contains_i(p->comm, incFilter)))
+         || (this->pidWhiteList && !Hashtable_get(this->pidWhiteList, p->pid)) )
          hidden = true;
 
       if (!hidden) {

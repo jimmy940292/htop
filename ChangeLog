@@ -1,4 +1,14 @@
 
+What's new in version 1.0.2
+
+* Add IO priority support ('i' key)
+* Avoid deleting .htoprc if it is a symlink
+* Fail gracefully when /proc is not mounted
+  (thanks to Philipp Hagemeister)
+* Option to update process names on every refresh
+  (thanks to Rob Hoelz)
+* BUGFIX: Fix crashes when process list is empty
+
 What's new in version 1.0.1
 
 * Move .htoprc to XDG-compliant path ~/.config/htop/htoprc,

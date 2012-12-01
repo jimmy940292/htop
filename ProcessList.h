@@ -97,6 +97,7 @@ typedef struct ProcessList_ {
    uid_t userId;
    bool filtering;
    const char* incFilter;
+   Hashtable* pidWhiteList;
 
    int cpuCount;
    int totalTasks;
@@ -135,6 +136,7 @@ typedef struct ProcessList_ {
    bool highlightThreads;
    bool detailedCPUTime;
    bool countCPUsFromZero;
+   bool updateProcessNames;
    const char **treeStr;
 
 } ProcessList;
@@ -144,7 +146,7 @@ extern const char *ProcessList_treeStrAscii[TREE_STR_COUNT];
 
 extern const char *ProcessList_treeStrUtf8[TREE_STR_COUNT];
 
-ProcessList* ProcessList_new(UsersTable* usersTable);
+ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* pidWhiteList);
 
 void ProcessList_delete(ProcessList* this);
 

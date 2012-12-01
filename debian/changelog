@@ -1,3 +1,18 @@
+htop (1.0.2-1) experimental; urgency=low
+
+  * New upstream release.
+    - Ability to update process names on refreshes. (Closes: #475254)
+    - More precise value of CPU%. (Closes: #668410)
+    - Columns line up properly even when for more-than-5-digits process ids.
+      (Closes: #687280)
+  * debian/control:
+    - Bumped Standards-Version to 3.9.4, no changes needed.
+  * debian/patches:
+    - Deleted 200-dont-delete-htoprc-if-symlink.patch, applied upstream.
+    - 700-ltrace-support.patch: ported to new upstream version.
+
+ -- Eugene V. Lyubimkin <jackyf@debian.org>  Sat, 01 Dec 2012 11:55:43 +0200
+
 htop (1.0.1-4) unstable; urgency=low
 
   * debian/rules:

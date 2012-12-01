@@ -74,13 +74,15 @@ am__objects_2 = htop-AvailableMetersPanel.$(OBJEXT) \
 	htop-Panel.$(OBJEXT) htop-BatteryMeter.$(OBJEXT) \
 	htop-Process.$(OBJEXT) htop-ProcessList.$(OBJEXT) \
 	htop-RichString.$(OBJEXT) htop-ScreenManager.$(OBJEXT) \
-	htop-Settings.$(OBJEXT) htop-SignalsPanel.$(OBJEXT) \
-	htop-String.$(OBJEXT) htop-SwapMeter.$(OBJEXT) \
-	htop-TasksMeter.$(OBJEXT) htop-TraceScreen.$(OBJEXT) \
-	htop-UptimeMeter.$(OBJEXT) htop-UsersTable.$(OBJEXT) \
-	htop-Vector.$(OBJEXT) htop-AvailableColumnsPanel.$(OBJEXT) \
+	htop-Settings.$(OBJEXT) htop-IOPriorityPanel.$(OBJEXT) \
+	htop-SignalsPanel.$(OBJEXT) htop-String.$(OBJEXT) \
+	htop-SwapMeter.$(OBJEXT) htop-TasksMeter.$(OBJEXT) \
+	htop-TraceScreen.$(OBJEXT) htop-UptimeMeter.$(OBJEXT) \
+	htop-UsersTable.$(OBJEXT) htop-Vector.$(OBJEXT) \
+	htop-AvailableColumnsPanel.$(OBJEXT) \
 	htop-AffinityPanel.$(OBJEXT) htop-HostnameMeter.$(OBJEXT) \
-	htop-OpenFilesScreen.$(OBJEXT) htop-Affinity.$(OBJEXT)
+	htop-OpenFilesScreen.$(OBJEXT) htop-Affinity.$(OBJEXT) \
+	htop-IOPriority.$(OBJEXT)
 am_htop_OBJECTS = $(am__objects_1) $(am__objects_2)
 htop_OBJECTS = $(am_htop_OBJECTS)
 htop_LDADD = $(LDADD)
@@ -270,18 +272,18 @@ ClockMeter.c ColorsPanel.c ColumnsPanel.c CPUMeter.c CRT.c \
 DisplayOptionsPanel.c FunctionBar.c Hashtable.c Header.c htop.c ListItem.c \
 LoadAverageMeter.c MemoryMeter.c Meter.c MetersPanel.c Object.c Panel.c \
 BatteryMeter.c Process.c ProcessList.c RichString.c ScreenManager.c Settings.c \
-SignalsPanel.c String.c SwapMeter.c TasksMeter.c TraceScreen.c \
+IOPriorityPanel.c SignalsPanel.c String.c SwapMeter.c TasksMeter.c TraceScreen.c \
 UptimeMeter.c UsersTable.c Vector.c AvailableColumnsPanel.c AffinityPanel.c \
-HostnameMeter.c OpenFilesScreen.c Affinity.c
+HostnameMeter.c OpenFilesScreen.c Affinity.c IOPriority.c
 
 myhtopheaders = AvailableColumnsPanel.h AvailableMetersPanel.h \
 CategoriesPanel.h CheckItem.h ClockMeter.h ColorsPanel.h ColumnsPanel.h \
-CPUMeter.h CRT.h DisplayOptionsPanel.h FunctionBar.h \
+IOPriorityPanel.h CPUMeter.h CRT.h DisplayOptionsPanel.h FunctionBar.h \
 Hashtable.h Header.h htop.h ListItem.h LoadAverageMeter.h MemoryMeter.h \
 BatteryMeter.h Meter.h MetersPanel.h Object.h Panel.h ProcessList.h RichString.h \
 ScreenManager.h Settings.h SignalsPanel.h String.h \
 SwapMeter.h TasksMeter.h TraceScreen.h UptimeMeter.h UsersTable.h Vector.h \
-Process.h AffinityPanel.h HostnameMeter.h OpenFilesScreen.h Affinity.h
+Process.h AffinityPanel.h HostnameMeter.h OpenFilesScreen.h Affinity.h IOPriority.h
 
 SUFFIXES = .h
 BUILT_SOURCES = $(myhtopheaders)
@@ -414,6 +416,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-Hashtable.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-Header.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-HostnameMeter.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-IOPriority.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-IOPriorityPanel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-ListItem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-LoadAverageMeter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-MemoryMeter.Po@am__quote@
@@ -822,6 +826,20 @@ htop-Settings.obj: Settings.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -c -o htop-Settings.obj `if test -f 'Settings.c'; then $(CYGPATH_W) 'Settings.c'; else $(CYGPATH_W) '$(srcdir)/Settings.c'; fi`
 
+htop-IOPriorityPanel.o: IOPriorityPanel.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -MT htop-IOPriorityPanel.o -MD -MP -MF $(DEPDIR)/htop-IOPriorityPanel.Tpo -c -o htop-IOPriorityPanel.o `test -f 'IOPriorityPanel.c' || echo '$(srcdir)/'`IOPriorityPanel.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/htop-IOPriorityPanel.Tpo $(DEPDIR)/htop-IOPriorityPanel.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='IOPriorityPanel.c' object='htop-IOPriorityPanel.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -c -o htop-IOPriorityPanel.o `test -f 'IOPriorityPanel.c' || echo '$(srcdir)/'`IOPriorityPanel.c
+
+htop-IOPriorityPanel.obj: IOPriorityPanel.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -MT htop-IOPriorityPanel.obj -MD -MP -MF $(DEPDIR)/htop-IOPriorityPanel.Tpo -c -o htop-IOPriorityPanel.obj `if test -f 'IOPriorityPanel.c'; then $(CYGPATH_W) 'IOPriorityPanel.c'; else $(CYGPATH_W) '$(srcdir)/IOPriorityPanel.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/htop-IOPriorityPanel.Tpo $(DEPDIR)/htop-IOPriorityPanel.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='IOPriorityPanel.c' object='htop-IOPriorityPanel.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -c -o htop-IOPriorityPanel.obj `if test -f 'IOPriorityPanel.c'; then $(CYGPATH_W) 'IOPriorityPanel.c'; else $(CYGPATH_W) '$(srcdir)/IOPriorityPanel.c'; fi`
+
 htop-SignalsPanel.o: SignalsPanel.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -MT htop-SignalsPanel.o -MD -MP -MF $(DEPDIR)/htop-SignalsPanel.Tpo -c -o htop-SignalsPanel.o `test -f 'SignalsPanel.c' || echo '$(srcdir)/'`SignalsPanel.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/htop-SignalsPanel.Tpo $(DEPDIR)/htop-SignalsPanel.Po
@@ -1003,6 +1021,20 @@ htop-Affinity.obj: Affinity.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='Affinity.c' object='htop-Affinity.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -c -o htop-Affinity.obj `if test -f 'Affinity.c'; then $(CYGPATH_W) 'Affinity.c'; else $(CYGPATH_W) '$(srcdir)/Affinity.c'; fi`
+
+htop-IOPriority.o: IOPriority.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -MT htop-IOPriority.o -MD -MP -MF $(DEPDIR)/htop-IOPriority.Tpo -c -o htop-IOPriority.o `test -f 'IOPriority.c' || echo '$(srcdir)/'`IOPriority.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/htop-IOPriority.Tpo $(DEPDIR)/htop-IOPriority.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='IOPriority.c' object='htop-IOPriority.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -c -o htop-IOPriority.o `test -f 'IOPriority.c' || echo '$(srcdir)/'`IOPriority.c
+
+htop-IOPriority.obj: IOPriority.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -MT htop-IOPriority.obj -MD -MP -MF $(DEPDIR)/htop-IOPriority.Tpo -c -o htop-IOPriority.obj `if test -f 'IOPriority.c'; then $(CYGPATH_W) 'IOPriority.c'; else $(CYGPATH_W) '$(srcdir)/IOPriority.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/htop-IOPriority.Tpo $(DEPDIR)/htop-IOPriority.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='IOPriority.c' object='htop-IOPriority.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -c -o htop-IOPriority.obj `if test -f 'IOPriority.c'; then $(CYGPATH_W) 'IOPriority.c'; else $(CYGPATH_W) '$(srcdir)/IOPriority.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

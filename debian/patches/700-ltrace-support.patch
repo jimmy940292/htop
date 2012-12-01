@@ -150,34 +150,31 @@ Index: htop/htop.c
 ===================================================================
 --- htop.orig/htop.c	2011-01-16 17:02:59.000000000 +0200
 +++ htop/htop.c	2011-01-16 18:15:07.000000000 +0200
-@@ -133,6 +133,7 @@
-    mvaddstr(19, 0, "   F2 S: setup                           F6 >: select sort column");
-    mvaddstr(20, 0, "   F1 h: show this help screen              l: list open files with lsof");
-    mvaddstr(21, 0, "  F10 q: quit                               s: trace syscalls with strace");
-+   mvaddstr(22, 0, "                                            L: trace library calls with ltrace");
+@@ -133,6 +133,6 @@
+    mvaddstr(19, 0, "   F2 S: setup                              l: list open files with lsof");
+    mvaddstr(20, 0, "   F1 h: show this help screen              s: trace syscalls with strace");
+-   mvaddstr(21, 0, "  F10 q: quit");
++   mvaddstr(21, 0, "  F10 q: quit                               L: trace library calls with ltrace");
  
     attrset(CRT_colors[HELP_BOLD]);
     mvaddstr( 9, 0, " Arrows"); mvaddstr( 9,40, " F5 t");
-@@ -152,10 +153,11 @@
-    mvaddstr(19, 0, "   F2 S"); mvaddstr(19,40, " F6 >");
-    mvaddstr(20, 0, " ? F1 h"); mvaddstr(20,40, "    l");
-    mvaddstr(21, 0, "  F10 q"); mvaddstr(21,40, "    s");
-+   mvaddstr(22,40, "    L");
+@@ -152,6 +152,6 @@
+    mvaddstr(19, 0, "   F2 S"); mvaddstr(19,40, "    l");
+    mvaddstr(20, 0, " ? F1 h"); mvaddstr(20,40, "    s");
+-   mvaddstr(21, 0, "  F10 q");
++   mvaddstr(21, 0, "  F10 q"); mvaddstr(21,40, "    L");
     attrset(CRT_colors[DEFAULT_COLOR]);
  
     attrset(CRT_colors[HELP_BOLD]);
--   mvaddstr(23,0, "Press any key to return.");
-+   mvaddstr(24,0, "Press any key to return.");
-    attrset(CRT_colors[DEFAULT_COLOR]);
-    refresh();
-    CRT_readKey();
-@@ -580,9 +582,20 @@
+@@ -580,11 +582,24 @@
           Panel_onKey(panel, KEY_DOWN);
           break;
        }
 +      case 'L':
 +      {
-+         TraceScreen* ts = TraceScreen_new((Process*) Panel_getSelected(panel), LTRACE);
++         Process* p = (Process*) Panel_getSelected(panel);
++         if (!p) break;
++         TraceScreen* ts = TraceScreen_new(p, LTRACE);
 +         TraceScreen_run(ts);
 +         TraceScreen_delete(ts);
 +         clear();
@@ -188,8 +185,10 @@ Index: htop/htop.c
 +      }
        case 's':
        {
--         TraceScreen* ts = TraceScreen_new((Process*) Panel_getSelected(panel));
-+         TraceScreen* ts = TraceScreen_new((Process*) Panel_getSelected(panel), STRACE);
+          Process* p = (Process*) Panel_getSelected(panel);
+          if (!p) break;
+-         TraceScreen* ts = TraceScreen_new(p);
++         TraceScreen* ts = TraceScreen_new(p, STRACE);
           TraceScreen_run(ts);
           TraceScreen_delete(ts);
           clear();
