@@ -1,3 +1,9 @@
+htop (1.0.2-2) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Eugene V. Lyubimkin <jackyf@debian.org>  Sat, 29 Jun 2013 22:25:41 +0300
+
 htop (1.0.2-1) experimental; urgency=low
 
   * New upstream release.

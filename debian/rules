@@ -1,7 +1,5 @@
 #!/usr/bin/make -f
 
-#export DH_VERBOSE=1
-
 include /usr/share/quilt/quilt.make
 
 # These are used for cross-compiling and for saving the configure script
