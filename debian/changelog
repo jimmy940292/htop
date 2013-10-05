@@ -1,3 +1,11 @@
+htop (1.0.2-3) unstable; urgency=low
+
+  * debian/patches:
+    - New patch 610-io-priority-only-on-linux.patch which should fix building
+      on non-Linux kernels.
+
+ -- Eugene V. Lyubimkin <jackyf@debian.org>  Sat, 05 Oct 2013 13:17:13 +0300
+
 htop (1.0.2-2) unstable; urgency=low
 
   * Upload to unstable.
