@@ -1,3 +1,18 @@
+htop (1.0.3-1) unstable; urgency=low
+
+  * New upstream release.
+  * debian/watch:
+    - Updated to use new download location (http://hisham.hm/htop/releases).
+  * debian/patches:
+    - 600-openvz-veid-on-kernels-gt-2.6.18.patch: refreshed.
+    - 610-io-priority-only-on-linux.patch: ported to new upstream version.
+    - 700-ltrace-support.patch: ported to new upstream version.
+  * debian/control:
+    - Bumped Standards-Version to 3.9.5, no changes needed.
+    - Updated Homepage to 'http://hisham.hm/htop/'.
+
+ -- Eugene V. Lyubimkin <jackyf@debian.org>  Thu, 01 May 2014 13:16:56 +0300
+
 htop (1.0.2-3) unstable; urgency=low
 
   * debian/patches:

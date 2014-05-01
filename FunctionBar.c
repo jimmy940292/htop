@@ -13,7 +13,6 @@ in the source distribution for its full text.
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <curses.h>
 
 /*{
 #include "Object.h"
@@ -29,31 +28,31 @@ typedef struct FunctionBar_ {
 
 }*/
 
-#ifdef DEBUG
-char* FUNCTIONBAR_CLASS = "FunctionBar";
-#else
-#define FUNCTIONBAR_CLASS NULL
-#endif
-
 static const char* FunctionBar_FKeys[] = {"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", NULL};
 
 static const char* FunctionBar_FLabels[] = {"      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", NULL};
 
 static int FunctionBar_FEvents[] = {KEY_F(1), KEY_F(2), KEY_F(3), KEY_F(4), KEY_F(5), KEY_F(6), KEY_F(7), KEY_F(8), KEY_F(9), KEY_F(10)};
 
+ObjectClass FunctionBar_class = {
+   .delete = FunctionBar_delete
+};
+
 FunctionBar* FunctionBar_new(const char** functions, const char** keys, int* events) {
-   FunctionBar* this = malloc(sizeof(FunctionBar));
-   Object_setClass(this, FUNCTIONBAR_CLASS);
-   ((Object*) this)->delete = FunctionBar_delete;
-   this->functions = (char**) functions;
+   FunctionBar* this = AllocThis(FunctionBar);
+   this->functions = calloc(16, sizeof(char*));
+   if (!functions) {
+      functions = FunctionBar_FLabels;
+   }
+   for (int i = 0; i < 15 && functions[i]; i++) {
+      this->functions[i] = strdup(functions[i]);
+   }
    if (keys && events) {
       this->staticData = false; 
-      this->functions = malloc(sizeof(char*) * 15);
       this->keys = malloc(sizeof(char*) * 15);
       this->events = malloc(sizeof(int) * 15);
       int i = 0;
       while (i < 15 && functions[i]) {
-         this->functions[i] = strdup(functions[i]);
          this->keys[i] = strdup(keys[i]);
          this->events[i] = events[i];
          i++;
@@ -61,7 +60,6 @@ FunctionBar* FunctionBar_new(const char** functions, const char** keys, int* eve
       this->size = i;
    } else {
       this->staticData = true;
-      this->functions = (char**)( functions ? functions : FunctionBar_FLabels );
       this->keys = (char**) FunctionBar_FKeys;
       this->events = FunctionBar_FEvents;
       this->size = 10;
@@ -71,12 +69,14 @@ FunctionBar* FunctionBar_new(const char** functions, const char** keys, int* eve
 
 void FunctionBar_delete(Object* cast) {
    FunctionBar* this = (FunctionBar*) cast;
+   for (int i = 0; i < 15 && this->functions[i]; i++) {
+      free(this->functions[i]);
+   }
+   free(this->functions);
    if (!this->staticData) {
       for (int i = 0; i < this->size; i++) {
-         free(this->functions[i]);
          free(this->keys[i]);
       }
-      free(this->functions);
       free(this->keys);
       free(this->events);
    }
@@ -84,7 +84,6 @@ void FunctionBar_delete(Object* cast) {
 }
 
 void FunctionBar_setLabel(FunctionBar* this, int event, const char* text) {
-   assert(!this->staticData);
    for (int i = 0; i < this->size; i++) {
       if (this->events[i] == event) {
          free(this->functions[i]);

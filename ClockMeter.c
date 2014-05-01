@@ -21,17 +21,20 @@ int ClockMeter_attributes[] = {
 
 static void ClockMeter_setValues(Meter* this, char* buffer, int size) {
    time_t t = time(NULL);
-   struct tm *lt = localtime(&t);
+   struct tm result;
+   struct tm *lt = localtime_r(&t, &result);
    this->values[0] = lt->tm_hour * 60 + lt->tm_min;
    strftime(buffer, size, "%H:%M:%S", lt);
 }
 
-MeterType ClockMeter = {
+MeterClass ClockMeter_class = {
+   .super = {
+      .extends = Class(Meter),
+      .delete = Meter_delete
+   },
    .setValues = ClockMeter_setValues, 
-   .display = NULL,
-   .mode = TEXT_METERMODE,
+   .defaultMode = TEXT_METERMODE,
    .total = 100.0,
-   .items = 1,
    .attributes = ClockMeter_attributes,
    .name = "Clock",
    .uiName = "Clock",

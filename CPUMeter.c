@@ -12,7 +12,6 @@ in the source distribution for its full text.
 
 #include <assert.h>
 #include <stdlib.h>
-#include <curses.h>
 #include <string.h>
 #include <math.h>
 
@@ -21,7 +20,7 @@ in the source distribution for its full text.
 }*/
 
 int CPUMeter_attributes[] = {
-   CPU_NICE, CPU_NORMAL, CPU_KERNEL, CPU_IRQ, CPU_SOFTIRQ, CPU_IOWAIT, CPU_STEAL, CPU_GUEST
+   CPU_NICE, CPU_NORMAL, CPU_KERNEL, CPU_IRQ, CPU_SOFTIRQ, CPU_STEAL, CPU_GUEST, CPU_IOWAIT
 };
 
 #ifndef MIN
@@ -52,24 +51,29 @@ static void CPUMeter_setValues(Meter* this, char* buffer, int size) {
    CPUData* cpuData = &(pl->cpus[cpu]);
    double total = (double) ( cpuData->totalPeriod == 0 ? 1 : cpuData->totalPeriod);
    double percent;
-   this->values[0] = cpuData->nicePeriod / total * 100.0;
-   this->values[1] = cpuData->userPeriod / total * 100.0;
+   double* v = this->values;
+   v[0] = cpuData->nicePeriod / total * 100.0;
+   v[1] = cpuData->userPeriod / total * 100.0;
    if (pl->detailedCPUTime) {
-      this->values[2] = cpuData->systemPeriod / total * 100.0;
-      this->values[3] = cpuData->irqPeriod / total * 100.0;
-      this->values[4] = cpuData->softIrqPeriod / total * 100.0;
-      this->values[5] = cpuData->ioWaitPeriod / total * 100.0;
-      this->values[6] = cpuData->stealPeriod / total * 100.0;
-      this->values[7] = cpuData->guestPeriod / total * 100.0;
-      this->type->items = 8;
-      percent = MIN(100.0, MAX(0.0, (this->values[0]+this->values[1]+this->values[2]+
-                       this->values[3]+this->values[4])));
+      v[2] = cpuData->systemPeriod / total * 100.0;
+      v[3] = cpuData->irqPeriod / total * 100.0;
+      v[4] = cpuData->softIrqPeriod / total * 100.0;
+      v[5] = cpuData->stealPeriod / total * 100.0;
+      v[6] = cpuData->guestPeriod / total * 100.0;
+      v[7] = cpuData->ioWaitPeriod / total * 100.0;
+      Meter_setItems(this, 8);
+      if (pl->accountGuestInCPUMeter) {
+         percent = v[0]+v[1]+v[2]+v[3]+v[4]+v[5]+v[6];
+      } else {
+         percent = v[0]+v[1]+v[2]+v[3]+v[4];
+      }       
    } else {
-      this->values[2] = cpuData->systemAllPeriod / total * 100.0;
-      this->values[3] = (cpuData->stealPeriod + cpuData->guestPeriod) / total * 100.0;
-      this->type->items = 4;
-      percent = MIN(100.0, MAX(0.0, (this->values[0]+this->values[1]+this->values[2]+this->values[3])));
+      v[2] = cpuData->systemAllPeriod / total * 100.0;
+      v[3] = (cpuData->stealPeriod + cpuData->guestPeriod) / total * 100.0;
+      Meter_setItems(this, 4);
+      percent = v[0]+v[1]+v[2]+v[3];
    }
+   percent = MIN(100.0, MAX(0.0, percent));      
    if (isnan(percent)) percent = 0.0;
    snprintf(buffer, size, "%5.1f%%", percent);
 }
@@ -91,31 +95,33 @@ static void CPUMeter_display(Object* cast, RichString* out) {
       RichString_append(out, CRT_colors[CPU_KERNEL], buffer);
       sprintf(buffer, "%5.1f%% ", this->values[0]);
       RichString_append(out, CRT_colors[METER_TEXT], "ni:");
-      RichString_append(out, CRT_colors[CPU_NICE], buffer);
+      RichString_append(out, CRT_colors[CPU_NICE_TEXT], buffer);
       sprintf(buffer, "%5.1f%% ", this->values[3]);
       RichString_append(out, CRT_colors[METER_TEXT], "hi:");
       RichString_append(out, CRT_colors[CPU_IRQ], buffer);
       sprintf(buffer, "%5.1f%% ", this->values[4]);
       RichString_append(out, CRT_colors[METER_TEXT], "si:");
       RichString_append(out, CRT_colors[CPU_SOFTIRQ], buffer);
-      sprintf(buffer, "%5.1f%% ", this->values[5]);
-      RichString_append(out, CRT_colors[METER_TEXT], "wa:");
-      RichString_append(out, CRT_colors[CPU_IOWAIT], buffer);
-      sprintf(buffer, "%5.1f%% ", this->values[6]);
-      RichString_append(out, CRT_colors[METER_TEXT], "st:");
-      RichString_append(out, CRT_colors[CPU_STEAL], buffer);
-      if (this->values[7]) {
-         sprintf(buffer, "%5.1f%% ", this->values[7]);
+      if (this->values[5]) {
+         sprintf(buffer, "%5.1f%% ", this->values[5]);
+         RichString_append(out, CRT_colors[METER_TEXT], "st:");
+         RichString_append(out, CRT_colors[CPU_STEAL], buffer);
+      }
+      if (this->values[6]) {
+         sprintf(buffer, "%5.1f%% ", this->values[6]);
          RichString_append(out, CRT_colors[METER_TEXT], "gu:");
          RichString_append(out, CRT_colors[CPU_GUEST], buffer);
       }
+      sprintf(buffer, "%5.1f%% ", this->values[7]);
+      RichString_append(out, CRT_colors[METER_TEXT], "wa:");
+      RichString_append(out, CRT_colors[CPU_IOWAIT], buffer);
    } else {
       sprintf(buffer, "%5.1f%% ", this->values[2]);
       RichString_append(out, CRT_colors[METER_TEXT], "sys:");
       RichString_append(out, CRT_colors[CPU_KERNEL], buffer);
       sprintf(buffer, "%5.1f%% ", this->values[0]);
       RichString_append(out, CRT_colors[METER_TEXT], "low:");
-      RichString_append(out, CRT_colors[CPU_NICE], buffer);
+      RichString_append(out, CRT_colors[CPU_NICE_TEXT], buffer);
       if (this->values[3]) {
          sprintf(buffer, "%5.1f%% ", this->values[3]);
          RichString_append(out, CRT_colors[METER_TEXT], "vir:");
@@ -126,7 +132,7 @@ static void CPUMeter_display(Object* cast, RichString* out) {
 
 static void AllCPUsMeter_getRange(Meter* this, int* start, int* count) {
    int cpus = this->pl->cpuCount;
-   switch(this->type->name[0]) {
+   switch(Meter_name(this)[0]) {
       default:
       case 'A': // All
          *start = 0;
@@ -146,19 +152,19 @@ static void AllCPUsMeter_getRange(Meter* this, int* start, int* count) {
 static void AllCPUsMeter_init(Meter* this) {
    int cpus = this->pl->cpuCount;
    if (!this->drawData)
-      this->drawData = calloc(sizeof(Meter*), cpus);
+      this->drawData = calloc(cpus, sizeof(Meter*));
    Meter** meters = (Meter**) this->drawData;
    int start, count;
    AllCPUsMeter_getRange(this, &start, &count);
    for (int i = 0; i < count; i++) {
       if (!meters[i])
-         meters[i] = Meter_new(this->pl, start+i+1, &CPUMeter);
-      meters[i]->type->init(meters[i]);
+         meters[i] = Meter_new(this->pl, start+i+1, (MeterClass*) Class(CPUMeter));
+      Meter_init(meters[i]);
    }
    if (this->mode == 0)
       this->mode = BAR_METERMODE;
    int h = Meter_modes[this->mode]->h;
-   if (strchr(this->type->name, '2'))
+   if (strchr(Meter_name(this), '2'))
       this->h = h * ((count+1) / 2);
    else
       this->h = h * count;
@@ -172,7 +178,7 @@ static void AllCPUsMeter_done(Meter* this) {
       Meter_delete((Object*)meters[i]);
 }
 
-static void AllCPUsMeter_setMode(Meter* this, int mode) {
+static void AllCPUsMeter_updateMode(Meter* this, int mode) {
    Meter** meters = (Meter**) this->drawData;
    this->mode = mode;
    int h = Meter_modes[mode]->h;
@@ -181,7 +187,7 @@ static void AllCPUsMeter_setMode(Meter* this, int mode) {
    for (int i = 0; i < count; i++) {
       Meter_setMode(meters[i], mode);
    }
-   if (strchr(this->type->name, '2'))
+   if (strchr(Meter_name(this), '2'))
       this->h = h * ((count+1) / 2);
    else
       this->h = h * count;
@@ -214,11 +220,15 @@ static void SingleColCPUsMeter_draw(Meter* this, int x, int y, int w) {
    }
 }
 
-MeterType CPUMeter = {
+MeterClass CPUMeter_class = {
+   .super = {
+      .extends = Class(Meter),
+      .delete = Meter_delete,
+      .display = CPUMeter_display
+   },
    .setValues = CPUMeter_setValues, 
-   .display = CPUMeter_display,
-   .mode = BAR_METERMODE,
-   .items = 8,
+   .defaultMode = BAR_METERMODE,
+   .maxItems = 8,
    .total = 100.0,
    .attributes = CPUMeter_attributes, 
    .name = "CPU",
@@ -227,9 +237,13 @@ MeterType CPUMeter = {
    .init = CPUMeter_init
 };
 
-MeterType AllCPUsMeter = {
-   .mode = 0,
-   .items = 1,
+MeterClass AllCPUsMeter_class = {
+   .super = {
+      .extends = Class(Meter),
+      .delete = Meter_delete,
+      .display = CPUMeter_display
+   },
+   .defaultMode = CUSTOM_METERMODE,
    .total = 100.0,
    .attributes = CPUMeter_attributes, 
    .name = "AllCPUs",
@@ -237,13 +251,17 @@ MeterType AllCPUsMeter = {
    .caption = "CPU",
    .draw = SingleColCPUsMeter_draw,
    .init = AllCPUsMeter_init,
-   .setMode = AllCPUsMeter_setMode,
+   .updateMode = AllCPUsMeter_updateMode,
    .done = AllCPUsMeter_done
 };
 
-MeterType AllCPUs2Meter = {
-   .mode = 0,
-   .items = 1,
+MeterClass AllCPUs2Meter_class = {
+   .super = {
+      .extends = Class(Meter),
+      .delete = Meter_delete,
+      .display = CPUMeter_display
+   },
+   .defaultMode = CUSTOM_METERMODE,
    .total = 100.0,
    .attributes = CPUMeter_attributes, 
    .name = "AllCPUs2",
@@ -251,13 +269,17 @@ MeterType AllCPUs2Meter = {
    .caption = "CPU",
    .draw = DualColCPUsMeter_draw,
    .init = AllCPUsMeter_init,
-   .setMode = AllCPUsMeter_setMode,
+   .updateMode = AllCPUsMeter_updateMode,
    .done = AllCPUsMeter_done
 };
 
-MeterType LeftCPUsMeter = {
-   .mode = 0,
-   .items = 1,
+MeterClass LeftCPUsMeter_class = {
+   .super = {
+      .extends = Class(Meter),
+      .delete = Meter_delete,
+      .display = CPUMeter_display
+   },
+   .defaultMode = CUSTOM_METERMODE,
    .total = 100.0,
    .attributes = CPUMeter_attributes, 
    .name = "LeftCPUs",
@@ -265,13 +287,17 @@ MeterType LeftCPUsMeter = {
    .caption = "CPU",
    .draw = SingleColCPUsMeter_draw,
    .init = AllCPUsMeter_init,
-   .setMode = AllCPUsMeter_setMode,
+   .updateMode = AllCPUsMeter_updateMode,
    .done = AllCPUsMeter_done
 };
 
-MeterType RightCPUsMeter = {
-   .mode = 0,
-   .items = 1,
+MeterClass RightCPUsMeter_class = {
+   .super = {
+      .extends = Class(Meter),
+      .delete = Meter_delete,
+      .display = CPUMeter_display
+   },
+   .defaultMode = CUSTOM_METERMODE,
    .total = 100.0,
    .attributes = CPUMeter_attributes, 
    .name = "RightCPUs",
@@ -279,13 +305,17 @@ MeterType RightCPUsMeter = {
    .caption = "CPU",
    .draw = SingleColCPUsMeter_draw,
    .init = AllCPUsMeter_init,
-   .setMode = AllCPUsMeter_setMode,
+   .updateMode = AllCPUsMeter_updateMode,
    .done = AllCPUsMeter_done
 };
 
-MeterType LeftCPUs2Meter = {
-   .mode = 0,
-   .items = 1,
+MeterClass LeftCPUs2Meter_class = {
+   .super = {
+      .extends = Class(Meter),
+      .delete = Meter_delete,
+      .display = CPUMeter_display
+   },
+   .defaultMode = CUSTOM_METERMODE,
    .total = 100.0,
    .attributes = CPUMeter_attributes, 
    .name = "LeftCPUs2",
@@ -293,13 +323,17 @@ MeterType LeftCPUs2Meter = {
    .caption = "CPU",
    .draw = DualColCPUsMeter_draw,
    .init = AllCPUsMeter_init,
-   .setMode = AllCPUsMeter_setMode,
+   .updateMode = AllCPUsMeter_updateMode,
    .done = AllCPUsMeter_done
 };
 
-MeterType RightCPUs2Meter = {
-   .mode = 0,
-   .items = 1,
+MeterClass RightCPUs2Meter_class = {
+   .super = {
+      .extends = Class(Meter),
+      .delete = Meter_delete,
+      .display = CPUMeter_display
+   },
+   .defaultMode = CUSTOM_METERMODE,
    .total = 100.0,
    .attributes = CPUMeter_attributes, 
    .name = "RightCPUs2",
@@ -307,7 +341,7 @@ MeterType RightCPUs2Meter = {
    .caption = "CPU",
    .draw = DualColCPUsMeter_draw,
    .init = AllCPUsMeter_init,
-   .setMode = AllCPUsMeter_setMode,
+   .updateMode = AllCPUsMeter_updateMode,
    .done = AllCPUsMeter_done
 };
 

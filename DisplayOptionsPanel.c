@@ -61,15 +61,21 @@ static HandlerResult DisplayOptionsPanel_eventHandler(Panel* super, int ch) {
    return result;
 }
 
+PanelClass DisplayOptionsPanel_class = {
+   .super = {
+      .extends = Class(Panel),
+      .delete = DisplayOptionsPanel_delete
+   },
+   .eventHandler = DisplayOptionsPanel_eventHandler
+};
+
 DisplayOptionsPanel* DisplayOptionsPanel_new(Settings* settings, ScreenManager* scr) {
-   DisplayOptionsPanel* this = (DisplayOptionsPanel*) malloc(sizeof(DisplayOptionsPanel));
+   DisplayOptionsPanel* this = AllocThis(DisplayOptionsPanel);
    Panel* super = (Panel*) this;
-   Panel_init(super, 1, 1, 1, 1, CHECKITEM_CLASS, true);
-   ((Object*)this)->delete = DisplayOptionsPanel_delete;
+   Panel_init(super, 1, 1, 1, 1, Class(CheckItem), true);
 
    this->settings = settings;
    this->scr = scr;
-   super->eventHandler = DisplayOptionsPanel_eventHandler;
 
    Panel_setHeader(super, "Display options");
    Panel_add(super, (Object*) CheckItem_new(strdup("Tree view"), &(settings->pl->treeView), false));
@@ -84,5 +90,6 @@ DisplayOptionsPanel* DisplayOptionsPanel_new(Settings* settings, ScreenManager* 
    Panel_add(super, (Object*) CheckItem_new(strdup("Detailed CPU time (System/IO-Wait/Hard-IRQ/Soft-IRQ/Steal/Guest)"), &(settings->pl->detailedCPUTime), false));
    Panel_add(super, (Object*) CheckItem_new(strdup("Count CPUs from 0 instead of 1"), &(settings->pl->countCPUsFromZero), false));
    Panel_add(super, (Object*) CheckItem_new(strdup("Update process names on every refresh"), &(settings->pl->updateProcessNames), false));
+   Panel_add(super, (Object*) CheckItem_new(strdup("Add guest time in CPU meter percentage"), &(settings->pl->accountGuestInCPUMeter), false));
    return this;
 }

@@ -21,9 +21,9 @@ typedef struct Header_ {
    Vector* leftMeters;
    Vector* rightMeters;
    ProcessList* pl;
-   bool margin;
    int height;
    int pad;
+   bool margin;
 } Header;
 
 
@@ -39,7 +39,7 @@ void Header_createMeter(Header* this, char* name, HeaderSide side);
 
 void Header_setMode(Header* this, int i, MeterModeId mode, HeaderSide side);
 
-Meter* Header_addMeter(Header* this, MeterType* type, int param, HeaderSide side);
+Meter* Header_addMeter(Header* this, MeterClass* type, int param, HeaderSide side);
 
 int Header_size(Header* this, HeaderSide side);
 

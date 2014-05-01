@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.65)
-AC_INIT([htop],[1.0.2],[loderunner@users.sourceforge.net])
+AC_INIT([htop],[1.0.3],[hisham@gobolinux.org])
 
 # The following two lines are required by hwloc scripts
 AC_USE_SYSTEM_EXTENSIONS
@@ -27,7 +27,7 @@ AC_CHECK_LIB([m], [ceil], [], [missing_libraries="$missing_libraries libm"])
 # Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stdlib.h string.h strings.h sys/param.h sys/time.h unistd.h curses.h],[:],[
+AC_CHECK_HEADERS([stdlib.h string.h strings.h sys/param.h sys/time.h unistd.h],[:],[
   missing_headers="$missing_headers $ac_header"
 ])
 AC_CHECK_HEADERS([execinfo.h],[:],[:])
@@ -94,11 +94,15 @@ if test "x$enable_unicode" = xyes; then
       AC_MSG_ERROR([You may want to use --disable-unicode or install libncursesw.])
    ])
    AC_CHECK_HEADERS([ncursesw/curses.h],[:],
-        [AC_CHECK_HEADERS([ncurses/ncurses.h],[:],
-          [AC_CHECK_HEADERS([ncurses.h],[:],[missing_headers="$missing_headers $ac_header"])])])
+      [AC_CHECK_HEADERS([ncurses/ncurses.h],[:],
+         [AC_CHECK_HEADERS([ncurses/curses.h],[:],
+            [AC_CHECK_HEADERS([ncurses.h],[:],[missing_headers="$missing_headers $ac_header"])])])])
 else
    AC_CHECK_LIB([ncurses], [refresh], [], [missing_libraries="$missing_libraries libncurses"])
-   AC_CHECK_HEADERS([curses.h],[:],[missing_headers="$missing_headers $ac_header"])
+   AC_CHECK_HEADERS([curses.h],[:],
+      [AC_CHECK_HEADERS([ncurses/curses.h],[:],
+         [AC_CHECK_HEADERS([ncurses/ncurses.h],[:],
+            [AC_CHECK_HEADERS([ncurses.h],[:],[missing_headers="$missing_headers $ac_header"])])])])
 fi
 
 if test ! -z "$missing_libraries"; then
@@ -139,6 +143,11 @@ if test "x$enable_hwloc" = xyes
 then
    AC_CHECK_LIB([hwloc], [hwloc_linux_get_tid_cpubind], [], [missing_libraries="$missing_libraries libhwloc"])
    AC_CHECK_HEADERS([hwloc.h],[:], [missing_headers="$missing_headers $ac_header"])
+fi
+
+AC_ARG_ENABLE(oom, [AC_HELP_STRING([--enable-oom], [enable OOM score reporting])], ,enable_oom="no")
+if test "x$enable_oom" = xyes; then
+    AC_DEFINE(HAVE_OOM, 1, [Define if OOM score support enabled.])
 fi
 
 AC_CONFIG_FILES([Makefile htop.1])

@@ -49,11 +49,13 @@ static void UptimeMeter_setValues(Meter* this, char* buffer, int len) {
    snprintf(buffer, len, "%s%02d:%02d:%02d", daysbuf, hours, minutes, seconds);
 }
 
-MeterType UptimeMeter = {
+MeterClass UptimeMeter_class = {
+   .super = {
+      .extends = Class(Meter),
+      .delete = Meter_delete
+   },
    .setValues = UptimeMeter_setValues, 
-   .display = NULL,
-   .mode = TEXT_METERMODE,
-   .items = 1,
+   .defaultMode = TEXT_METERMODE,
    .total = 100.0,
    .attributes = UptimeMeter_attributes,
    .name = "Uptime",

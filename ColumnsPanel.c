@@ -82,15 +82,21 @@ static HandlerResult ColumnsPanel_eventHandler(Panel* super, int ch) {
    return result;
 }
 
+PanelClass ColumnsPanel_class = {
+   .super = {
+      .extends = Class(Panel),
+      .delete = ColumnsPanel_delete
+   },
+   .eventHandler = ColumnsPanel_eventHandler
+};
+
 ColumnsPanel* ColumnsPanel_new(Settings* settings, ScreenManager* scr) {
-   ColumnsPanel* this = (ColumnsPanel*) malloc(sizeof(ColumnsPanel));
+   ColumnsPanel* this = AllocThis(ColumnsPanel);
    Panel* super = (Panel*) this;
-   Panel_init(super, 1, 1, 1, 1, LISTITEM_CLASS, true);
-   ((Object*)this)->delete = ColumnsPanel_delete;
+   Panel_init(super, 1, 1, 1, 1, Class(ListItem), true);
 
    this->settings = settings;
    this->scr = scr;
-   super->eventHandler = ColumnsPanel_eventHandler;
    Panel_setHeader(super, "Active Columns");
 
    ProcessField* fields = this->settings->pl->fields;
@@ -116,11 +122,14 @@ void ColumnsPanel_update(Panel* super) {
    // FIXME: this is crappily inefficient
    free(this->settings->pl->fields);
    this->settings->pl->fields = (ProcessField*) malloc(sizeof(ProcessField) * (size+1));
+   this->settings->pl->flags = 0;
    for (int i = 0; i < size; i++) {
       char* text = ((ListItem*) Panel_get(super, i))->value;
           int j = ColumnsPanel_fieldNameToIndex(text);
-          if (j > 0)
+          if (j > 0) {
              this->settings->pl->fields[i] = j;
+             this->settings->pl->flags |= Process_fieldFlags[j];
+          }
    }
    this->settings->pl->fields[size] = 0;
 }

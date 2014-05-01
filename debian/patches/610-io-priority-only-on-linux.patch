@@ -1,6 +1,8 @@
---- a/Process.c
-+++ b/Process.c
-@@ -39,6 +39,10 @@ in the source distribution for its full text.
+Index: htop/Process.c
+===================================================================
+--- htop.orig/Process.c	2014-04-29 21:11:25.000000000 +0300
++++ htop/Process.c	2014-05-01 12:00:02.000000000 +0300
+@@ -39,6 +39,10 @@
  #endif
  #define PAGE_SIZE_KB ( PAGE_SIZE / ONE_K )
  
@@ -11,15 +13,15 @@
  /*{
  #include "Object.h"
  #include "Affinity.h"
-@@ -517,6 +521,7 @@ static void Process_writeField(Process* this, RichString* str, ProcessField fiel
-    #ifdef HAVE_CGROUP
-    case CGROUP: snprintf(buffer, n, "%-10s ", this->cgroup); break;
+@@ -617,6 +621,7 @@
+    #ifdef HAVE_OOM
+    case OOM: snprintf(buffer, n, Process_pidFormat, this->oom); break;
     #endif
 +   #ifdef HAVE_IO_PRIORITY
     case IO_PRIORITY: {
        int klass = IOPriority_class(this->ioPriority);
        if (klass == IOPRIO_CLASS_NONE) {
-@@ -535,6 +540,7 @@ static void Process_writeField(Process* this, RichString* str, ProcessField fiel
+@@ -635,6 +640,7 @@
        }
        break;
     }
@@ -27,7 +29,7 @@
     default:
        snprintf(buffer, n, "- ");
     }
-@@ -603,6 +609,7 @@ bool Process_changePriorityBy(Process* this, size_t delta) {
+@@ -709,6 +715,7 @@
     return Process_setPriority(this, this->nice + delta);
  }
  
@@ -35,7 +37,7 @@
  IOPriority Process_updateIOPriority(Process* this) {
     IOPriority ioprio = syscall(SYS_ioprio_get, IOPRIO_WHO_PROCESS, this->pid);
     this->ioPriority = ioprio;
-@@ -613,6 +620,7 @@ bool Process_setIOPriority(Process* this, IOPriority ioprio) {
+@@ -719,6 +726,7 @@
     syscall(SYS_ioprio_set, IOPRIO_WHO_PROCESS, this->pid, ioprio);
     return (Process_updateIOPriority(this) == ioprio);
  }
@@ -43,53 +45,46 @@
  
  /*
  [1] Note that before kernel 2.6.26 a process that has not asked for
---- a/ProcessList.c
-+++ b/ProcessList.c
-@@ -685,7 +685,9 @@ static bool ProcessList_processEntries(ProcessList* this, const char* dirname, P
+Index: htop/ProcessList.c
+===================================================================
+--- htop.orig/ProcessList.c	2014-05-01 11:52:18.000000000 +0300
++++ htop/ProcessList.c	2014-05-01 12:00:02.000000000 +0300
+@@ -798,8 +798,10 @@
        unsigned long long int lasttimes = (process->utime + process->stime);
        if (! ProcessList_readStatFile(process, dirname, name, command))
           goto errorReadingProcess;
 +      #ifdef HAVE_IO_PRIORITY
-       Process_updateIOPriority(process);
+       if (this->flags & PROCESS_FLAG_IOPRIO)
+          Process_updateIOPriority(process);
 +      #endif
        float percent_cpu = (process->utime + process->stime - lasttimes) / period * 100.0;
        process->percent_cpu = MAX(MIN(percent_cpu, cpus*100.0), 0.0);
        if (isnan(process->percent_cpu)) process->percent_cpu = 0.0;
---- a/htop.c
-+++ b/htop.c
-@@ -126,7 +126,11 @@ static void showHelp(ProcessList* pl) {
-    mvaddstr(13, 0, "  Space: tag processes                      F: cursor follows process");
-    mvaddstr(14, 0, "      U: untag all processes              + -: expand/collapse tree");
-    mvaddstr(15, 0, "   F9 k: kill process/tagged processes  P M T: sort by CPU%, MEM% or TIME");
+Index: htop/htop.c
+===================================================================
+--- htop.orig/htop.c	2014-04-29 21:11:25.000000000 +0300
++++ htop/htop.c	2014-05-01 12:00:02.000000000 +0300
+@@ -96,7 +96,11 @@
+ #if (HAVE_LIBHWLOC || HAVE_NATIVE_AFFINITY)
+    { .key = "      a: ", .info = "set CPU affinity" },
+ #endif
 +#ifdef HAVE_IO_PRIORITY
-    mvaddstr(16, 0, "   ] F7: higher priority (root only)        i: set IO priority");
+    { .key = "      i: ", .info = "set IO prority" },
 +#else
-+   mvaddstr(16, 0, "   ] F7: higher priority (root only)");
++   { .key = "         ", .info = "" },
 +#endif
-    mvaddstr(17, 0, "   [ F8: lower priority (+ nice)            I: invert sort order");
- #if (HAVE_LIBHWLOC || HAVE_NATIVE_AFFINITY)
-    if (pl->cpuCount > 1)
-@@ -146,7 +150,10 @@ static void showHelp(ProcessList* pl) {
-    mvaddstr(13, 0, "  Space"); mvaddstr(13,40, "    F");
-    mvaddstr(14, 0, "      U"); mvaddstr(14,40, "  + -");
-    mvaddstr(15, 0, "   F9 k"); mvaddstr(15,40, "P M T");
--   mvaddstr(16, 0, "   ] F7"); mvaddstr(16,40, "    i");
-+   mvaddstr(16, 0, "   ] F7");
-+#ifdef HAVE_IO_PRIORITY
-+                               mvaddstr(16,40, "    i");
-+#endif
-    mvaddstr(17, 0, "   [ F8"); mvaddstr(17,40, "    I");
-                                mvaddstr(18,40, " F6 >");
- #if (HAVE_LIBHWLOC || HAVE_NATIVE_AFFINITY)
-@@ -851,6 +858,7 @@ int main(int argc, char** argv) {
-          refreshTimeout = 0;
+    { .key = "      l: ", .info = "list open files with lsof" },
+    { .key = "      s: ", .info = "trace syscalls with strace" },
+    { .key = "         ", .info = "" },
+@@ -856,6 +860,7 @@
+          }
           break;
        }
 +      #ifdef HAVE_IO_PRIORITY
        case 'i':
        {
           Process* p = (Process*) Panel_getSelected(panel);
-@@ -870,6 +878,7 @@ int main(int argc, char** argv) {
+@@ -875,6 +880,7 @@
           refreshTimeout = 0;
           break;
        }

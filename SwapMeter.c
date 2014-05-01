@@ -11,7 +11,6 @@ in the source distribution for its full text.
 #include "ProcessList.h"
 
 #include <stdlib.h>
-#include <curses.h>
 #include <string.h>
 #include <math.h>
 #include <sys/param.h>
@@ -31,18 +30,14 @@ int SwapMeter_attributes[] = {
 
 /* NOTE: Value is in kilobytes */
 static void SwapMeter_humanNumber(char* buffer, const long int* value) {
-   if (*value >= 10*GIGABYTE)
-      sprintf(buffer, "%ldG ", *value / GIGABYTE);
-   else if (*value >= 10*MEGABYTE)
-      sprintf(buffer, "%ldM ", *value / MEGABYTE);
-   else
-      sprintf(buffer, "%ldK ", *value);
+   sprintf(buffer, "%ldM ", *value / MEGABYTE);
 }
 
 static void SwapMeter_setValues(Meter* this, char* buffer, int len) {
    long int usedSwap = this->pl->usedSwap;
    this->total = this->pl->totalSwap;
    this->values[0] = usedSwap;
+
    snprintf(buffer, len, "%ld/%ldMB", (long int) usedSwap / MEGABYTE, (long int) this->total / MEGABYTE);
 }
 
@@ -59,11 +54,14 @@ static void SwapMeter_display(Object* cast, RichString* out) {
    RichString_append(out, CRT_colors[METER_VALUE], buffer);
 }
 
-MeterType SwapMeter = {
+MeterClass SwapMeter_class = {
+   .super = {
+      .extends = Class(Meter),
+      .delete = Meter_delete,
+      .display = SwapMeter_display,
+   },
    .setValues = SwapMeter_setValues, 
-   .display = SwapMeter_display,
-   .mode = BAR_METERMODE,
-   .items = 1,
+   .defaultMode = BAR_METERMODE,
    .total = 100.0,
    .attributes = SwapMeter_attributes,
    .name = "Swap",

@@ -76,6 +76,7 @@ typedef enum ColorElements_ {
    GRAPH_9,
    MEMORY_USED,
    MEMORY_BUFFERS,
+   MEMORY_BUFFERS_TEXT,
    MEMORY_CACHE,
    LOAD,
    LOAD_AVERAGE_FIFTEEN,
@@ -88,6 +89,7 @@ typedef enum ColorElements_ {
    HELP_BOLD,
    HOSTNAME,
    CPU_NICE,
+   CPU_NICE_TEXT,
    CPU_NORMAL,
    CPU_KERNEL,
    CPU_IOWAIT,
@@ -98,16 +100,20 @@ typedef enum ColorElements_ {
    LAST_COLORELEMENT
 } ColorElements;
 
+void CRT_fatalError(const char* note) __attribute__ ((noreturn));
+
 
 // TODO: centralize these in Settings.
 
-extern int CRT_delay;
-
 extern int CRT_colorScheme;
+
+extern bool CRT_utf8;
 
 extern int CRT_colors[LAST_COLORELEMENT];
 
 extern int CRT_cursorX;
+
+extern int CRT_scrollHAmount;
 
 char* CRT_termType;
 

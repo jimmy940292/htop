@@ -1,11 +1,11 @@
 Add support for 'ltrace' in addition to 'strace' support.
 Index: htop/TraceScreen.c
 ===================================================================
---- htop.orig/TraceScreen.c	2011-01-16 17:02:59.000000000 +0200
-+++ htop/TraceScreen.c	2011-01-16 18:15:07.000000000 +0200
-@@ -23,11 +23,17 @@
- 
- /*{
+--- htop.orig/TraceScreen.c	2014-05-01 12:58:42.000000000 +0300
++++ htop/TraceScreen.c	2014-05-01 12:59:07.000000000 +0300
+@@ -29,10 +29,16 @@
+ #include "Panel.h"
+ #include "FunctionBar.h"
  
 +typedef enum TraceType_ {
 +   STRACE,
@@ -15,26 +15,25 @@ Index: htop/TraceScreen.c
  typedef struct TraceScreen_ {
     Process* process;
     Panel* display;
-    FunctionBar* bar;
     bool tracing;
 +   TraceType type;
  } TraceScreen;
  
  }*/
-@@ -38,9 +44,10 @@
+@@ -43,9 +49,10 @@
  
- static int tsEvents[] = {KEY_F(4), KEY_F(5), 27};
+ static int tsEvents[] = {KEY_F(3), KEY_F(4), KEY_F(8), KEY_F(9), 27};
  
 -TraceScreen* TraceScreen_new(Process* process) {
 +TraceScreen* TraceScreen_new(Process* process, TraceType type) {
     TraceScreen* this = (TraceScreen*) malloc(sizeof(TraceScreen));
     this->process = process;
 +   this->type = type;
-    this->display = Panel_new(0, 1, COLS, LINES-2, LISTITEM_CLASS, true, ListItem_compare);
-    this->bar = FunctionBar_new(tsFunctions, tsKeys, tsEvents);
+    this->display = Panel_new(0, 1, COLS, LINES-2, false, Class(ListItem));
     this->tracing = true;
-@@ -56,7 +63,14 @@
- static void TraceScreen_draw(TraceScreen* this) {
+    return this;
+@@ -59,7 +66,14 @@
+ static void TraceScreen_draw(TraceScreen* this, IncSet* inc) {
     attrset(CRT_colors[PANEL_HEADER_FOCUS]);
     mvhline(0, 0, ' ', COLS);
 -   mvprintw(0, 0, "Trace of process %d - %s", this->process->pid, this->process->comm);
@@ -47,25 +46,32 @@ Index: htop/TraceScreen.c
 +          break;
 +   }
     attrset(CRT_colors[DEFAULT_COLOR]);
-    FunctionBar_draw(this->bar, NULL);
+    IncSet_drawBar(inc);
  }
-@@ -73,15 +87,24 @@
-       dup2(fdpair[1], STDERR_FILENO);
-       fcntl(fdpair[1], F_SETFL, O_NONBLOCK);
-       sprintf(buffer, "%d", this->process->pid);
--      execlp("strace", "strace", "-p", buffer, NULL);
--      const char* message = "Could not execute 'strace'. Please make sure it is available in your $PATH.";
+@@ -90,16 +104,31 @@
+       int ok = fcntl(fdpair[1], F_SETFL, O_NONBLOCK);
+       if (ok != -1) {
+          sprintf(buffer, "%d", this->process->pid);
+-         execlp("strace", "strace", "-p", buffer, NULL);
++         switch(this->type) {
++            case STRACE:
++               execlp("strace", "strace", "-p", buffer, NULL);
++               break;
++            case LTRACE:
++               execlp("ltrace", "ltrace", "-p", buffer, NULL);
++               break;
++         }
++      }
 +      const char* message;
 +      switch(this->type) {
 +         case STRACE:
-+            execlp("strace", "strace", "-p", buffer, NULL);
 +            message = "Could not execute 'strace'. Please make sure it is available in your $PATH.";
 +            break;
 +         case LTRACE:
-+            execlp("ltrace", "ltrace", "-p", buffer, NULL);
 +            message = "Could not execute 'ltrace'. Please make sure it is available in your $PATH.";
 +            break;
-+      }
+       }
+-      const char* message = "Could not execute 'strace'. Please make sure it is available in your $PATH.";
        write(fdpair[1], message, strlen(message));
        exit(1);
     }
@@ -75,66 +81,40 @@ Index: htop/TraceScreen.c
     Panel* panel = this->display;
 -   int fd_strace = fileno(strace);
 +   int fd_trace = fileno(trace);
-    TraceScreen_draw(this);
     CRT_disableDelay();
     bool contLine = false;
-@@ -90,13 +113,13 @@
-    while (looping) {
-       fd_set fds;
-       FD_ZERO(&fds);
--      FD_SET(fd_strace, &fds);
-+      FD_SET(fd_trace, &fds);
-       struct timeval tv;
-       tv.tv_sec = 0; tv.tv_usec = 500;
--      int ready = select(fd_strace+1, &fds, NULL, NULL, &tv);
-+      int ready = select(fd_trace+1, &fds, NULL, NULL, &tv);
-       int nread = 0;
-       if (ready > 0)
--         nread = fread(buffer, 1, 1000, strace);
-+         nread = fread(buffer, 1, 1000, trace);
-       if (nread && this->tracing) {
-          char* line = buffer;
-          buffer[nread] = '\0';
-@@ -171,6 +194,6 @@
-    }
+    bool follow = false;
+@@ -125,13 +154,13 @@
+          fd_set fds;
+          FD_ZERO(&fds);
+ //         FD_SET(STDIN_FILENO, &fds);
+-         FD_SET(fd_strace, &fds);
++         FD_SET(fd_trace, &fds);
+          struct timeval tv;
+          tv.tv_sec = 0; tv.tv_usec = 500;
+-         int ready = select(fd_strace+1, &fds, NULL, NULL, &tv);
++         int ready = select(fd_trace+1, &fds, NULL, NULL, &tv);
+          int nread = 0;
+-         if (ready > 0 && FD_ISSET(fd_strace, &fds))
++         if (ready > 0 && FD_ISSET(fd_trace, &fds))
+-            nread = fread(buffer, 1, 1000, strace);
++            nread = fread(buffer, 1, 1000, trace);
+          if (nread && this->tracing) {
+             char* line = buffer;
+             buffer[nread] = '\0';
+@@ -224,6 +253,6 @@
+    
     kill(child, SIGTERM);
     waitpid(child, NULL, 0);
 -   fclose(strace);
 +   fclose(trace);
     CRT_enableDelay();
  }
-Index: htop/TraceScreen.h
+Index: htop/htop.1.in
 ===================================================================
---- htop.orig/TraceScreen.h	2009-06-29 13:18:40.000000000 +0300
-+++ htop/TraceScreen.h	2011-01-16 18:15:07.000000000 +0200
-@@ -25,15 +25,21 @@
- #include "FunctionBar.h"
- 
- 
-+typedef enum TraceType_ {
-+   STRACE,
-+   LTRACE
-+} TraceType;
-+
- typedef struct TraceScreen_ {
-    Process* process;
-    Panel* display;
-    FunctionBar* bar;
-    bool tracing;
-+   TraceType type;
- } TraceScreen;
- 
- 
--TraceScreen* TraceScreen_new(Process* process);
-+TraceScreen* TraceScreen_new(Process* process, TraceType type);
- 
- void TraceScreen_delete(TraceScreen* this);
- 
-Index: htop/htop.1
-===================================================================
---- htop.orig/htop.1.in	2011-01-16 17:02:59.000000000 +0200
-+++ htop/htop.1.in	2011-01-16 18:15:07.000000000 +0200
-@@ -54,6 +54,11 @@
+--- htop.orig/htop.1.in	2014-05-01 12:58:42.000000000 +0300
++++ htop/htop.1.in	2014-05-01 12:59:07.000000000 +0300
+@@ -67,6 +67,11 @@
  Display open files for a process: if lsof(1) is installed, pressing this key
  will display the list of file descriptors opened by the process.
  .TP
@@ -148,25 +128,18 @@ Index: htop/htop.1
  .TP
 Index: htop/htop.c
 ===================================================================
---- htop.orig/htop.c	2011-01-16 17:02:59.000000000 +0200
-+++ htop/htop.c	2011-01-16 18:15:07.000000000 +0200
-@@ -133,6 +133,6 @@
-    mvaddstr(19, 0, "   F2 S: setup                              l: list open files with lsof");
-    mvaddstr(20, 0, "   F1 h: show this help screen              s: trace syscalls with strace");
--   mvaddstr(21, 0, "  F10 q: quit");
-+   mvaddstr(21, 0, "  F10 q: quit                               L: trace library calls with ltrace");
- 
-    attrset(CRT_colors[HELP_BOLD]);
-    mvaddstr( 9, 0, " Arrows"); mvaddstr( 9,40, " F5 t");
-@@ -152,6 +152,6 @@
-    mvaddstr(19, 0, "   F2 S"); mvaddstr(19,40, "    l");
-    mvaddstr(20, 0, " ? F1 h"); mvaddstr(20,40, "    s");
--   mvaddstr(21, 0, "  F10 q");
-+   mvaddstr(21, 0, "  F10 q"); mvaddstr(21,40, "    L");
-    attrset(CRT_colors[DEFAULT_COLOR]);
- 
-    attrset(CRT_colors[HELP_BOLD]);
-@@ -580,11 +582,24 @@
+--- htop.orig/htop.c	2014-05-01 12:58:42.000000000 +0300
++++ htop/htop.c	2014-05-01 12:59:07.000000000 +0300
+@@ -103,7 +103,7 @@
+ #endif
+    { .key = "      l: ", .info = "list open files with lsof" },
+    { .key = "      s: ", .info = "trace syscalls with strace" },
+-   { .key = "         ", .info = "" },
++   { .key = "      L: ", .info = "trace library calls with ltrace" },
+    { .key = "   F2 S: ", .info = "setup" },
+    { .key = "   F1 h: ", .info = "show this help screen" },
+    { .key = "  F10 q: ", .info = "quit" },
+@@ -711,11 +711,24 @@
           Panel_onKey(panel, KEY_DOWN);
           break;
        }

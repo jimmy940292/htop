@@ -11,13 +11,11 @@ in the source distribution for its full text.
 
 //#link m
 
-#define INCSEARCH_MAX 40
-
-#define COPYRIGHT "(C) 2004-2011 Hisham Muhammad"
+#define COPYRIGHT "(C) 2004-2012 Hisham Muhammad"
 
 typedef bool(*ForeachProcessFn)(Process*, size_t);
 
-typedef struct IncBuffer_;
+void sortBy(Panel* panel, ProcessList* pl, Settings* settings, int headerHeight, FunctionBar* defaultBar, Header* header);
 
 int main(int argc, char** argv);
 

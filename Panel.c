@@ -18,7 +18,6 @@ in the source distribution for its full text.
 #include <ctype.h>
 #include <string.h>
 #include <assert.h>
-#include <curses.h>
 
 //#link curses
 
@@ -38,19 +37,28 @@ typedef enum HandlerResult_ {
 
 typedef HandlerResult(*Panel_EventHandler)(Panel*, int);
 
+typedef struct PanelClass_ {
+   const ObjectClass super;
+   const Panel_EventHandler eventHandler;
+} PanelClass;
+
+#define As_Panel(this_)                ((PanelClass*)((this_)->super.klass))
+#define Panel_eventHandlerFn(this_)    As_Panel(this_)->eventHandler
+#define Panel_eventHandler(this_, ev_) As_Panel(this_)->eventHandler((Panel*)(this_), ev_)
+
 struct Panel_ {
    Object super;
+   PanelClass* class;
    int x, y, w, h;
    WINDOW* window;
    Vector* items;
    int selected;
-   int scrollV, scrollH;
-   int scrollHAmount;
    int oldSelected;
+   char* eventHandlerBuffer;
+   int scrollV;
+   short scrollH;
    bool needsRedraw;
    RichString header;
-   Panel_EventHandler eventHandler;
-   char* eventHandlerBuffer;
 };
 
 }*/
@@ -62,22 +70,24 @@ struct Panel_ {
 #define MAX(a,b) ((a)>(b)?(a):(b))
 #endif
 
-#ifdef DEBUG
-char* PANEL_CLASS = "Panel";
-#else
-#define PANEL_CLASS NULL
-#endif
-
 #define KEY_CTRLN      0016            /* control-n key */
 #define KEY_CTRLP      0020            /* control-p key */
 #define KEY_CTRLF      0006            /* control-f key */
 #define KEY_CTRLB      0002            /* control-b key */
 
-Panel* Panel_new(int x, int y, int w, int h, char* type, bool owner, Object_Compare compare) {
+PanelClass Panel_class = {
+   .super = {
+      .extends = Class(Object),
+      .delete = Panel_delete
+   },
+   .eventHandler = Panel_selectByTyping
+};
+
+Panel* Panel_new(int x, int y, int w, int h, bool owner, ObjectClass* type) {
    Panel* this;
    this = malloc(sizeof(Panel));
+   Object_setClass(this, Class(Panel));
    Panel_init(this, x, y, w, h, type, owner);
-   this->items->compare = compare;
    return this;
 }
 
@@ -87,27 +97,19 @@ void Panel_delete(Object* cast) {
    free(this);
 }
 
-void Panel_init(Panel* this, int x, int y, int w, int h, char* type, bool owner) {
-   Object* super = (Object*) this;
-   Object_setClass(this, PANEL_CLASS);
-   super->delete = Panel_delete;
+void Panel_init(Panel* this, int x, int y, int w, int h, ObjectClass* type, bool owner) {
    this->x = x;
    this->y = y;
    this->w = w;
    this->h = h;
-   this->eventHandler = NULL;
    this->eventHandlerBuffer = NULL;
-   this->items = Vector_new(type, owner, DEFAULT_SIZE, ListItem_compare);
+   this->items = Vector_new(type, owner, DEFAULT_SIZE);
    this->scrollV = 0;
    this->scrollH = 0;
    this->selected = 0;
    this->oldSelected = 0;
    this->needsRedraw = true;
    RichString_beginAllocated(this->header);
-   if (String_eq(CRT_termType, "linux"))
-      this->scrollHAmount = 20;
-   else
-      this->scrollHAmount = 5;
 }
 
 void Panel_done(Panel* this) {
@@ -127,10 +129,6 @@ RichString* Panel_getHeader(Panel* this) {
 inline void Panel_setHeader(Panel* this, const char* header) {
    RichString_write(&(this->header), CRT_colors[PANEL_HEADER_FOCUS], header);
    this->needsRedraw = true;
-}
-
-void Panel_setEventHandler(Panel* this, Panel_EventHandler eh) {
-   this->eventHandler = eh;
 }
 
 void Panel_move(Panel* this, int x, int y) {
@@ -238,8 +236,8 @@ void Panel_setSelected(Panel* this, int selected) {
 
    selected = MAX(0, MIN(Vector_size(this->items) - 1, selected));
    this->selected = selected;
-   if (this->eventHandler) {
-      this->eventHandler(this, EVENT_SETSELECTED);
+   if (Panel_eventHandlerFn(this)) {
+      Panel_eventHandler(this, EVENT_SETSELECTED);
    }
 }
 
@@ -292,22 +290,21 @@ void Panel_draw(Panel* this, bool focus) {
 
       for(int i = first, j = 0; j < this->h && i < last; i++, j++) {
          Object* itemObj = Vector_get(this->items, i);
+         assert(itemObj); if(!itemObj) continue;
          RichString_begin(item);
-         itemObj->display(itemObj, &item);
+         Object_display(itemObj, &item);
          int itemLen = RichString_sizeVal(item);
          int amt = MIN(itemLen - scrollH, this->w);
-         if (i == this->selected) {
+         bool selected = (i == this->selected);
+         if (selected) {
             attrset(highlight);
             RichString_setAttr(&item, highlight);
-            mvhline(y + j, x+0, ' ', this->w);
-            if (amt > 0)
-               RichString_printoffnVal(item, y+j, x+0, scrollH, amt);
-            attrset(CRT_colors[RESET_COLOR]);
-         } else {
-            mvhline(y+j, x+0, ' ', this->w);
-            if (amt > 0)
-               RichString_printoffnVal(item, y+j, x+0, scrollH, amt);
          }
+         mvhline(y + j, x, ' ', this->w);
+         if (amt > 0)
+            RichString_printoffnVal(item, y+j, x, scrollH, amt);
+         if (selected)
+            attrset(CRT_colors[RESET_COLOR]);
          RichString_end(item);
       }
       for (int i = y + (last - first); i < y + this->h; i++)
@@ -316,23 +313,24 @@ void Panel_draw(Panel* this, bool focus) {
 
    } else {
       Object* oldObj = Vector_get(this->items, this->oldSelected);
+      assert(oldObj);
       RichString_begin(old);
-      oldObj->display(oldObj, &old);
+      Object_display(oldObj, &old);
       int oldLen = RichString_sizeVal(old);
       Object* newObj = Vector_get(this->items, this->selected);
       RichString_begin(new);
-      newObj->display(newObj, &new);
+      Object_display(newObj, &new);
       int newLen = RichString_sizeVal(new);
       mvhline(y+ this->oldSelected - this->scrollV, x+0, ' ', this->w);
       if (scrollH < oldLen)
          RichString_printoffnVal(old, y+this->oldSelected - this->scrollV, x,
-            this->scrollH, MIN(oldLen - scrollH, this->w));
+            scrollH, MIN(oldLen - scrollH, this->w));
       attrset(highlight);
       mvhline(y+this->selected - this->scrollV, x+0, ' ', this->w);
       RichString_setAttr(&new, highlight);
       if (scrollH < newLen)
          RichString_printoffnVal(new, y+this->selected - this->scrollV, x,
-            this->scrollH, MIN(newLen - scrollH, this->w));
+            scrollH, MIN(newLen - scrollH, this->w));
       attrset(CRT_colors[RESET_COLOR]);
       RichString_end(new);
       RichString_end(old);
@@ -379,13 +377,13 @@ bool Panel_onKey(Panel* this, int key) {
    case KEY_LEFT:
    case KEY_CTRLB:
       if (this->scrollH > 0) {
-         this->scrollH -= 5;
+         this->scrollH -= CRT_scrollHAmount;
          this->needsRedraw = true;
       }
       return true;
    case KEY_RIGHT:
    case KEY_CTRLF:
-      this->scrollH += 5;
+      this->scrollH += CRT_scrollHAmount;
       this->needsRedraw = true;
       return true;
    case KEY_PPAGE:

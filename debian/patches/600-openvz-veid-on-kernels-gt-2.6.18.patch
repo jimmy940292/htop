@@ -1,9 +1,9 @@
 Fix determining OpenVZ VEID on Linux kernels >= 2.6.18.
 Index: htop/ProcessList.c
 ===================================================================
---- htop.orig/ProcessList.c	2011-01-16 17:02:59.000000000 +0200
-+++ htop/ProcessList.c	2011-01-16 18:05:01.000000000 +0200
-@@ -438,19 +438,26 @@
+--- htop.orig/ProcessList.c	2014-05-01 11:43:17.000000000 +0300
++++ htop/ProcessList.c	2014-05-01 11:43:26.000000000 +0300
+@@ -586,19 +586,26 @@
        return;
     }
     char filename[MAX_NAME+1];

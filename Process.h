@@ -24,6 +24,12 @@ in the source distribution for its full text.
 #include "IOPriority.h"
 #include <sys/types.h>
 
+#define PROCESS_FLAG_IO 1
+#define PROCESS_FLAG_IOPRIO 2
+#define PROCESS_FLAG_OPENVZ 4
+#define PROCESS_FLAG_VSERVER 8
+#define PROCESS_FLAG_CGROUP 16
+
 #ifndef Process_isKernelThread
 #define Process_isKernelThread(_process) (_process->pgrp == 0)
 #endif
@@ -54,6 +60,9 @@ typedef enum ProcessField_ {
    #ifdef HAVE_CGROUP
    CGROUP,
    #endif
+   #ifdef HAVE_OOM
+   OOM,
+   #endif
    IO_PRIORITY,
    LAST_PROCESSFIELD
 } ProcessField;
@@ -64,7 +73,6 @@ typedef struct Process_ {
    Object super;
 
    struct ProcessList_ *pl;
-   bool updated;
 
    pid_t pid;
    char* comm;
@@ -80,12 +88,12 @@ typedef struct Process_ {
    pid_t tgid;
    int tpgid;
    unsigned long int flags;
-   #ifdef DEBUG
-   unsigned long int minflt;
-   unsigned long int cminflt;
-   unsigned long int majflt;
-   unsigned long int cmajflt;
-   #endif
+
+   uid_t st_uid;
+   float percent_cpu;
+   float percent_mem;
+   char* user;
+
    unsigned long long int utime;
    unsigned long long int stime;
    unsigned long long int cutime;
@@ -96,6 +104,53 @@ typedef struct Process_ {
    IOPriority ioPriority;
    char starttime_show[8];
    time_t starttime_ctime;
+
+   #ifdef HAVE_TASKSTATS
+   unsigned long long io_rchar;
+   unsigned long long io_wchar;
+   unsigned long long io_syscr;
+   unsigned long long io_syscw;
+   unsigned long long io_read_bytes;
+   unsigned long long io_write_bytes;
+   unsigned long long io_cancelled_write_bytes;
+   double io_rate_read_bps;
+   unsigned long long io_rate_read_time;
+   double io_rate_write_bps;
+   unsigned long long io_rate_write_time;   
+   #endif
+
+   int processor;
+   long m_size;
+   long m_resident;
+   long m_share;
+   long m_trs;
+   long m_drs;
+   long m_lrs;
+   long m_dt;
+
+   #ifdef HAVE_OPENVZ
+   unsigned int ctid;
+   unsigned int vpid;
+   #endif
+   #ifdef HAVE_VSERVER
+   unsigned int vxid;
+   #endif
+
+   #ifdef HAVE_CGROUP
+   char* cgroup;
+   #endif
+   #ifdef HAVE_OOM
+   unsigned int oom;
+   #endif
+
+   int exit_signal;
+   int basenameOffset;
+   bool updated;
+
+   unsigned long int minflt;
+   unsigned long int cminflt;
+   unsigned long int majflt;
+   unsigned long int cmajflt;
    #ifdef DEBUG
    long int itrealvalue;
    unsigned long int vsize;
@@ -114,63 +169,30 @@ typedef struct Process_ {
    unsigned long int nswap;
    unsigned long int cnswap;
    #endif
-   int exit_signal;
-   int processor;
-   int m_size;
-   int m_resident;
-   int m_share;
-   int m_trs;
-   int m_drs;
-   int m_lrs;
-   int m_dt;
-   uid_t st_uid;
-   float percent_cpu;
-   float percent_mem;
-   char* user;
-   #ifdef HAVE_OPENVZ
-   unsigned int ctid;
-   unsigned int vpid;
-   #endif
-   #ifdef HAVE_VSERVER
-   unsigned int vxid;
-   #endif
-   #ifdef HAVE_TASKSTATS
-   unsigned long long io_rchar;
-   unsigned long long io_wchar;
-   unsigned long long io_syscr;
-   unsigned long long io_syscw;
-   unsigned long long io_read_bytes;
-   unsigned long long io_write_bytes;
-   unsigned long long io_cancelled_write_bytes;
-   double io_rate_read_bps;
-   unsigned long long io_rate_read_time;
-   double io_rate_write_bps;
-   unsigned long long io_rate_write_time;   
-   #endif
-   #ifdef HAVE_CGROUP
-   char* cgroup;
-   #endif
+
 } Process;
 
 
-#ifdef DEBUG
-extern char* PROCESS_CLASS;
-#else
-#define PROCESS_CLASS NULL
-#endif
-
 extern const char *Process_fieldNames[];
+
+extern const int Process_fieldFlags[];
 
 extern const char *Process_fieldTitles[];
 
 
 void Process_getMaxPid();
 
-#define ONE_K 1024
+#define ONE_K 1024L
 #define ONE_M (ONE_K * ONE_K)
 #define ONE_G (ONE_M * ONE_K)
 
+#define ONE_DECIMAL_K 1000L
+#define ONE_DECIMAL_M (ONE_DECIMAL_K * ONE_DECIMAL_K)
+#define ONE_DECIMAL_G (ONE_DECIMAL_M * ONE_DECIMAL_K)
+
 void Process_delete(Object* cast);
+
+extern ObjectClass Process_class;
 
 Process* Process_new(struct ProcessList_ *pl);
 

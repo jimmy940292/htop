@@ -9,8 +9,9 @@ in the source distribution for its full text.
 
 #include "config.h"
 #include "String.h"
+#include "RichString.h"
 
-#include <curses.h>
+#include <stdio.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -84,6 +85,7 @@ typedef enum ColorElements_ {
    GRAPH_9,
    MEMORY_USED,
    MEMORY_BUFFERS,
+   MEMORY_BUFFERS_TEXT,
    MEMORY_CACHE,
    LOAD,
    LOAD_AVERAGE_FIFTEEN,
@@ -96,6 +98,7 @@ typedef enum ColorElements_ {
    HELP_BOLD,
    HOSTNAME,
    CPU_NICE,
+   CPU_NICE_TEXT,
    CPU_NORMAL,
    CPU_KERNEL,
    CPU_IOWAIT,
@@ -106,19 +109,25 @@ typedef enum ColorElements_ {
    LAST_COLORELEMENT
 } ColorElements;
 
+void CRT_fatalError(const char* note) __attribute__ ((noreturn));
+
 }*/
 
 // TODO: centralize these in Settings.
 
 static bool CRT_hasColors;
 
-int CRT_delay = 0;
+static int CRT_delay = 0;
 
 int CRT_colorScheme = 0;
+
+bool CRT_utf8 = false;
 
 int CRT_colors[LAST_COLORELEMENT] = { 0 };
 
 int CRT_cursorX = 0;
+
+int CRT_scrollHAmount = 5;
 
 char* CRT_termType;
 
@@ -128,7 +137,7 @@ static void CRT_handleSIGSEGV(int sgn) {
    (void) sgn;
    CRT_done();
    #if __linux
-   fprintf(stderr, "\n\nhtop " VERSION " aborting. Please report bug at http://htop.sf.net\n");
+   fprintf(stderr, "\n\nhtop " VERSION " aborting. Please report bug at http://hisham.hm/htop\n");
    #ifdef HAVE_EXECINFO_H
    size_t size = backtrace(backtraceArray, sizeof(backtraceArray) / sizeof(void *));
    fprintf(stderr, "\n Please include in your report the following backtrace: \n");
@@ -158,7 +167,7 @@ void CRT_init(int delay, int colorScheme) {
    noecho();
    CRT_delay = delay;
    CRT_colorScheme = colorScheme;
-   halfdelay(CRT_delay);
+   halfdelay(CRT_delay/2);
    nonl();
    intrflush(stdscr, false);
    keypad(stdscr, true);
@@ -170,9 +179,15 @@ void CRT_init(int delay, int colorScheme) {
       CRT_hasColors = false;
    }
    CRT_termType = getenv("TERM");
+   if (String_eq(CRT_termType, "linux"))
+      CRT_scrollHAmount = 20;
+   else
+      CRT_scrollHAmount = 5;
    if (String_eq(CRT_termType, "xterm") || String_eq(CRT_termType, "xterm-color") || String_eq(CRT_termType, "vt220")) {
       define_key("\033[H", KEY_HOME);
       define_key("\033[F", KEY_END);
+      define_key("\033[7~", KEY_HOME);
+      define_key("\033[8~", KEY_END);
       define_key("\033OP", KEY_F(1));
       define_key("\033OQ", KEY_F(2));
       define_key("\033OR", KEY_F(3));
@@ -212,7 +227,7 @@ int CRT_readKey() {
    cbreak();
    nodelay(stdscr, FALSE);
    int ret = getch();
-   halfdelay(CRT_delay);
+   halfdelay(CRT_delay/2);
    return ret;
 }
 
@@ -223,7 +238,7 @@ void CRT_disableDelay() {
 }
 
 void CRT_enableDelay() {
-   halfdelay(CRT_delay);
+   halfdelay(CRT_delay/2);
 }
 
 void CRT_setColors(int colorScheme) {
@@ -280,6 +295,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[GRAPH_9] = A_DIM;
       CRT_colors[MEMORY_USED] = A_BOLD;
       CRT_colors[MEMORY_BUFFERS] = A_NORMAL;
+      CRT_colors[MEMORY_BUFFERS_TEXT] = A_NORMAL;
       CRT_colors[MEMORY_CACHE] = A_NORMAL;
       CRT_colors[LOAD_AVERAGE_FIFTEEN] = A_DIM;
       CRT_colors[LOAD_AVERAGE_FIVE] = A_NORMAL;
@@ -292,6 +308,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[CHECK_TEXT] = A_NORMAL;
       CRT_colors[HOSTNAME] = A_BOLD;
       CRT_colors[CPU_NICE] = A_NORMAL;
+      CRT_colors[CPU_NICE_TEXT] = A_NORMAL;
       CRT_colors[CPU_NORMAL] = A_BOLD;
       CRT_colors[CPU_KERNEL] = A_BOLD;
       CRT_colors[CPU_IOWAIT] = A_NORMAL;
@@ -341,6 +358,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[GRAPH_9] = ColorPair(Yellow,White);
       CRT_colors[MEMORY_USED] = ColorPair(Green,White);
       CRT_colors[MEMORY_BUFFERS] = ColorPair(Cyan,White);
+      CRT_colors[MEMORY_BUFFERS_TEXT] = ColorPair(Cyan,White);
       CRT_colors[MEMORY_CACHE] = ColorPair(Yellow,White);
       CRT_colors[LOAD_AVERAGE_FIFTEEN] = ColorPair(Black,White);
       CRT_colors[LOAD_AVERAGE_FIVE] = ColorPair(Black,White);
@@ -353,6 +371,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[CHECK_TEXT] = ColorPair(Black,White);
       CRT_colors[HOSTNAME] = ColorPair(Black,White);
       CRT_colors[CPU_NICE] = ColorPair(Cyan,White);
+      CRT_colors[CPU_NICE_TEXT] = ColorPair(Cyan,White);
       CRT_colors[CPU_NORMAL] = ColorPair(Green,White);
       CRT_colors[CPU_KERNEL] = ColorPair(Red,White);
       CRT_colors[CPU_IOWAIT] = A_BOLD | ColorPair(Black, White);
@@ -402,6 +421,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[GRAPH_9] = ColorPair(Yellow,Black);
       CRT_colors[MEMORY_USED] = ColorPair(Green,Black);
       CRT_colors[MEMORY_BUFFERS] = ColorPair(Cyan,Black);
+      CRT_colors[MEMORY_BUFFERS_TEXT] = ColorPair(Cyan,Black);
       CRT_colors[MEMORY_CACHE] = ColorPair(Yellow,Black);
       CRT_colors[LOAD_AVERAGE_FIFTEEN] = ColorPair(Black,Black);
       CRT_colors[LOAD_AVERAGE_FIVE] = ColorPair(Black,Black);
@@ -414,6 +434,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[CHECK_TEXT] = ColorPair(Black,Black);
       CRT_colors[HOSTNAME] = ColorPair(White,Black);
       CRT_colors[CPU_NICE] = ColorPair(Cyan,Black);
+      CRT_colors[CPU_NICE_TEXT] = ColorPair(Cyan,Black);
       CRT_colors[CPU_NORMAL] = ColorPair(Green,Black);
       CRT_colors[CPU_KERNEL] = ColorPair(Red,Black);
       CRT_colors[CPU_IOWAIT] = A_BOLD | ColorPair(Black, Black);
@@ -463,6 +484,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[GRAPH_9] = A_BOLD | ColorPair(Yellow,Blue);
       CRT_colors[MEMORY_USED] = A_BOLD | ColorPair(Green,Blue);
       CRT_colors[MEMORY_BUFFERS] = A_BOLD | ColorPair(Cyan,Blue);
+      CRT_colors[MEMORY_BUFFERS_TEXT] = A_BOLD | ColorPair(Cyan,Blue);
       CRT_colors[MEMORY_CACHE] = A_BOLD | ColorPair(Yellow,Blue);
       CRT_colors[LOAD_AVERAGE_FIFTEEN] = A_BOLD | ColorPair(Black,Blue);
       CRT_colors[LOAD_AVERAGE_FIVE] = A_NORMAL | ColorPair(White,Blue);
@@ -475,6 +497,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[CHECK_TEXT] = A_NORMAL | ColorPair(White,Blue);
       CRT_colors[HOSTNAME] = ColorPair(White,Blue);
       CRT_colors[CPU_NICE] = A_BOLD | ColorPair(Cyan,Blue);
+      CRT_colors[CPU_NICE_TEXT] = A_BOLD | ColorPair(Cyan,Blue);
       CRT_colors[CPU_NORMAL] = A_BOLD | ColorPair(Green,Blue);
       CRT_colors[CPU_KERNEL] = A_BOLD | ColorPair(Red,Blue);
       CRT_colors[CPU_IOWAIT] = A_BOLD | ColorPair(Blue,Blue);
@@ -524,6 +547,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[GRAPH_9] = A_BOLD | ColorPair(Black,Black);
       CRT_colors[MEMORY_USED] = ColorPair(Green,Black);
       CRT_colors[MEMORY_BUFFERS] = ColorPair(Blue,Black);
+      CRT_colors[MEMORY_BUFFERS_TEXT] = A_BOLD | ColorPair(Blue,Black);
       CRT_colors[MEMORY_CACHE] = ColorPair(Yellow,Black);
       CRT_colors[LOAD_AVERAGE_FIFTEEN] = ColorPair(Green,Black);
       CRT_colors[LOAD_AVERAGE_FIVE] = ColorPair(Green,Black);
@@ -536,6 +560,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[CHECK_TEXT] = ColorPair(Cyan,Black);
       CRT_colors[HOSTNAME] = ColorPair(Green,Black);
       CRT_colors[CPU_NICE] = ColorPair(Blue,Black);
+      CRT_colors[CPU_NICE_TEXT] = A_BOLD | ColorPair(Blue,Black);
       CRT_colors[CPU_NORMAL] = ColorPair(Green,Black);
       CRT_colors[CPU_KERNEL] = ColorPair(Red,Black);
       CRT_colors[CPU_IOWAIT] = ColorPair(Yellow,Black);
@@ -586,6 +611,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[GRAPH_9] = A_BOLD | ColorPair(Black,Black);
       CRT_colors[MEMORY_USED] = ColorPair(Green,Black);
       CRT_colors[MEMORY_BUFFERS] = ColorPair(Blue,Black);
+      CRT_colors[MEMORY_BUFFERS_TEXT] = A_BOLD | ColorPair(Blue,Black);
       CRT_colors[MEMORY_CACHE] = ColorPair(Yellow,Black);
       CRT_colors[LOAD_AVERAGE_FIFTEEN] = A_BOLD | ColorPair(Black,Black);
       CRT_colors[LOAD_AVERAGE_FIVE] = A_NORMAL;
@@ -598,6 +624,7 @@ void CRT_setColors(int colorScheme) {
       CRT_colors[CHECK_TEXT] = A_NORMAL;
       CRT_colors[HOSTNAME] = A_BOLD;
       CRT_colors[CPU_NICE] = ColorPair(Blue,Black);
+      CRT_colors[CPU_NICE_TEXT] = A_BOLD | ColorPair(Blue,Black);
       CRT_colors[CPU_NORMAL] = ColorPair(Green,Black);
       CRT_colors[CPU_KERNEL] = ColorPair(Red,Black);
       CRT_colors[CPU_IOWAIT] = A_BOLD | ColorPair(Black, Black);

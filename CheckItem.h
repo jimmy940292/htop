@@ -14,16 +14,12 @@ in the source distribution for its full text.
 typedef struct CheckItem_ {
    Object super;
    char* text;
-   bool value;
    bool* ref;
+   bool value;
 } CheckItem;
 
 
-#ifdef DEBUG
-extern char* CHECKITEM_CLASS;
-#else
-#define CHECKITEM_CLASS NULL
-#endif
+extern ObjectClass CheckItem_class;
 
 CheckItem* CheckItem_new(char* text, bool* ref, bool value);
 

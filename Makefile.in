@@ -82,7 +82,7 @@ am__objects_2 = htop-AvailableMetersPanel.$(OBJEXT) \
 	htop-AvailableColumnsPanel.$(OBJEXT) \
 	htop-AffinityPanel.$(OBJEXT) htop-HostnameMeter.$(OBJEXT) \
 	htop-OpenFilesScreen.$(OBJEXT) htop-Affinity.$(OBJEXT) \
-	htop-IOPriority.$(OBJEXT)
+	htop-IOPriority.$(OBJEXT) htop-IncSet.$(OBJEXT)
 am_htop_OBJECTS = $(am__objects_1) $(am__objects_2)
 htop_OBJECTS = $(am_htop_OBJECTS)
 htop_LDADD = $(LDADD)
@@ -274,16 +274,16 @@ LoadAverageMeter.c MemoryMeter.c Meter.c MetersPanel.c Object.c Panel.c \
 BatteryMeter.c Process.c ProcessList.c RichString.c ScreenManager.c Settings.c \
 IOPriorityPanel.c SignalsPanel.c String.c SwapMeter.c TasksMeter.c TraceScreen.c \
 UptimeMeter.c UsersTable.c Vector.c AvailableColumnsPanel.c AffinityPanel.c \
-HostnameMeter.c OpenFilesScreen.c Affinity.c IOPriority.c
+HostnameMeter.c OpenFilesScreen.c Affinity.c IOPriority.c IncSet.c
 
 myhtopheaders = AvailableColumnsPanel.h AvailableMetersPanel.h \
 CategoriesPanel.h CheckItem.h ClockMeter.h ColorsPanel.h ColumnsPanel.h \
 IOPriorityPanel.h CPUMeter.h CRT.h DisplayOptionsPanel.h FunctionBar.h \
 Hashtable.h Header.h htop.h ListItem.h LoadAverageMeter.h MemoryMeter.h \
 BatteryMeter.h Meter.h MetersPanel.h Object.h Panel.h ProcessList.h RichString.h \
-ScreenManager.h Settings.h SignalsPanel.h String.h \
-SwapMeter.h TasksMeter.h TraceScreen.h UptimeMeter.h UsersTable.h Vector.h \
-Process.h AffinityPanel.h HostnameMeter.h OpenFilesScreen.h Affinity.h IOPriority.h
+ScreenManager.h Settings.h SignalsPanel.h String.h SwapMeter.h TasksMeter.h \
+TraceScreen.h UptimeMeter.h UsersTable.h Vector.h Process.h AffinityPanel.h \
+HostnameMeter.h OpenFilesScreen.h Affinity.h IOPriority.h IncSet.h
 
 SUFFIXES = .h
 BUILT_SOURCES = $(myhtopheaders)
@@ -418,6 +418,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-HostnameMeter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-IOPriority.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-IOPriorityPanel.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-IncSet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-ListItem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-LoadAverageMeter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htop-MemoryMeter.Po@am__quote@
@@ -1036,6 +1037,20 @@ htop-IOPriority.obj: IOPriority.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -c -o htop-IOPriority.obj `if test -f 'IOPriority.c'; then $(CYGPATH_W) 'IOPriority.c'; else $(CYGPATH_W) '$(srcdir)/IOPriority.c'; fi`
 
+htop-IncSet.o: IncSet.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -MT htop-IncSet.o -MD -MP -MF $(DEPDIR)/htop-IncSet.Tpo -c -o htop-IncSet.o `test -f 'IncSet.c' || echo '$(srcdir)/'`IncSet.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/htop-IncSet.Tpo $(DEPDIR)/htop-IncSet.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='IncSet.c' object='htop-IncSet.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -c -o htop-IncSet.o `test -f 'IncSet.c' || echo '$(srcdir)/'`IncSet.c
+
+htop-IncSet.obj: IncSet.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -MT htop-IncSet.obj -MD -MP -MF $(DEPDIR)/htop-IncSet.Tpo -c -o htop-IncSet.obj `if test -f 'IncSet.c'; then $(CYGPATH_W) 'IncSet.c'; else $(CYGPATH_W) '$(srcdir)/IncSet.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/htop-IncSet.Tpo $(DEPDIR)/htop-IncSet.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='IncSet.c' object='htop-IncSet.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(htop_CFLAGS) $(CFLAGS) -c -o htop-IncSet.obj `if test -f 'IncSet.c'; then $(CYGPATH_W) 'IncSet.c'; else $(CYGPATH_W) '$(srcdir)/IncSet.c'; fi`
+
 mostlyclean-libtool:
 	-rm -f *.lo
 
@@ -1470,13 +1485,13 @@ uninstall-man: uninstall-man1
 
 
 profile:
-	$(MAKE) all CFLAGS="" AM_CPPFLAGS="-pg -O2"
+	$(MAKE) all CFLAGS="-pg" AM_CPPFLAGS="-pg -O2 -DNDEBUG"
 
 debug:
 	$(MAKE) all CFLAGS="" AM_CPPFLAGS="-ggdb -DDEBUG"
 
 .c.h:
-	scripts/MakeHeader.py $<
+	@srcdir@/scripts/MakeHeader.py $<
 
 cppcheck:
 	cppcheck -q -v . --enable=all -DHAVE_CGROUP -DHAVE_OPENVZ -DHAVE_TASKSTATS

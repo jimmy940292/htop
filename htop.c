@@ -23,6 +23,7 @@ in the source distribution for its full text.
 #include "OpenFilesScreen.h"
 #include "AffinityPanel.h"
 #include "IOPriorityPanel.h"
+#include "IncSet.h"
 
 #include <unistd.h>
 #include <math.h>
@@ -35,12 +36,11 @@ in the source distribution for its full text.
 #include <string.h>
 #include <sys/param.h>
 #include <sys/time.h>
+#include <time.h>
 
 //#link m
 
-#define INCSEARCH_MAX 40
-
-#define COPYRIGHT "(C) 2004-2011 Hisham Muhammad"
+#define COPYRIGHT "(C) 2004-2012 Hisham Muhammad"
 
 static void printVersionFlag() {
    fputs("htop " VERSION " - " COPYRIGHT "\n"
@@ -49,6 +49,8 @@ static void printVersionFlag() {
    exit(0);
 }
 
+static const char* defaultFunctions[]  = {"Help  ", "Setup ", "Search", "Filter", "Tree  ", "SortBy", "Nice -", "Nice +", "Kill  ", "Quit  ", NULL};
+ 
 static void printHelpFlag() {
    fputs("htop " VERSION " - " COPYRIGHT "\n"
          "Released under the GNU GPL.\n\n"
@@ -67,6 +69,43 @@ static void printHelpFlag() {
    exit(0);
 }
 
+static struct { const char* key; const char* info; } helpLeft[] = {
+   { .key = " Arrows: ", .info = "scroll process list" },
+   { .key = " Digits: ", .info = "incremental PID search" },
+   { .key = "   F3 /: ", .info = "incremental name search" },
+   { .key = "   F4 \\: ",.info = "incremental name filtering" },
+   { .key = "   F5 t: ", .info = "tree view" },
+   { .key = "      u: ", .info = "show processes of a single user" },
+   { .key = "      H: ", .info = "hide/show user threads" },
+   { .key = "      K: ", .info = "hide/show kernel threads" },
+   { .key = "      F: ", .info = "cursor follows process" },
+   { .key = " F6 + -: ", .info = "expand/collapse tree" },
+   { .key = "  P M T: ", .info = "sort by CPU%, MEM% or TIME" },
+   { .key = "      I: ", .info = "invert sort order" },
+   { .key = "   F6 >: ", .info = "select sort column" },
+   { .key = NULL, .info = NULL }
+};
+
+static struct { const char* key; const char* info; } helpRight[] = {
+   { .key = "  Space: ", .info = "tag process" },
+   { .key = "      c: ", .info = "tag process and its children" },
+   { .key = "      U: ", .info = "untag all processes" },
+   { .key = "   F9 k: ", .info = "kill process/tagged processes" },
+   { .key = "   F7 ]: ", .info = "higher priority (root only)" },
+   { .key = "   F8 [: ", .info = "lower priority (+ nice)" },
+#if (HAVE_LIBHWLOC || HAVE_NATIVE_AFFINITY)
+   { .key = "      a: ", .info = "set CPU affinity" },
+#endif
+   { .key = "      i: ", .info = "set IO prority" },
+   { .key = "      l: ", .info = "list open files with lsof" },
+   { .key = "      s: ", .info = "trace syscalls with strace" },
+   { .key = "         ", .info = "" },
+   { .key = "   F2 S: ", .info = "setup" },
+   { .key = "   F1 h: ", .info = "show this help screen" },
+   { .key = "  F10 q: ", .info = "quit" },
+   { .key = NULL, .info = NULL }
+};
+
 static void showHelp(ProcessList* pl) {
    clear();
    attrset(CRT_colors[HELP_BOLD]);
@@ -82,17 +121,17 @@ static void showHelp(ProcessList* pl) {
    #define addattrstr(a,s) attrset(a);addstr(s)
    addattrstr(CRT_colors[BAR_BORDER], "[");
    if (pl->detailedCPUTime) {
-      addattrstr(CRT_colors[CPU_NICE], "low"); addstr("/");
+      addattrstr(CRT_colors[CPU_NICE_TEXT], "low"); addstr("/");
       addattrstr(CRT_colors[CPU_NORMAL], "normal"); addstr("/");
       addattrstr(CRT_colors[CPU_KERNEL], "kernel"); addstr("/");
       addattrstr(CRT_colors[CPU_IRQ], "irq"); addstr("/");
       addattrstr(CRT_colors[CPU_SOFTIRQ], "soft-irq"); addstr("/");
-      addattrstr(CRT_colors[CPU_IOWAIT], "io-wait"); addstr("/");
       addattrstr(CRT_colors[CPU_STEAL], "steal"); addstr("/");
-      addattrstr(CRT_colors[CPU_GUEST], "guest");
+      addattrstr(CRT_colors[CPU_GUEST], "guest"); addstr("/");
+      addattrstr(CRT_colors[CPU_IOWAIT], "io-wait");
       addattrstr(CRT_colors[BAR_SHADOW], " used%");
    } else {
-      addattrstr(CRT_colors[CPU_NICE], "low-priority"); addstr("/");
+      addattrstr(CRT_colors[CPU_NICE_TEXT], "low-priority"); addstr("/");
       addattrstr(CRT_colors[CPU_NORMAL], "normal"); addstr("/");
       addattrstr(CRT_colors[CPU_KERNEL], "kernel"); addstr("/");
       addattrstr(CRT_colors[CPU_STEAL], "virtualiz");
@@ -103,7 +142,7 @@ static void showHelp(ProcessList* pl) {
    mvaddstr(4, 0, "Memory bar:    ");
    addattrstr(CRT_colors[BAR_BORDER], "[");
    addattrstr(CRT_colors[MEMORY_USED], "used"); addstr("/");
-   addattrstr(CRT_colors[MEMORY_BUFFERS], "buffers"); addstr("/");
+   addattrstr(CRT_colors[MEMORY_BUFFERS_TEXT], "buffers"); addstr("/");
    addattrstr(CRT_colors[MEMORY_CACHE], "cache");
    addattrstr(CRT_colors[BAR_SHADOW], "                            used/total");
    addattrstr(CRT_colors[BAR_BORDER], "]");
@@ -119,44 +158,11 @@ static void showHelp(ProcessList* pl) {
       mvaddstr(7, 0, "In monochrome, meters are displayed through different chars, in order: |#*@$%&");
    }
    mvaddstr( 8, 0, " Status: R: running; S: sleeping; T: traced/stopped; Z: zombie; D: disk sleep");
-   mvaddstr( 9, 0, " Arrows: scroll process list             F5 t: tree view");
-   mvaddstr(10, 0, " Digits: incremental PID search             u: show processes of a single user");
-   mvaddstr(11, 0, "   F3 /: incremental name search            H: hide/show user threads");
-   mvaddstr(12, 0, "   F4 \\: incremental name filtering         K: hide/show kernel threads");
-   mvaddstr(13, 0, "  Space: tag processes                      F: cursor follows process");
-   mvaddstr(14, 0, "      U: untag all processes              + -: expand/collapse tree");
-   mvaddstr(15, 0, "   F9 k: kill process/tagged processes  P M T: sort by CPU%, MEM% or TIME");
-   mvaddstr(16, 0, "   ] F7: higher priority (root only)        i: set IO priority");
-   mvaddstr(17, 0, "   [ F8: lower priority (+ nice)            I: invert sort order");
-#if (HAVE_LIBHWLOC || HAVE_NATIVE_AFFINITY)
-   if (pl->cpuCount > 1)
-      mvaddstr(18, 0, "      a: set CPU affinity                F6 >: select sort column");
-   else
-#endif
-      mvaddstr(18, 0, "                                         F6 >: select sort column");
-   mvaddstr(19, 0, "   F2 S: setup                              l: list open files with lsof");
-   mvaddstr(20, 0, "   F1 h: show this help screen              s: trace syscalls with strace");
-   mvaddstr(21, 0, "  F10 q: quit");
-
+   for (int i = 0; helpLeft[i].info; i++) { mvaddstr(9+i, 9,  helpLeft[i].info); }
+   for (int i = 0; helpRight[i].info; i++) { mvaddstr(9+i, 49, helpRight[i].info); }
    attrset(CRT_colors[HELP_BOLD]);
-   mvaddstr( 9, 0, " Arrows"); mvaddstr( 9,40, " F5 t");
-   mvaddstr(10, 0, " Digits"); mvaddstr(10,40, "    u");
-   mvaddstr(11, 0, "   F3 /"); mvaddstr(11,40, "    H");
-   mvaddstr(12, 0, "   F4 \\"); mvaddstr(12,40, "    K");
-   mvaddstr(13, 0, "  Space"); mvaddstr(13,40, "    F");
-   mvaddstr(14, 0, "      U"); mvaddstr(14,40, "  + -");
-   mvaddstr(15, 0, "   F9 k"); mvaddstr(15,40, "P M T");
-   mvaddstr(16, 0, "   ] F7"); mvaddstr(16,40, "    i");
-   mvaddstr(17, 0, "   [ F8"); mvaddstr(17,40, "    I");
-                               mvaddstr(18,40, " F6 >");
-#if (HAVE_LIBHWLOC || HAVE_NATIVE_AFFINITY)
-   if (pl->cpuCount > 1)
-      mvaddstr(18, 0, "      a:");
-#endif
-   mvaddstr(19, 0, "   F2 S"); mvaddstr(19,40, "    l");
-   mvaddstr(20, 0, " ? F1 h"); mvaddstr(20,40, "    s");
-   mvaddstr(21, 0, "  F10 q");
-   attrset(CRT_colors[DEFAULT_COLOR]);
+   for (int i = 0; helpLeft[i].key;  i++) { mvaddstr(9+i, 0,  helpLeft[i].key); }
+   for (int i = 0; helpRight[i].key; i++) { mvaddstr(9+i, 40, helpRight[i].key); }
 
    attrset(CRT_colors[HELP_BOLD]);
    mvaddstr(23,0, "Press any key to return.");
@@ -208,11 +214,17 @@ static bool changePriority(Panel* panel, int delta) {
    return anyTagged;
 }
 
+static int selectedPid(Panel* panel) {
+   Process* p = (Process*) Panel_getSelected(panel);
+   if (p) {
+      return p->pid;
+   }
+   return -1;
+}
+
 static Object* pickFromVector(Panel* panel, Panel* list, int x, int y, const char** keyLabels, FunctionBar* prevBar, Header* header) {
    const char* fuKeys[] = {"Enter", "Esc", NULL};
    int fuEvents[] = {13, 27};
-   if (!list->eventHandler)
-      Panel_setEventHandler(list, Panel_selectByTyping);
    ScreenManager* scr = ScreenManager_new(0, y, 0, -1, HORIZONTAL, header, false);
    scr->allowFocusChange = false;
    ScreenManager_add(scr, list, FunctionBar_new(keyLabels, fuKeys, fuEvents), x - 1);
@@ -220,9 +232,9 @@ static Object* pickFromVector(Panel* panel, Panel* list, int x, int y, const cha
    Panel* panelFocus;
    int ch;
    bool unfollow = false;
+   int pid = selectedPid(panel);
    if (header->pl->following == -1) {
-      Process* p = (Process*)Panel_getSelected(panel);
-      header->pl->following = p ? p->pid : -1;
+      header->pl->following = pid;
       unfollow = true;
    }
    ScreenManager_run(scr, &panelFocus, &ch);
@@ -234,7 +246,11 @@ static Object* pickFromVector(Panel* panel, Panel* list, int x, int y, const cha
    Panel_resize(panel, COLS, LINES-y-1);
    FunctionBar_draw(prevBar, NULL);
    if (panelFocus == list && ch == 13) {
-      return Panel_getSelected(list);
+      Process* selected = (Process*)Panel_getSelected(panel);
+      if (selected && selected->pid == pid)
+         return Panel_getSelected(list);
+      else
+         beep();
    }
    return NULL;
 }
@@ -255,23 +271,83 @@ static bool setUserOnly(const char* userName, bool* userOnly, uid_t* userId) {
    return false;
 }
 
-static inline void setSortKey(ProcessList* pl, ProcessField sortKey, Panel* panel, Settings* settings) {
+static void setTreeView(ProcessList* pl, FunctionBar* fuBar, bool mode) {
+   if (mode) {
+      FunctionBar_setLabel(fuBar, KEY_F(5), "Sorted");
+      FunctionBar_setLabel(fuBar, KEY_F(6), "Collap");
+   } else {
+      FunctionBar_setLabel(fuBar, KEY_F(5), "Tree  ");
+      FunctionBar_setLabel(fuBar, KEY_F(6), "SortBy");
+   }
+   if (mode != pl->treeView) {
+      FunctionBar_draw(fuBar, NULL);
+   }
+   pl->treeView = mode;
+}
+
+static inline void setSortKey(ProcessList* pl, FunctionBar* fuBar, ProcessField sortKey, Panel* panel, Settings* settings) {
    pl->sortKey = sortKey;
    pl->direction = 1;
-   pl->treeView = false;
+   setTreeView(pl, fuBar, false);
    settings->changed = true;
    ProcessList_printHeader(pl, Panel_getHeader(panel));
 }
 
-typedef struct IncBuffer_ {
-   char buffer[INCSEARCH_MAX];
-   int index;
-   FunctionBar* bar;
-} IncBuffer;
+static const char* getMainPanelValue(Panel* panel, int i) {
+   Process* p = (Process*) Panel_get(panel, i);
+   if (p)
+      return p->comm;
+   return "";
+}
 
-static void IncBuffer_reset(IncBuffer* inc) {
-   inc->index = 0;
-   inc->buffer[0] = 0;
+static void tagAllChildren(Panel* panel, Process* parent) {
+   parent->tag = true;
+   pid_t ppid = parent->pid;
+   for (int i = 0; i < Panel_size(panel); i++) {
+      Process* p = (Process*) Panel_get(panel, i);
+      if (!p->tag && p->ppid == ppid) {
+         tagAllChildren(panel, p);
+      }
+   }
+}
+
+static bool expandCollapse(Panel* panel) {
+   Process* p = (Process*) Panel_getSelected(panel);
+   if (!p) return false;
+   p->showChildren = !p->showChildren;
+   return true;
+}
+
+void sortBy(Panel* panel, ProcessList* pl, Settings* settings, int headerHeight, FunctionBar* defaultBar, Header* header) {
+   Panel* sortPanel = Panel_new(0, 0, 0, 0, true, Class(ListItem));
+   Panel_setHeader(sortPanel, "Sort by");
+   const char* fuFunctions[] = {"Sort  ", "Cancel ", NULL};
+   ProcessField* fields = pl->fields;
+   for (int i = 0; fields[i]; i++) {
+      char* name = String_trim(Process_fieldNames[fields[i]]);
+      Panel_add(sortPanel, (Object*) ListItem_new(name, fields[i]));
+      if (fields[i] == pl->sortKey)
+         Panel_setSelected(sortPanel, i);
+      free(name);
+   }
+   ListItem* field = (ListItem*) pickFromVector(panel, sortPanel, 15, headerHeight, fuFunctions, defaultBar, header);
+   if (field) {
+      settings->changed = true;
+      setSortKey(pl, defaultBar, field->key, panel, settings);
+   } else {
+      ProcessList_printHeader(pl, Panel_getHeader(panel));
+   }
+   Object_delete(sortPanel);
+}
+
+static void millisleep(unsigned long millisec) {
+   struct timespec req = {
+      .tv_sec = 0,
+      .tv_nsec = millisec * 1000000L
+   };
+   while(nanosleep(&req,&req)==-1) {
+      continue;
+   }
 }
 
 int main(int argc, char** argv) {
@@ -280,7 +356,6 @@ int main(int argc, char** argv) {
    bool userOnly = false;
    uid_t userId = 0;
    int usecolors = 1;
-   TreeType treeType = TREE_TYPE_AUTO;
    char *argCopy;
    char *pid;
    Hashtable *pidWhiteList = NULL;
@@ -332,7 +407,7 @@ int main(int argc, char** argv) {
             }
             break;
          case 'd':
-            if (sscanf(optarg, "%d", &delay) == 1) {
+            if (sscanf(optarg, "%16d", &delay) == 1) {
                if (delay < 1) delay = 1;
                if (delay > 100) delay = 100;
             } else {
@@ -349,9 +424,10 @@ int main(int argc, char** argv) {
          case 'C':
             usecolors=0;
             break;
-        case 'p':
+        case 'p': {
             argCopy = strdup(optarg);
-            pid = strtok(argCopy, ",");
+            char* saveptr;
+            pid = strtok_r(argCopy, ",", &saveptr);
 
             if( !pidWhiteList ) {
                pidWhiteList = Hashtable_new(8, false);
@@ -360,11 +436,12 @@ int main(int argc, char** argv) {
             while( pid ) {
                 unsigned int num_pid = atoi(pid);
                 Hashtable_put(pidWhiteList, num_pid, (void *) 1);
-                pid = strtok(NULL, ",");
+                pid = strtok_r(NULL, ",", &saveptr);
             }
             free(argCopy);
 
             break;
+         }
          default:
             exit(1);
       }
@@ -383,10 +460,22 @@ int main(int argc, char** argv) {
    bool doRecalculate = false;
    Settings* settings;
    
-   Panel* killPanel = NULL;
-   
    ProcessList* pl = NULL;
    UsersTable* ut = UsersTable_new();
+
+#ifdef HAVE_LIBNCURSESW
+   char *locale = setlocale(LC_ALL, NULL);
+   if (locale == NULL || locale[0] == '\0')
+      locale = setlocale(LC_CTYPE, NULL);
+   if (locale != NULL &&
+       (strstr(locale, "UTF-8") ||
+        strstr(locale, "utf-8") ||
+        strstr(locale, "UTF8")  ||
+        strstr(locale, "utf8")))
+      CRT_utf8 = true;
+   else
+      CRT_utf8 = false;
+#endif
 
    pl = ProcessList_new(ut, pidWhiteList);
    Process_getMaxPid();
@@ -401,68 +490,25 @@ int main(int argc, char** argv) {
    if (!usecolors) 
       settings->colorScheme = COLORSCHEME_MONOCHROME;
 
-   if (treeType == TREE_TYPE_AUTO) {
-#ifdef HAVE_LIBNCURSESW
-      char *locale = setlocale(LC_ALL, NULL);
-      if (locale == NULL || locale[0] == '\0')
-         locale = setlocale(LC_CTYPE, NULL);
-      if (locale != NULL &&
-          (strstr(locale, "UTF-8") ||
-           strstr(locale, "utf-8") ||
-           strstr(locale, "UTF8")  ||
-           strstr(locale, "utf8")))
-         treeType = TREE_TYPE_UTF8;
-      else
-         treeType = TREE_TYPE_ASCII;
-#else
-      treeType = TREE_TYPE_ASCII;
-#endif
-   }
-   switch (treeType) {
-   default:
-   case TREE_TYPE_ASCII:
-      pl->treeStr = ProcessList_treeStrAscii;
-      break;
-   case TREE_TYPE_UTF8:
-      pl->treeStr = ProcessList_treeStrUtf8;
-      break;
-   }
-
    CRT_init(settings->delay, settings->colorScheme);
 
-   Panel* panel = Panel_new(0, headerHeight, COLS, LINES - headerHeight - 2, PROCESS_CLASS, false, NULL);
+   Panel* panel = Panel_new(0, headerHeight, COLS, LINES - headerHeight - 2, false, &Process_class);
    ProcessList_setPanel(pl, panel);
+   
+   FunctionBar* defaultBar = FunctionBar_new(defaultFunctions, NULL, NULL);
+   setTreeView(pl, defaultBar, pl->treeView);
    
    if (sortKey > 0) {
       pl->sortKey = sortKey;
-      pl->treeView = false;
+      setTreeView(pl, defaultBar, false);
       pl->direction = 1;
    }
    ProcessList_printHeader(pl, Panel_getHeader(panel));
 
-   IncBuffer incSearch, incFilter;
-   bool filtering = false;
-
-   memset(&incSearch, 0, sizeof(IncBuffer));
-   const char* searchFunctions[] = {"Next  ", "Cancel ", " Search: ", NULL};
-   const char* searchKeys[] = {"F3", "Esc", "  "};
-   int searchEvents[] = {KEY_F(3), 27, ERR};
-   incSearch.bar = FunctionBar_new(searchFunctions, searchKeys, searchEvents);
-
-   memset(&incFilter, 0, sizeof(IncBuffer));
-   const char* filterFunctions[] = {"Done  ", "Clear ", " Filter: ", NULL};
-   const char* filterKeys[] = {"Enter", "Esc", "  "};
-   int filterEvents[] = {13, 27, ERR};
-   incFilter.bar = FunctionBar_new(filterFunctions, filterKeys, filterEvents);
-   
-   IncBuffer* incMode = NULL;
-   
-   const char* defaultFunctions[] = {"Help  ", "Setup ", "Search", "Filter", "Tree  ",
-       "SortBy", "Nice -", "Nice +", "Kill  ", "Quit  ", NULL};
-   FunctionBar* defaultBar = FunctionBar_new(defaultFunctions, NULL, NULL);
+   IncSet* inc = IncSet_new(defaultBar);
 
    ProcessList_scan(pl);
-   usleep(75000);
+   millisleep(75);
    
    FunctionBar_draw(defaultBar, NULL);
    
@@ -470,21 +516,24 @@ int main(int argc, char** argv) {
    bool follow = false;
  
    struct timeval tv;
-   double newTime = 0.0;
    double oldTime = 0.0;
-   bool recalculate;
 
    int ch = ERR;
    int closeTimeout = 0;
 
+   bool idle = false;
+   
+   bool collapsed = false;
+   
    while (!quit) {
       gettimeofday(&tv, NULL);
-      newTime = ((double)tv.tv_sec * 10) + ((double)tv.tv_usec / 100000);
-      recalculate = (newTime - oldTime > CRT_delay);
-      Process* p = (Process*)Panel_getSelected(panel);
-      int following = (follow && p) ? p->pid : -1;
-      if (recalculate)
+      double newTime = ((double)tv.tv_sec * 10) + ((double)tv.tv_usec / 100000);
+      bool recalculate = (newTime - oldTime > settings->delay);
+      int following = follow ? selectedPid(panel) : -1;
+      if (recalculate) {
+         Header_draw(header);
          oldTime = newTime;
+      }
       if (doRefresh) {
          if (recalculate || doRecalculate) {
             ProcessList_scan(pl);
@@ -494,20 +543,36 @@ int main(int argc, char** argv) {
             ProcessList_sort(pl);
             refreshTimeout = 1;
          }
-         ProcessList_rebuildPanel(pl, true, following, userOnly, userId, filtering, incFilter.buffer);
+         ProcessList_rebuildPanel(pl, true, following, userOnly, userId, IncSet_filter(inc));
+         idle = false;
       }
       doRefresh = true;
       
-      Header_draw(header);
+      if (pl->treeView) {
+         Process* p = (Process*) Panel_getSelected(panel);
+         if (p) {
+            if (!p->showChildren && !collapsed) {
+               FunctionBar_setLabel(defaultBar, KEY_F(6), "Expand");
+               FunctionBar_draw(defaultBar, NULL);
+            } else if (p->showChildren && collapsed) {
+               FunctionBar_setLabel(defaultBar, KEY_F(6), "Collap");
+               FunctionBar_draw(defaultBar, NULL);
+            }
+            collapsed = !p->showChildren;
+         }
+      }
 
-      Panel_draw(panel, true);
+      if (!idle) {
+         Panel_draw(panel, true);
+      }
+      
       int prev = ch;
-      if (incMode)
+      if (inc->active)
          move(LINES-1, CRT_cursorX);
       ch = getch();
 
       if (ch == ERR) {
-         if (!incMode)
+         if (!inc->active)
             refreshTimeout--;
          if (prev == ch && !recalculate) {
             closeTimeout++;
@@ -516,85 +581,10 @@ int main(int argc, char** argv) {
             }
          } else
             closeTimeout = 0;
+         idle = true;
          continue;
       }
-
-      if (incMode) {
-         doRefresh = false;
-         int size = Panel_size(panel);
-         if (ch == KEY_F(3)) {
-            if (Panel_size(panel) == 0) continue;
-            int here = Panel_getSelectedIndex(panel);
-            int i = here+1;
-            while (i != here) {
-               if (i == size)
-                  i = 0;
-               Process* p = (Process*) Panel_get(panel, i);
-               if (String_contains_i(p->comm, incMode->buffer)) {
-                  Panel_setSelected(panel, i);
-                  break;
-               }
-               i++;
-            }
-            continue;
-         } else if (isprint((char)ch) && (incMode->index < INCSEARCH_MAX)) {
-            incMode->buffer[incMode->index] = ch;
-            incMode->index++;
-            incMode->buffer[incMode->index] = 0;
-            if (incMode == &incFilter) {
-               doRefresh = true;
-               if (incFilter.index == 1) filtering = true;
-            }
-         } else if ((ch == KEY_BACKSPACE || ch == 127) && (incMode->index > 0)) {
-            incMode->index--;
-            incMode->buffer[incMode->index] = 0;
-            if (incMode == &incFilter) {
-               doRefresh = true;
-               if (incFilter.index == 0) {
-                  filtering = false;
-                  IncBuffer_reset(incMode);
-               }
-            }
-         } else {
-            if (incMode == &incFilter) {
-               doRefresh = true;
-               if (ch == 27) {
-                  filtering = false;
-                  IncBuffer_reset(incMode);
-               }
-            }
-            incMode = NULL;
-            FunctionBar_draw(defaultBar, NULL);
-            continue;
-         }
-
-         bool found = false;
-         for (int i = 0; i < size; i++) {
-            Process* p = (Process*) Panel_get(panel, i);
-            if (String_contains_i(p->comm, incSearch.buffer)) {
-               Panel_setSelected(panel, i);
-               found = true;
-               break;
-            }
-         }
-         if (found)
-            FunctionBar_draw(incMode->bar, incMode->buffer);
-         else
-            FunctionBar_drawAttr(incMode->bar, incMode->buffer, CRT_colors[FAILED_SEARCH]);
-         continue;
-      }
-      if (isdigit((char)ch)) {
-         if (Panel_size(panel) == 0) continue;
-         pid_t pid = ch-48 + acc;
-         for (int i = 0; i < ProcessList_size(pl) && ((Process*) Panel_getSelected(panel))->pid != pid; i++)
-            Panel_setSelected(panel, i);
-         acc = pid * 10;
-         if (acc > 10000000)
-            acc = 0;
-         continue;
-      } else {
-         acc = 0;
-      }
+      idle = false;
 
       if (ch == KEY_MOUSE) {
          MEVENT mevent;
@@ -606,9 +596,9 @@ int main(int argc, char** argv) {
                   ProcessField field = ProcessList_keyAt(pl, x);
                   if (field == pl->sortKey) {
                      ProcessList_invertSortOrder(pl);
-                     pl->treeView = false;
+                     setTreeView(pl, defaultBar, false);
                   } else {
-                     setSortKey(pl, field, panel, settings);
+                     setSortKey(pl, defaultBar, field, panel, settings);
                   }
                   refreshTimeout = 0;
                   continue;
@@ -619,10 +609,7 @@ int main(int argc, char** argv) {
                   follow = true;
                   continue;
                } if (mevent.y == LINES - 1) {
-                  FunctionBar* bar;
-                  if (incMode) bar = incMode->bar;
-                  else bar = defaultBar;
-                  ch = FunctionBar_synthesizeEvent(bar, mevent.x);
+                  ch = FunctionBar_synthesizeEvent(inc->bar, mevent.x);
                }
             } else if (mevent.bstate & BUTTON4_CLICKED) {
                ch = KEY_UP;
@@ -634,24 +621,51 @@ int main(int argc, char** argv) {
          }
       }
 
+      if (inc->active) {
+         doRefresh = IncSet_handleKey(inc, ch, panel, getMainPanelValue, NULL);
+         continue;
+      }
+      
+      if (isdigit((char)ch)) {
+         if (Panel_size(panel) == 0) continue;
+         pid_t pid = ch-48 + acc;
+         for (int i = 0; i < ProcessList_size(pl); i++) {
+            Panel_setSelected(panel, i);
+            Process* p = (Process*) Panel_getSelected(panel);
+            if (p && p->pid == pid) {
+               break;
+            }
+         }
+         acc = pid * 10;
+         if (acc > 10000000)
+            acc = 0;
+         continue;
+      } else {
+         acc = 0;
+      }
+
       switch (ch) {
       case KEY_RESIZE:
          Panel_resize(panel, COLS, LINES-headerHeight-1);
-         if (incMode)
-            FunctionBar_draw(incMode->bar, incMode->buffer);
-         else
-            FunctionBar_draw(defaultBar, NULL);
+         IncSet_drawBar(inc);
          break;
       case 'M':
       {
          refreshTimeout = 0;
-         setSortKey(pl, PERCENT_MEM, panel, settings);
+         setSortKey(pl, defaultBar, PERCENT_MEM, panel, settings);
          break;
       }
       case 'T':
       {
          refreshTimeout = 0;
-         setSortKey(pl, TIME, panel, settings);
+         setSortKey(pl, defaultBar, TIME, panel, settings);
+         break;
+      }
+      case 'c':
+      {
+         Process* p = (Process*) Panel_getSelected(panel);
+         if (!p) break;
+         tagAllChildren(panel, p);
          break;
       }
       case 'U':
@@ -666,7 +680,7 @@ int main(int argc, char** argv) {
       case 'P':
       {
          refreshTimeout = 0;
-         setSortKey(pl, PERCENT_CPU, panel, settings);
+         setSortKey(pl, defaultBar, PERCENT_CPU, panel, settings);
          break;
       }
       case KEY_F(1):
@@ -740,7 +754,7 @@ int main(int argc, char** argv) {
       }
       case 'u':
       {
-         Panel* usersPanel = Panel_new(0, 0, 0, 0, LISTITEM_CLASS, true, ListItem_compare);
+         Panel* usersPanel = Panel_new(0, 0, 0, 0, true, Class(ListItem));
          Panel_setHeader(usersPanel, "Show processes of:");
          UsersTable_foreach(ut, addUserToVector, usersPanel);
          Vector_insertionSort(usersPanel->items);
@@ -762,22 +776,18 @@ int main(int argc, char** argv) {
       case '=':
       case '-':
       {
-         Process* p = (Process*) Panel_getSelected(panel);
-         if (!p) break;
-         p->showChildren = !p->showChildren;
-         refreshTimeout = 0;
-         doRecalculate = true;
+         if (expandCollapse(panel)) {
+            doRecalculate = true;         
+            refreshTimeout = 0;
+         }
          break;
       }
       case KEY_F(9):
       case 'k':
       {
-         if (!killPanel) {
-            killPanel = (Panel*) SignalsPanel_new(0, 0, 0, 0);
-         }
-         SignalsPanel_reset((SignalsPanel*) killPanel);
+         Panel* signalsPanel = (Panel*) SignalsPanel_new();
          const char* fuFunctions[] = {"Send  ", "Cancel ", NULL};
-         ListItem* sgn = (ListItem*) pickFromVector(panel, killPanel, 15, headerHeight, fuFunctions, defaultBar, header);
+         ListItem* sgn = (ListItem*) pickFromVector(panel, signalsPanel, 15, headerHeight, fuFunctions, defaultBar, header);
          if (sgn) {
             if (sgn->key != 0) {
                Panel_setHeader(panel, "Sending...");
@@ -788,6 +798,7 @@ int main(int argc, char** argv) {
             }
          }
          ProcessList_printHeader(pl, Panel_getHeader(panel));
+         Panel_delete((Object*)signalsPanel);
          refreshTimeout = 0;
          break;
       }
@@ -824,31 +835,25 @@ int main(int argc, char** argv) {
          break;
       case '<':
       case ',':
-      case KEY_F(18):
       case '>':
       case '.':
+      {
+         sortBy(panel, pl, settings, headerHeight, defaultBar, header);
+         refreshTimeout = 0;
+         break;
+      }
+      case KEY_F(18):
       case KEY_F(6):
       {
-         Panel* sortPanel = Panel_new(0, 0, 0, 0, LISTITEM_CLASS, true, ListItem_compare);
-         Panel_setHeader(sortPanel, "Sort by");
-         const char* fuFunctions[] = {"Sort  ", "Cancel ", NULL};
-         ProcessField* fields = pl->fields;
-         for (int i = 0; fields[i]; i++) {
-            char* name = String_trim(Process_fieldTitles[fields[i]]);
-            Panel_add(sortPanel, (Object*) ListItem_new(name, fields[i]));
-            if (fields[i] == pl->sortKey)
-               Panel_setSelected(sortPanel, i);
-            free(name);
-         }
-         ListItem* field = (ListItem*) pickFromVector(panel, sortPanel, 15, headerHeight, fuFunctions, defaultBar, header);
-         if (field) {
-            settings->changed = true;
-            setSortKey(pl, field->key, panel, settings);
+         if (pl->treeView) {
+            if (expandCollapse(panel)) {
+               doRecalculate = true;
+               refreshTimeout = 0;
+            }
          } else {
-            ProcessList_printHeader(pl, Panel_getHeader(panel));
+            sortBy(panel, pl, settings, headerHeight, defaultBar, header);
+            refreshTimeout = 0;
          }
-         ((Object*)sortPanel)->delete((Object*)sortPanel);
-         refreshTimeout = 0;
          break;
       }
       case 'i':
@@ -891,21 +896,19 @@ int main(int argc, char** argv) {
       }
       case KEY_F(3):
       case '/':
-         incMode = &incSearch;
-         IncBuffer_reset(incMode);
-         FunctionBar_draw(incSearch.bar, incSearch.buffer);
+         IncSet_activate(inc, INC_SEARCH);
          break;
       case KEY_F(4):
       case '\\':
-         incMode = &incFilter;
+         IncSet_activate(inc, INC_FILTER);
          refreshTimeout = 0;
          doRefresh = true;
-         FunctionBar_draw(incFilter.bar, incFilter.buffer);
          continue;
       case 't':
       case KEY_F(5):
          refreshTimeout = 0;
-         pl->treeView = !pl->treeView;
+         collapsed = false;
+         setTreeView(pl, defaultBar, !pl->treeView);
          if (pl->treeView) pl->direction = 1;
          ProcessList_printHeader(pl, Panel_getHeader(panel));
          ProcessList_expandTree(pl);
@@ -943,12 +946,9 @@ int main(int argc, char** argv) {
       Settings_write(settings);
    Header_delete(header);
    ProcessList_delete(pl);
-   FunctionBar_delete((Object*)incFilter.bar);
-   FunctionBar_delete((Object*)incSearch.bar);
+   IncSet_delete(inc);
    FunctionBar_delete((Object*)defaultBar);
    Panel_delete((Object*)panel);
-   if (killPanel)
-      ((Object*)killPanel)->delete((Object*)killPanel);
    UsersTable_delete(ut);
    Settings_delete(settings);
    if(pidWhiteList) {

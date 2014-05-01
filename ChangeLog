@@ -1,4 +1,21 @@
 
+What's new in version 1.0.3
+
+* Tag all children ('c' key)
+* Fixes in accounting of guest time when using virtualization
+  (thanks to Patrick Marlier)
+* Performance improvements
+  (thanks to Jann Horn)
+* Further performance improvements due to conditional parsing
+  of IO data depending on selected fields.
+* Better consistency in coloring.
+* Increase limit of buffer when tracing a deep nested process tree.
+* Display pagefault stats.
+* BUGFIX: Fix crash when adding meters and toggling detailed CPU time.
+  (thanks to Dawid Gajownik)
+* Add column to track the OOM-killer score of processes
+  (thanks to Leigh Simpson)
+
 What's new in version 1.0.2
 
 * Add IO priority support ('i' key)

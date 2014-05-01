@@ -52,8 +52,8 @@ ScreenManager* ScreenManager_new(int x1, int y1, int x2, int y2, Orientation ori
    this->y2 = y2;
    this->fuBar = NULL;
    this->orientation = orientation;
-   this->panels = Vector_new(PANEL_CLASS, owner, DEFAULT_SIZE, NULL);
-   this->fuBars = Vector_new(FUNCTIONBAR_CLASS, true, DEFAULT_SIZE, NULL);
+   this->panels = Vector_new(Class(Panel), owner, DEFAULT_SIZE);
+   this->fuBars = Vector_new(Class(FunctionBar), true, DEFAULT_SIZE);
    this->panelCount = 0;
    this->header = header;
    this->owner = owner;
@@ -144,7 +144,7 @@ void ScreenManager_run(ScreenManager* this, Panel** lastFocus, int* lastKey) {
             this->lastScan = now;
          }
          Header_draw(this->header);
-         ProcessList_rebuildPanel(this->header->pl, false, false, false, false, false, NULL);
+         ProcessList_rebuildPanel(this->header->pl, false, false, false, false, NULL);
       }
       for (int i = 0; i < panels; i++) {
          Panel* panel = (Panel*) Vector_get(this->panels, i);
@@ -173,7 +173,8 @@ void ScreenManager_run(ScreenManager* this, Panel** lastFocus, int* lastKey) {
                for (int i = 0; i < this->panelCount; i++) {
                   Panel* panel = (Panel*) Vector_get(this->panels, i);
                   if (mevent.x > panel->x && mevent.x <= panel->x+panel->w &&
-                     mevent.y > panel->y && mevent.y <= panel->y+panel->h) {
+                     mevent.y > panel->y && mevent.y <= panel->y+panel->h &&
+                     (this->allowFocusChange || panelFocus == panel) ) {
                      focus = i;
                      panelFocus = panel;
                      Panel_setSelected(panel, mevent.y - panel->y + panel->scrollV - 1);
@@ -184,8 +185,8 @@ void ScreenManager_run(ScreenManager* this, Panel** lastFocus, int* lastKey) {
          }
       }
       
-      if (panelFocus->eventHandler) {
-         HandlerResult result = panelFocus->eventHandler(panelFocus, ch);
+      if (Panel_eventHandlerFn(panelFocus)) {
+         HandlerResult result = Panel_eventHandler(panelFocus, ch);
          if (result == HANDLED) {
             continue;
          } else if (result == BREAK_LOOP) {

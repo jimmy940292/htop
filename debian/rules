@@ -43,6 +43,7 @@ build-arch: build
 build-indep: build
 build-stamp: config.status
 	scripts/MakeHeader.py Process.c
+	scripts/MakeHeader.py TraceScreen.c
 	dh build --before dh_auto_configure
 	dh build --after dh_auto_configure
 	touch build-stamp

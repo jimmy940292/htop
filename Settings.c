@@ -27,8 +27,8 @@ typedef struct Settings_ {
    ProcessList* pl;
    Header* header;
    int colorScheme;
-   bool changed;
    int delay;
+   bool changed;
 } Settings;
 
 }*/
@@ -61,7 +61,7 @@ static void Settings_readMeterModes(Settings* this, char* line, HeaderSide side)
    String_freeArray(ids);
 }
 
-static bool Settings_read(Settings* this, char* fileName, int cpuCount) {
+static bool Settings_read(Settings* this, const char* fileName, int cpuCount) {
    FILE* fd = fopen(fileName, "r");
    if (!fd)
       return false;
@@ -82,11 +82,13 @@ static bool Settings_read(Settings* this, char* fileName, int cpuCount) {
          char** ids = String_split(trim, ' ', &nIds);
          free(trim);
          int i, j;
+         this->pl->flags = 0;
          for (j = 0, i = 0; i < LAST_PROCESSFIELD && ids[i]; i++) {
             // This "+1" is for compatibility with the older enum format.
             int id = atoi(ids[i]) + 1;
             if (id > 0 && id < LAST_PROCESSFIELD) {
                this->pl->fields[j] = id;
+               this->pl->flags |= Process_fieldFlags[id];
                j++;
             }
          }
@@ -126,6 +128,8 @@ static bool Settings_read(Settings* this, char* fileName, int cpuCount) {
          this->pl->countCPUsFromZero = atoi(option[1]);
       } else if (String_eq(option[0], "update_process_names")) {
          this->pl->updateProcessNames = atoi(option[1]);
+      } else if (String_eq(option[0], "account_guest_in_cpu_meter")) {
+         this->pl->accountGuestInCPUMeter = atoi(option[1]);
       } else if (String_eq(option[0], "delay")) {
          this->delay = atoi(option[1]);
       } else if (String_eq(option[0], "color_scheme")) {
@@ -186,6 +190,7 @@ bool Settings_write(Settings* this) {
    fprintf(fd, "detailed_cpu_time=%d\n", (int) this->pl->detailedCPUTime);
    fprintf(fd, "cpu_count_from_zero=%d\n", (int) this->pl->countCPUsFromZero);
    fprintf(fd, "update_process_names=%d\n", (int) this->pl->updateProcessNames);
+   fprintf(fd, "account_guest_in_cpu_meter=%d\n", (int) this->pl->accountGuestInCPUMeter);
    fprintf(fd, "color_scheme=%d\n", (int) this->colorScheme);
    fprintf(fd, "delay=%d\n", (int) this->delay);
    fprintf(fd, "left_meters=");
@@ -238,12 +243,14 @@ Settings* Settings_new(ProcessList* pl, Header* header, int cpuCount) {
          htopDir = String_cat(home, "/.config/htop");
       }
       legacyDotfile = String_cat(home, "/.htoprc");
-      mkdir(configDir, 0700);
-      mkdir(htopDir, 0700);
+      (void) mkdir(configDir, 0700);
+      (void) mkdir(htopDir, 0700);
       free(htopDir);
       free(configDir);
       struct stat st;
-      lstat(legacyDotfile, &st);
+      if (lstat(legacyDotfile, &st) != 0) {
+         st.st_mode = 0;
+      }
       if (access(legacyDotfile, R_OK) != 0 || S_ISLNK(st.st_mode)) {
          free(legacyDotfile);
          legacyDotfile = NULL;
@@ -258,7 +265,6 @@ Settings* Settings_new(ProcessList* pl, Header* header, int cpuCount) {
          // Transition to new location and delete old configuration file
          if (Settings_write(this))
             unlink(legacyDotfile);
-         free(legacyDotfile);
       }
    } else {
       this->changed = true;
@@ -273,5 +279,6 @@ Settings* Settings_new(ProcessList* pl, Header* header, int cpuCount) {
          pl->highlightThreads = false;
       }
    }
+   free(legacyDotfile);
    return this;
 }
