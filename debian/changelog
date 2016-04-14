@@ -1,3 +1,16 @@
+htop (2.0.1-1) unstable; urgency=medium
+
+  * New upstream release 2.0.1. (Closes: #814401, #783893, #774930)
+  * Clean up patches from 1.0.3 -> 2.0.1
+  * Update compat -> 9, rules -> debhelper/9
+  * Update debian/copyright to copyright-format/1.0 (Closes: #749850)
+  * Add lsof as suggested (Closes: #817918)
+  * Change maintainership jackyf -> DLange, jackyf and ginggs will
+    co-maintain. Jackyf: Thank you very much for 8 years of htop
+    maintenance!
+
+ -- Daniel Lange <dl.ml1@usrlocal.de>  Thu, 14 Apr 2016 10:25:45 +0200
+
 htop (1.0.3-1) unstable; urgency=low
 
   * New upstream release.

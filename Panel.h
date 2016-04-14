@@ -13,16 +13,24 @@ in the source distribution for its full text.
 
 #include "Object.h"
 #include "Vector.h"
+#include "FunctionBar.h"
 
 typedef struct Panel_ Panel;
 
 typedef enum HandlerResult_ {
-   HANDLED,
-   IGNORED,
-   BREAK_LOOP
+   HANDLED     = 0x01,
+   IGNORED     = 0x02,
+   BREAK_LOOP  = 0x04,
+   REDRAW      = 0x08,
+   RESCAN      = 0x10,
+   SYNTH_KEY   = 0x20,
 } HandlerResult;
 
-#define EVENT_SETSELECTED -1
+#define EVENT_SET_SELECTED -1
+
+#define EVENT_HEADER_CLICK(x_) (-10000 + x_)
+#define EVENT_IS_HEADER_CLICK(ev_) (ev_ >= -10000 && ev_ <= -9000)
+#define EVENT_HEADER_CLICK_GET_X(ev_) (ev_ + 10000)
 
 typedef HandlerResult(*Panel_EventHandler)(Panel*, int);
 
@@ -37,18 +45,22 @@ typedef struct PanelClass_ {
 
 struct Panel_ {
    Object super;
-   PanelClass* class;
    int x, y, w, h;
    WINDOW* window;
    Vector* items;
    int selected;
    int oldSelected;
-   char* eventHandlerBuffer;
+   void* eventHandlerState;
    int scrollV;
    short scrollH;
    bool needsRedraw;
+   FunctionBar* currentBar;
+   FunctionBar* defaultBar;
    RichString header;
+   int selectionColor;
 };
+
+#define Panel_setDefaultBar(this_) do{ (this_)->currentBar = (this_)->defaultBar; }while(0)
 
 
 #ifndef MIN
@@ -65,13 +77,15 @@ struct Panel_ {
 
 extern PanelClass Panel_class;
 
-Panel* Panel_new(int x, int y, int w, int h, bool owner, ObjectClass* type);
+Panel* Panel_new(int x, int y, int w, int h, bool owner, ObjectClass* type, FunctionBar* fuBar);
 
 void Panel_delete(Object* cast);
 
-void Panel_init(Panel* this, int x, int y, int w, int h, ObjectClass* type, bool owner);
+void Panel_init(Panel* this, int x, int y, int w, int h, ObjectClass* type, bool owner, FunctionBar* fuBar);
 
 void Panel_done(Panel* this);
+
+void Panel_setSelectionColor(Panel* this, int color);
 
 RichString* Panel_getHeader(Panel* this);
 

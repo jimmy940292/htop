@@ -9,10 +9,10 @@ Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
-#include "Object.h"
+
+#include <stdbool.h>
 
 typedef struct FunctionBar_ {
-   Object super;
    int size;
    char** functions;
    char** keys;
@@ -21,11 +21,12 @@ typedef struct FunctionBar_ {
 } FunctionBar;
 
 
-extern ObjectClass FunctionBar_class;
+
+FunctionBar* FunctionBar_newEnterEsc(const char* enter, const char* esc);
 
 FunctionBar* FunctionBar_new(const char** functions, const char** keys, int* events);
 
-void FunctionBar_delete(Object* cast);
+void FunctionBar_delete(FunctionBar* this);
 
 void FunctionBar_setLabel(FunctionBar* this, int event, const char* text);
 

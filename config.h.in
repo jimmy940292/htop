@@ -3,6 +3,9 @@
 /* Define to 1 if the `closedir' function returns void instead of `int'. */
 #undef CLOSEDIR_VOID
 
+/* Copyright message. */
+#undef COPYRIGHT
+
 /* Define if ancient vserver support enabled. */
 #undef HAVE_ANCIENT_VSERVER
 
@@ -31,23 +34,26 @@
 /* Define to 1 if you have the `hwloc' library (-lhwloc). */
 #undef HAVE_LIBHWLOC
 
+/* Define to 1 if you have the `kvm' library (-lkvm). */
+#undef HAVE_LIBKVM
+
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 
-/* Define to 1 if you have the `ncurses' library (-lncurses). */
+/* The library is present. */
 #undef HAVE_LIBNCURSES
 
-/* Define to 1 if you have the `ncursesw' library (-lncursesw). */
+/* The library is present. */
 #undef HAVE_LIBNCURSESW
+
+/* Define if Linux sched_setaffinity and sched_getaffinity are to be used. */
+#undef HAVE_LINUX_AFFINITY
 
 /* Define to 1 if you have the `memmove' function. */
 #undef HAVE_MEMMOVE
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
-
-/* Define if native sched_setaffinity and sched_getaffinity are to be used. */
-#undef HAVE_NATIVE_AFFINITY
 
 /* Define to 1 if you have the <ncursesw/curses.h> header file. */
 #undef HAVE_NCURSESW_CURSES_H
@@ -64,11 +70,11 @@
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
 
-/* Define if OOM score support enabled. */
-#undef HAVE_OOM
-
 /* Define if openvz support enabled. */
 #undef HAVE_OPENVZ
+
+/* Define if using a Linux-compatible proc filesystem. */
+#undef HAVE_PROC
 
 /* Define to 1 if `stat' has the bug that it succeeds when given the
    zero-length file name argument. */
@@ -137,9 +143,6 @@
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #undef LT_OBJDIR
-
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-#undef NO_MINUS_C_MINUS_O
 
 /* Name of package */
 #undef PACKAGE

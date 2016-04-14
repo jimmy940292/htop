@@ -37,9 +37,9 @@ Vector* Vector_new(ObjectClass* type, bool owner, int size) {
 
    if (size == DEFAULT_SIZE)
       size = 10;
-   this = (Vector*) malloc(sizeof(Vector));
+   this = xMalloc(sizeof(Vector));
    this->growthRate = size;
-   this->array = (Object**) calloc(size, sizeof(Object*));
+   this->array = (Object**) xCalloc(size, sizeof(Object*));
    this->arraySize = size;
    this->items = 0;
    this->type = type;
@@ -179,7 +179,7 @@ static void Vector_checkArraySize(Vector* this) {
       //int i;
       //i = this->arraySize;
       this->arraySize = this->items + this->growthRate;
-      this->array = (Object**) realloc(this->array, sizeof(Object*) * this->arraySize);
+      this->array = (Object**) xRealloc(this->array, sizeof(Object*) * this->arraySize);
       //for (; i < this->arraySize; i++)
       //   this->array[i] = NULL;
    }
@@ -189,9 +189,12 @@ static void Vector_checkArraySize(Vector* this) {
 void Vector_insert(Vector* this, int idx, void* data_) {
    Object* data = data_;
    assert(idx >= 0);
-   assert(idx <= this->items);
    assert(Object_isA(data, this->type));
    assert(Vector_isConsistent(this));
+
+   if (idx > this->items) {
+      idx = this->items;
+   }
    
    Vector_checkArraySize(this);
    //assert(this->array[this->items] == NULL);

@@ -12,6 +12,8 @@ in the source distribution for its full text.
 #include "FunctionBar.h"
 #include "Vector.h"
 #include "Header.h"
+#include "Settings.h"
+#include "Panel.h"
 
 typedef enum Orientation_ {
    VERTICAL,
@@ -25,23 +27,21 @@ typedef struct ScreenManager_ {
    int y2;
    Orientation orientation;
    Vector* panels;
-   Vector* fuBars;
    int panelCount;
-   const FunctionBar* fuBar;
    const Header* header;
-   time_t lastScan;
+   const Settings* settings;
    bool owner;
    bool allowFocusChange;
 } ScreenManager;
 
 
-ScreenManager* ScreenManager_new(int x1, int y1, int x2, int y2, Orientation orientation, const Header* header, bool owner);
+ScreenManager* ScreenManager_new(int x1, int y1, int x2, int y2, Orientation orientation, const Header* header, const Settings* settings, bool owner);
 
 void ScreenManager_delete(ScreenManager* this);
 
 extern int ScreenManager_size(ScreenManager* this);
 
-void ScreenManager_add(ScreenManager* this, Panel* item, FunctionBar* fuBar, int size);
+void ScreenManager_add(ScreenManager* this, Panel* item, int size);
 
 Panel* ScreenManager_remove(ScreenManager* this, int idx);
 

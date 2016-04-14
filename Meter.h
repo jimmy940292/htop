@@ -9,10 +9,15 @@ Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
-#define METER_BUFFER_LEN 128
+#define METER_BUFFER_LEN 256
+
+#define GRAPH_DELAY (DEFAULT_DELAY/2)
+
+#define GRAPH_HEIGHT 4 /* Unit: rows (lines) */
 
 #include "ListItem.h"
-#include "ProcessList.h"
+
+#include <sys/time.h>
 
 typedef struct Meter_ Meter;
 
@@ -35,6 +40,7 @@ typedef struct MeterClass_ {
    const char* name;
    const char* uiName;
    const char* caption;
+   const char* description;
    const char maxItems;
    char curItems;
 } MeterClass;
@@ -64,7 +70,7 @@ struct Meter_ {
    int param;
    void* drawData;
    int h;
-   ProcessList* pl;
+   struct ProcessList_* pl;
    double* values;
    double total;
 };
@@ -96,12 +102,15 @@ typedef struct GraphData_ {
 #ifndef MAX
 #define MAX(a,b) ((a)>(b)?(a):(b))
 #endif
+#ifndef CLAMP
+#define CLAMP(x,low,high) (((x)>(high))?(high):(((x)<(low))?(low):(x)))
+#endif
 
 extern MeterClass Meter_class;
 
-extern MeterClass* Meter_types[];
+Meter* Meter_new(struct ProcessList_* pl, int param, MeterClass* type);
 
-Meter* Meter_new(ProcessList* pl, int param, MeterClass* type);
+int Meter_humanUnit(char* buffer, unsigned long int value, int size);
 
 void Meter_delete(Object* cast);
 
@@ -109,7 +118,7 @@ void Meter_setCaption(Meter* this, const char* caption);
 
 void Meter_setMode(Meter* this, int modeIndex);
 
-ListItem* Meter_toListItem(Meter* this);
+ListItem* Meter_toListItem(Meter* this, bool moving);
 
 /* ---------- TextMeterMode ---------- */
 
@@ -117,9 +126,18 @@ ListItem* Meter_toListItem(Meter* this);
 
 /* ---------- GraphMeterMode ---------- */
 
-#define DrawDot(a,y,c) do { attrset(a); mvaddch(y, x+k, c); } while(0)
+#ifdef HAVE_LIBNCURSESW
+
+#define PIXPERROW_UTF8 4
+#endif
+
+#define PIXPERROW_ASCII 2
 
 /* ---------- LEDMeterMode ---------- */
+
+#ifdef HAVE_LIBNCURSESW
+
+#endif
 
 extern MeterMode* Meter_modes[];
 

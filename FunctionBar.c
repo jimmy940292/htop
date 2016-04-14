@@ -6,19 +6,19 @@ in the source distribution for its full text.
 */
 
 #include "FunctionBar.h"
-
 #include "CRT.h"
+#include "RichString.h"
+#include "XAlloc.h"
 
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 /*{
-#include "Object.h"
+
+#include <stdbool.h>
 
 typedef struct FunctionBar_ {
-   Object super;
    int size;
    char** functions;
    char** keys;
@@ -34,26 +34,30 @@ static const char* FunctionBar_FLabels[] = {"      ", "      ", "      ", "     
 
 static int FunctionBar_FEvents[] = {KEY_F(1), KEY_F(2), KEY_F(3), KEY_F(4), KEY_F(5), KEY_F(6), KEY_F(7), KEY_F(8), KEY_F(9), KEY_F(10)};
 
-ObjectClass FunctionBar_class = {
-   .delete = FunctionBar_delete
-};
+static const char* FunctionBar_EnterEscKeys[] = {"Enter", "Esc", NULL};
+static int FunctionBar_EnterEscEvents[] = {13, 27};
+
+FunctionBar* FunctionBar_newEnterEsc(const char* enter, const char* esc) {
+   const char* functions[] = {enter, esc, NULL};
+   return FunctionBar_new(functions, FunctionBar_EnterEscKeys, FunctionBar_EnterEscEvents);
+}
 
 FunctionBar* FunctionBar_new(const char** functions, const char** keys, int* events) {
-   FunctionBar* this = AllocThis(FunctionBar);
-   this->functions = calloc(16, sizeof(char*));
+   FunctionBar* this = xCalloc(1, sizeof(FunctionBar));
+   this->functions = xCalloc(16, sizeof(char*));
    if (!functions) {
       functions = FunctionBar_FLabels;
    }
    for (int i = 0; i < 15 && functions[i]; i++) {
-      this->functions[i] = strdup(functions[i]);
+      this->functions[i] = xStrdup(functions[i]);
    }
    if (keys && events) {
       this->staticData = false; 
-      this->keys = malloc(sizeof(char*) * 15);
-      this->events = malloc(sizeof(int) * 15);
+      this->keys = xCalloc(15, sizeof(char*));
+      this->events = xCalloc(15, sizeof(int));
       int i = 0;
       while (i < 15 && functions[i]) {
-         this->keys[i] = strdup(keys[i]);
+         this->keys[i] = xStrdup(keys[i]);
          this->events[i] = events[i];
          i++;
       }
@@ -67,8 +71,7 @@ FunctionBar* FunctionBar_new(const char** functions, const char** keys, int* eve
    return this;
 }
 
-void FunctionBar_delete(Object* cast) {
-   FunctionBar* this = (FunctionBar*) cast;
+void FunctionBar_delete(FunctionBar* this) {
    for (int i = 0; i < 15 && this->functions[i]; i++) {
       free(this->functions[i]);
    }
@@ -87,7 +90,7 @@ void FunctionBar_setLabel(FunctionBar* this, int event, const char* text) {
    for (int i = 0; i < this->size; i++) {
       if (this->events[i] == event) {
          free(this->functions[i]);
-         this->functions[i] = strdup(text);
+         this->functions[i] = xStrdup(text);
          break;
       }
    }

@@ -4,6 +4,9 @@
 /* Define to 1 if the `closedir' function returns void instead of `int'. */
 /* #undef CLOSEDIR_VOID */
 
+/* Copyright message. */
+#define COPYRIGHT "(C) 2004-2016 Hisham Muhammad"
+
 /* Define if ancient vserver support enabled. */
 /* #undef HAVE_ANCIENT_VSERVER */
 
@@ -32,23 +35,26 @@
 /* Define to 1 if you have the `hwloc' library (-lhwloc). */
 /* #undef HAVE_LIBHWLOC */
 
+/* Define to 1 if you have the `kvm' library (-lkvm). */
+/* #undef HAVE_LIBKVM */
+
 /* Define to 1 if you have the `m' library (-lm). */
 #define HAVE_LIBM 1
 
-/* Define to 1 if you have the `ncurses' library (-lncurses). */
+/* The library is present. */
 /* #undef HAVE_LIBNCURSES */
 
-/* Define to 1 if you have the `ncursesw' library (-lncursesw). */
+/* The library is present. */
 #define HAVE_LIBNCURSESW 1
+
+/* Define if Linux sched_setaffinity and sched_getaffinity are to be used. */
+#define HAVE_LINUX_AFFINITY 1
 
 /* Define to 1 if you have the `memmove' function. */
 #define HAVE_MEMMOVE 1
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
-
-/* Define if native sched_setaffinity and sched_getaffinity are to be used. */
-#define HAVE_NATIVE_AFFINITY 1
 
 /* Define to 1 if you have the <ncursesw/curses.h> header file. */
 #define HAVE_NCURSESW_CURSES_H 1
@@ -65,11 +71,11 @@
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 /* #undef HAVE_NDIR_H */
 
-/* Define if OOM score support enabled. */
-/* #undef HAVE_OOM */
-
 /* Define if openvz support enabled. */
 /* #undef HAVE_OPENVZ */
+
+/* Define if using a Linux-compatible proc filesystem. */
+/* #undef HAVE_PROC */
 
 /* Define to 1 if `stat' has the bug that it succeeds when given the
    zero-length file name argument. */
@@ -139,9 +145,6 @@
    */
 #define LT_OBJDIR ".libs/"
 
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-/* #undef NO_MINUS_C_MINUS_O */
-
 /* Name of package */
 #define PACKAGE "htop"
 
@@ -152,7 +155,7 @@
 #define PACKAGE_NAME "htop"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "htop 1.0.3"
+#define PACKAGE_STRING "htop 2.0.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "htop"
@@ -161,7 +164,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.0.3"
+#define PACKAGE_VERSION "2.0.1"
 
 /* Path of proc filesystem */
 #define PROCDIR "/proc"
@@ -195,7 +198,7 @@
 
 
 /* Version number of package */
-#define VERSION "1.0.3"
+#define VERSION "2.0.1"
 
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */

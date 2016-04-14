@@ -21,27 +21,20 @@ in the source distribution for its full text.
 #include "Panel.h"
 #include "Settings.h"
 #include "ScreenManager.h"
+#include "ProcessList.h"
 
 typedef struct CategoriesPanel_ {
    Panel super;
+   ScreenManager* scr;
 
    Settings* settings;
-   ScreenManager* scr;
+   Header* header;
+   ProcessList* pl;
 } CategoriesPanel;
 
 }*/
 
-static const char* MetersFunctions[] = {"      ", "      ", "      ", "Type  ", "      ", "      ", "MoveUp", "MoveDn", "Remove", "Done  ", NULL};
-
-static const char* AvailableMetersFunctions[] = {"      ", "      ", "      ", "      ", "Add L ", "Add R ", "      ", "      ", "      ", "Done  ", NULL};
-
-static const char* DisplayOptionsFunctions[] = {"      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "Done  ", NULL};
-
-static const char* ColumnsFunctions[] = {"      ", "      ", "      ", "      ", "      ", "      ", "MoveUp", "MoveDn", "Remove", "Done  ", NULL};
-
-static const char* ColorsFunctions[] = {"      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "Done  ", NULL};
-
-static const char* AvailableColumnsFunctions[] = {"      ", "      ", "      ", "      ", "Add   ", "      ", "      ", "      ", "      ", "Done  ", NULL};
+static const char* CategoriesFunctions[] = {"      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "      ", "Done  ", NULL};
 
 static void CategoriesPanel_delete(Object* object) {
    Panel* super = (Panel*) object;
@@ -51,29 +44,31 @@ static void CategoriesPanel_delete(Object* object) {
 }
 
 void CategoriesPanel_makeMetersPage(CategoriesPanel* this) {
-   Panel* leftMeters = (Panel*) MetersPanel_new(this->settings, "Left column", this->settings->header->leftMeters, this->scr);
-   Panel* rightMeters = (Panel*) MetersPanel_new(this->settings, "Right column", this->settings->header->rightMeters, this->scr);
-   Panel* availableMeters = (Panel*) AvailableMetersPanel_new(this->settings, leftMeters, rightMeters, this->scr);
-   ScreenManager_add(this->scr, leftMeters, FunctionBar_new(MetersFunctions, NULL, NULL), 20);
-   ScreenManager_add(this->scr, rightMeters, FunctionBar_new(MetersFunctions, NULL, NULL), 20);
-   ScreenManager_add(this->scr, availableMeters, FunctionBar_new(AvailableMetersFunctions, NULL, NULL), -1);
+   MetersPanel* leftMeters = MetersPanel_new(this->settings, "Left column", this->header->columns[0], this->scr);
+   MetersPanel* rightMeters = MetersPanel_new(this->settings, "Right column", this->header->columns[1], this->scr);
+   leftMeters->rightNeighbor = rightMeters;
+   rightMeters->leftNeighbor = leftMeters;
+   Panel* availableMeters = (Panel*) AvailableMetersPanel_new(this->settings, this->header, (Panel*) leftMeters, (Panel*) rightMeters, this->scr, this->pl);
+   ScreenManager_add(this->scr, (Panel*) leftMeters, 20);
+   ScreenManager_add(this->scr, (Panel*) rightMeters, 20);
+   ScreenManager_add(this->scr, availableMeters, -1);
 }
 
 static void CategoriesPanel_makeDisplayOptionsPage(CategoriesPanel* this) {
    Panel* displayOptions = (Panel*) DisplayOptionsPanel_new(this->settings, this->scr);
-   ScreenManager_add(this->scr, displayOptions, FunctionBar_new(DisplayOptionsFunctions, NULL, NULL), -1);
+   ScreenManager_add(this->scr, displayOptions, -1);
 }
 
 static void CategoriesPanel_makeColorsPage(CategoriesPanel* this) {
    Panel* colors = (Panel*) ColorsPanel_new(this->settings, this->scr);
-   ScreenManager_add(this->scr, colors, FunctionBar_new(ColorsFunctions, NULL, NULL), -1);
+   ScreenManager_add(this->scr, colors, -1);
 }
 
 static void CategoriesPanel_makeColumnsPage(CategoriesPanel* this) {
-   Panel* columns = (Panel*) ColumnsPanel_new(this->settings, this->scr);
-   Panel* availableColumns = (Panel*) AvailableColumnsPanel_new(this->settings, columns, this->scr);
-   ScreenManager_add(this->scr, columns, FunctionBar_new(ColumnsFunctions, NULL, NULL), 20);
-   ScreenManager_add(this->scr, availableColumns, FunctionBar_new(AvailableColumnsFunctions, NULL, NULL), -1);
+   Panel* columns = (Panel*) ColumnsPanel_new(this->settings);
+   Panel* availableColumns = (Panel*) AvailableColumnsPanel_new(columns);
+   ScreenManager_add(this->scr, columns, 20);
+   ScreenManager_add(this->scr, availableColumns, -1);
 }
 
 static HandlerResult CategoriesPanel_eventHandler(Panel* super, int ch) {
@@ -83,7 +78,7 @@ static HandlerResult CategoriesPanel_eventHandler(Panel* super, int ch) {
 
    int selected = Panel_getSelectedIndex(super);
    switch (ch) {
-      case EVENT_SETSELECTED:
+      case EVENT_SET_SELECTED:
          result = HANDLED;
          break;
       case KEY_UP:
@@ -102,13 +97,12 @@ static HandlerResult CategoriesPanel_eventHandler(Panel* super, int ch) {
          break;
       }
       default:
-         if (isalpha(ch))
+         if (ch < 255 && isalpha(ch))
             result = Panel_selectByTyping(super, ch);
          if (result == BREAK_LOOP)
             result = IGNORED;
          break;
    }
-
    if (result == HANDLED) {
       int size = ScreenManager_size(this->scr);
       for (int i = 1; i < size; i++)
@@ -128,7 +122,6 @@ static HandlerResult CategoriesPanel_eventHandler(Panel* super, int ch) {
             break;
       }
    }
-
    return result;
 }
 
@@ -140,13 +133,16 @@ PanelClass CategoriesPanel_class = {
    .eventHandler = CategoriesPanel_eventHandler
 };
 
-CategoriesPanel* CategoriesPanel_new(Settings* settings, ScreenManager* scr) {
+CategoriesPanel* CategoriesPanel_new(ScreenManager* scr, Settings* settings, Header* header, ProcessList* pl) {
    CategoriesPanel* this = AllocThis(CategoriesPanel);
    Panel* super = (Panel*) this;
-   Panel_init(super, 1, 1, 1, 1, Class(ListItem), true);
+   FunctionBar* fuBar = FunctionBar_new(CategoriesFunctions, NULL, NULL);
+   Panel_init(super, 1, 1, 1, 1, Class(ListItem), true, fuBar);
 
-   this->settings = settings;
    this->scr = scr;
+   this->settings = settings;
+   this->header = header;
+   this->pl = pl;
    Panel_setHeader(super, "Setup");
    Panel_add(super, (Object*) ListItem_new("Meters", 0));
    Panel_add(super, (Object*) ListItem_new("Display options", 0));

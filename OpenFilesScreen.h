@@ -9,9 +9,7 @@ Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
-#include "Process.h"
-#include "Panel.h"
-#include "FunctionBar.h"
+#include "InfoScreen.h"
 
 typedef struct OpenFiles_Data_ {
    char* data[256];
@@ -29,17 +27,19 @@ typedef struct OpenFiles_FileData_ {
 } OpenFiles_FileData;
 
 typedef struct OpenFilesScreen_ {
-   Process* process;
+   InfoScreen super;
    pid_t pid;
-   Panel* display;
-   FunctionBar* bar;
 } OpenFilesScreen;
 
 
+extern InfoScreenClass OpenFilesScreen_class;
+
 OpenFilesScreen* OpenFilesScreen_new(Process* process);
 
-void OpenFilesScreen_delete(OpenFilesScreen* this);
+void OpenFilesScreen_delete(Object* this);
 
-void OpenFilesScreen_run(OpenFilesScreen* this);
+void OpenFilesScreen_draw(InfoScreen* this);
+
+void OpenFilesScreen_scan(InfoScreen* this);
 
 #endif

@@ -1,4 +1,53 @@
 
+What's new in version 2.0.1
+
+* OpenBSD: Various fixes and improvements
+  (thanks to Michael McConville and Juan Francisco Cantero Hurtado)
+* FreeBSD: fix CPU and memory readings
+  (thanks to Tim Creech, Hung-Yi Chen, Bernard Spil, Greg V)
+* FreeBSD: add battery support
+  (thanks to Greg V)
+* Linux: Retain last-obtained name of a zombie process
+* Mac OS X: Improve portability for OS X versions
+  (thanks to Michael Klein)
+* Mac OS X: Fix reading command-line arguments and basename
+* Mac OS X: Fix process state information
+* Mac OS X: Fix tree view collapsing/expanding
+* Mac OS X: Fix tree organization
+* Mac OS X: Fix memory accounting
+* Fix crash when emptying a column of meters
+* Make Esc key more responsive
+
+What's new in version 2.0.0
+
+* Platform abstraction layer
+* Initial FreeBSD support
+* Initial Mac OS X support
+  (thanks to David Hunt)
+* Swap meter for Mac OSX
+  (thanks to Ștefan Rusu)
+* OpenBSD port
+  (thanks to Michael McConville)
+* FreeBSD support improvements
+  (thanks to Martin Misuth)
+* Support for NCurses 6 ABI, including mouse wheel support
+* Much improved mouse responsiveness
+* Process environment variables screen
+  (thanks to Michael Klein)
+* Higher-resolution UTF-8 based Graph mode
+  (Thanks to James Hall from vtop for the idea!)
+* Show program path settings
+  (thanks to Tobias Geerinckx-Rice)
+* BUGFIX: Fix crash when scrolling an empty filtered list.
+* Use dynamic units for text display, and several fixes
+  (thanks to Christian Hesse)
+* BUGFIX: fix error caused by overflow in usertime calculation.
+  (thanks to Patrick Marlier)
+* Catch all memory allocation errors
+  (thanks to Michael McConville for the push)
+* Several tweaks and bugfixes
+  (See the Git log for details and contributors!)
+
 What's new in version 1.0.3
 
 * Tag all children ('c' key)

@@ -1,3 +1,3 @@
-600-openvz-veid-on-kernels-gt-2.6.18.patch 
-610-io-priority-only-on-linux.patch
-700-ltrace-support.patch 
+001-lintian-warning-fix-man-typo.patch
+002-lintian-warning-fix-desktop-keywords.patch
+601-openvz-new-ctid-vpid.patch
