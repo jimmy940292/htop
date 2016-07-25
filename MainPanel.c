@@ -83,6 +83,9 @@ static HandlerResult MainPanel_eventHandler(Panel* super, int ch) {
       result = HANDLED;
    } else if (ch != ERR && this->inc->active) {
       bool filterChanged = IncSet_handleKey(this->inc, ch, super, (IncMode_GetPanelValue) MainPanel_getValue, NULL);
+      if (this->inc->found) {
+         reaction |= Action_follow(this->state);
+      }
       if (filterChanged) {
          this->state->pl->incFilter = IncSet_filter(this->inc);
          reaction = HTOP_REFRESH | HTOP_REDRAW_BAR;
@@ -101,20 +104,6 @@ static HandlerResult MainPanel_eventHandler(Panel* super, int ch) {
          this->pidSearch = 0;
       } else {
          reaction |= HTOP_KEEP_FOLLOWING;
-      }
-      switch (ch) {
-      case KEY_LEFT:
-      case KEY_CTRLB:
-         if (super->scrollH > 0) {
-            super->scrollH -= CRT_scrollHAmount;
-            super->needsRedraw = true;
-         }
-         return HANDLED;
-      case KEY_RIGHT:
-      case KEY_CTRLF:
-         super->scrollH += CRT_scrollHAmount;
-         super->needsRedraw = true;
-         return HANDLED;
       }
    }
 
@@ -159,7 +148,7 @@ const char* MainPanel_getValue(MainPanel* this, int i) {
    return "";
 }
 
-bool MainPanel_foreachProcess(MainPanel* this, MainPanel_ForeachProcessFn fn, int arg, bool* wasAnyTagged) {
+bool MainPanel_foreachProcess(MainPanel* this, MainPanel_ForeachProcessFn fn, size_t arg, bool* wasAnyTagged) {
    Panel* super = (Panel*) this;
    bool ok = true;
    bool anyTagged = false;

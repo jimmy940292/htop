@@ -155,7 +155,7 @@
 #define PACKAGE_NAME "htop"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "htop 2.0.1"
+#define PACKAGE_STRING "htop 2.0.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "htop"
@@ -164,7 +164,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.0.1"
+#define PACKAGE_VERSION "2.0.2"
 
 /* Path of proc filesystem */
 #define PROCDIR "/proc"
@@ -198,7 +198,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.0.1"
+#define VERSION "2.0.2"
 
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */

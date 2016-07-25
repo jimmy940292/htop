@@ -1,3 +1,14 @@
+htop (2.0.2-1) unstable; urgency=medium
+
+  * Update to upstream version 2.0.2
+    - Use SOURCE_DATE_EPOCH instead of current year in copyright message
+      to make build reproducible. (Closes: #822963)
+    - Fix build to detect the Hurd as a Linux platform. (Closes: #821747)
+    - Fix crash when setting CPU affinity and -fPIE. (LP: #1589549)
+  * Bump Standards to 3.9.8 (no changes required)
+
+ -- Daniel Lange <dl.ml1@usrlocal.de>  Mon, 25 Jul 2016 19:46:17 +0200
+
 htop (2.0.1-1) unstable; urgency=medium
 
   * New upstream release 2.0.1. (Closes: #814401, #783893, #774930)

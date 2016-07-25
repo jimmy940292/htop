@@ -125,7 +125,7 @@ void CRT_fatalError(const char* note) __attribute__ ((noreturn));
 
 void CRT_handleSIGSEGV(int sgn);
 
-#define KEY_ALT(x) KEY_F(60) + (x - 'A')
+#define KEY_ALT(x) (KEY_F(64 - 26) + (x - 'A'))
 
 }*/
 
@@ -599,6 +599,7 @@ void CRT_init(int delay, int colorScheme) {
    signal(11, CRT_handleSIGSEGV);
 #endif
    signal(SIGTERM, CRT_handleSIGTERM);
+   signal(SIGQUIT, CRT_handleSIGTERM);
    use_default_colors();
    if (!has_colors())
       CRT_colorScheme = 1;
