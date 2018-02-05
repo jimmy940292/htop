@@ -5,6 +5,7 @@ Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
+#include "config.h"
 #include "CRT.h"
 
 #include "StringUtils.h"
@@ -17,8 +18,14 @@ in the source distribution for its full text.
 #include <string.h>
 #include <locale.h>
 #include <langinfo.h>
+#if HAVE_SETUID_ENABLED
+#include <unistd.h>
+#include <sys/types.h>
+#endif
 
-#define ColorPair(i,j) COLOR_PAIR((7-i)*8+j)
+#define ColorIndex(i,j) ((7-i)*8+j)
+
+#define ColorPair(i,j) COLOR_PAIR(ColorIndex(i,j))
 
 #define Black COLOR_BLACK
 #define Red COLOR_RED
@@ -28,6 +35,8 @@ in the source distribution for its full text.
 #define Magenta COLOR_MAGENTA
 #define Cyan COLOR_CYAN
 #define White COLOR_WHITE
+
+#define ColorPairGrayBlack ColorPair(Magenta,Magenta)
 
 #define KEY_WHEELUP KEY_F(20)
 #define KEY_WHEELDOWN KEY_F(21)
@@ -183,7 +192,7 @@ int CRT_colorSchemes[LAST_COLORSCHEME][LAST_COLORELEMENT] = {
       [LED_COLOR] = ColorPair(Green,Black),
       [TASKS_RUNNING] = A_BOLD | ColorPair(Green,Black),
       [PROCESS] = A_NORMAL,
-      [PROCESS_SHADOW] = A_BOLD | ColorPair(Black,Black),
+      [PROCESS_SHADOW] = A_BOLD | ColorPairGrayBlack,
       [PROCESS_TAG] = A_BOLD | ColorPair(Yellow,Black),
       [PROCESS_MEGABYTES] = ColorPair(Cyan,Black),
       [PROCESS_BASENAME] = A_BOLD | ColorPair(Cyan,Black),
@@ -195,7 +204,7 @@ int CRT_colorSchemes[LAST_COLORSCHEME][LAST_COLORELEMENT] = {
       [PROCESS_THREAD] = ColorPair(Green,Black),
       [PROCESS_THREAD_BASENAME] = A_BOLD | ColorPair(Green,Black),
       [BAR_BORDER] = A_BOLD,
-      [BAR_SHADOW] = A_BOLD | ColorPair(Black,Black),
+      [BAR_SHADOW] = A_BOLD | ColorPairGrayBlack,
       [SWAP] = ColorPair(Red,Black),
       [GRAPH_1] = A_BOLD | ColorPair(Cyan,Black),
       [GRAPH_2] = ColorPair(Cyan,Black),
@@ -360,7 +369,7 @@ int CRT_colorSchemes[LAST_COLORSCHEME][LAST_COLORELEMENT] = {
       [LED_COLOR] = ColorPair(Green,Black),
       [TASKS_RUNNING] = ColorPair(Green,Black),
       [PROCESS] = ColorPair(Black,Black),
-      [PROCESS_SHADOW] = A_BOLD | ColorPair(Black,Black),
+      [PROCESS_SHADOW] = A_BOLD | ColorPairGrayBlack,
       [PROCESS_TAG] = ColorPair(White,Blue),
       [PROCESS_MEGABYTES] = ColorPair(Blue,Black),
       [PROCESS_BASENAME] = ColorPair(Green,Black),
@@ -372,7 +381,7 @@ int CRT_colorSchemes[LAST_COLORSCHEME][LAST_COLORELEMENT] = {
       [PROCESS_THREAD] = ColorPair(Blue,Black),
       [PROCESS_THREAD_BASENAME] = A_BOLD | ColorPair(Blue,Black),
       [BAR_BORDER] = ColorPair(Blue,Black),
-      [BAR_SHADOW] = ColorPair(Black,Black),
+      [BAR_SHADOW] = ColorPairGrayBlack,
       [SWAP] = ColorPair(Red,Black),
       [GRAPH_1] = A_BOLD | ColorPair(Cyan,Black),
       [GRAPH_2] = ColorPair(Cyan,Black),
@@ -478,7 +487,7 @@ int CRT_colorSchemes[LAST_COLORSCHEME][LAST_COLORELEMENT] = {
       [LED_COLOR] = ColorPair(Green,Black),
       [TASKS_RUNNING] = A_BOLD | ColorPair(Green,Black),
       [PROCESS] = ColorPair(Cyan,Black),
-      [PROCESS_SHADOW] = A_BOLD | ColorPair(Black,Black),
+      [PROCESS_SHADOW] = A_BOLD | ColorPairGrayBlack,
       [PROCESS_TAG] = A_BOLD | ColorPair(Yellow,Black),
       [PROCESS_MEGABYTES] = A_BOLD | ColorPair(Green,Black),
       [PROCESS_BASENAME] = A_BOLD | ColorPair(Green,Black),
@@ -541,6 +550,48 @@ static void CRT_handleSIGTERM(int sgn) {
    exit(0);
 }
 
+#if HAVE_SETUID_ENABLED
+
+static int CRT_euid = -1;
+
+static int CRT_egid = -1;
+
+#define DIE(msg) do { CRT_done(); fprintf(stderr, msg); exit(1); } while(0)
+
+void CRT_dropPrivileges() {
+   CRT_egid = getegid();
+   CRT_euid = geteuid();
+   if (setegid(getgid()) == -1) {
+      DIE("Fatal error: failed dropping group privileges.\n");
+   }
+   if (seteuid(getuid()) == -1) {
+      DIE("Fatal error: failed dropping user privileges.\n");
+   }
+}
+
+void CRT_restorePrivileges() {
+   if (CRT_egid == -1 || CRT_euid == -1) {
+      DIE("Fatal error: internal inconsistency.\n");
+   }
+   if (setegid(CRT_egid) == -1) {
+      DIE("Fatal error: failed restoring group privileges.\n");
+   }
+   if (seteuid(CRT_euid) == -1) {
+      DIE("Fatal error: failed restoring user privileges.\n");
+   }
+}
+
+#else
+
+/* Turn setuid operations into NOPs */
+
+#ifndef CRT_dropPrivileges
+#define CRT_dropPrivileges()
+#define CRT_restorePrivileges()
+#endif
+
+#endif
+
 // TODO: pass an instance of Settings instead.
 
 void CRT_init(int delay, int colorScheme) {
@@ -555,7 +606,7 @@ void CRT_init(int delay, int colorScheme) {
    
    for (int i = 0; i < LAST_COLORELEMENT; i++) {
       unsigned int color = CRT_colorSchemes[COLORSCHEME_DEFAULT][i];
-      CRT_colorSchemes[COLORSCHEME_BROKENGRAY][i] = color == (A_BOLD | ColorPair(Black,Black)) ? ColorPair(White,Black) : color;
+      CRT_colorSchemes[COLORSCHEME_BROKENGRAY][i] = color == (A_BOLD | ColorPairGrayBlack) ? ColorPair(White,Black) : color;
    }
    
    halfdelay(CRT_delay);
@@ -575,7 +626,7 @@ void CRT_init(int delay, int colorScheme) {
       CRT_scrollHAmount = 20;
    else
       CRT_scrollHAmount = 5;
-   if (String_eq(CRT_termType, "xterm") || String_eq(CRT_termType, "xterm-color") || String_eq(CRT_termType, "vt220")) {
+   if (String_startsWith(CRT_termType, "xterm") || String_eq(CRT_termType, "vt220")) {
       define_key("\033[H", KEY_HOME);
       define_key("\033[F", KEY_END);
       define_key("\033[7~", KEY_HOME);
@@ -664,12 +715,20 @@ void CRT_setColors(int colorScheme) {
    CRT_colorScheme = colorScheme;
    if (colorScheme == COLORSCHEME_BLACKNIGHT) {
       for (int i = 0; i < 8; i++)
-         for (int j = 0; j < 8; j++)
-            init_pair((7-i)*8+j, i, j);
+         for (int j = 0; j < 8; j++) {
+            if (ColorIndex(i,j) != ColorIndex(Magenta,Magenta)) {
+               init_pair(ColorIndex(i,j), i, j);
+            }
+         }
+      init_pair(ColorIndex(Magenta,Magenta), 8, 0);
    } else {
       for (int i = 0; i < 8; i++) 
-         for (int j = 0; j < 8; j++)
-            init_pair((7-i)*8+j, i, (j==0?-1:j));
+         for (int j = 0; j < 8; j++) {
+            if (ColorIndex(i,j) != ColorIndex(Magenta,Magenta)) {
+               init_pair(ColorIndex(i,j), i, (j==0?-1:j));
+            }
+         }
+      init_pair(ColorIndex(Magenta,Magenta), 8, -1);
    }
    CRT_colors = CRT_colorSchemes[colorScheme];
 }

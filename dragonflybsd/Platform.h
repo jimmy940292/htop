@@ -3,18 +3,19 @@
 #ifndef HEADER_Platform
 #define HEADER_Platform
 /*
-htop - darwin/Platform.h
+htop - dragonflybsd/Platform.h
 (C) 2014 Hisham H. Muhammad
-(C) 2015 David C. Hunt
+(C) 2017 Diederik de Groot
 Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
 #include "Action.h"
-#include "SignalsPanel.h"
-#include "CPUMeter.h"
 #include "BatteryMeter.h"
-#include "DarwinProcess.h"
+#include "SignalsPanel.h"
+
+extern ProcessFieldData Process_fields[];
+
 
 #ifndef CLAMP
 #define CLAMP(x,low,high) (((x)>(high))?(high):(((x)<(low))?(low):(x)))
@@ -22,17 +23,15 @@ in the source distribution for its full text.
 
 extern ProcessField Platform_defaultFields[];
 
+extern int Platform_numberOfFields;
+
 extern const SignalItem Platform_signals[];
 
 extern const unsigned int Platform_numberOfSignals;
 
-extern ProcessFieldData Process_fields[];
-
-extern MeterClass* Platform_meterTypes[];
-
 void Platform_setBindings(Htop_Action* keys);
 
-extern int Platform_numberOfFields;
+extern MeterClass* Platform_meterTypes[];
 
 int Platform_getUptime();
 
@@ -40,13 +39,13 @@ void Platform_getLoadAverage(double* one, double* five, double* fifteen);
 
 int Platform_getMaxPid();
 
-extern ProcessPidColumn Process_pidColumns[];
+double Platform_setCPUValues(Meter* this, int cpu);
 
-double Platform_setCPUValues(Meter* mtr, int cpu);
+void Platform_setMemoryValues(Meter* this);
 
-void Platform_setMemoryValues(Meter* mtr);
+void Platform_setSwapValues(Meter* this);
 
-void Platform_setSwapValues(Meter* mtr);
+void Platform_setTasksValues(Meter* this);
 
 char* Platform_getProcessEnv(pid_t pid);
 

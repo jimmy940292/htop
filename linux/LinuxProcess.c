@@ -81,7 +81,12 @@ typedef enum LinuxProcessFields {
    #endif
    OOM = 114,
    IO_PRIORITY = 115,
-   LAST_PROCESSFIELD = 116,
+   #ifdef HAVE_DELAYACCT
+   PERCENT_CPU_DELAY = 116,
+   PERCENT_IO_DELAY = 117,
+   PERCENT_SWAP_DELAY = 118,
+   #endif
+   LAST_PROCESSFIELD = 119,
 } LinuxProcessField;
 
 #include "IOPriority.h"
@@ -124,6 +129,16 @@ typedef struct LinuxProcess_ {
    char* cgroup;
    #endif
    unsigned int oom;
+   char* ttyDevice;
+   #ifdef HAVE_DELAYACCT
+   unsigned long long int delay_read_time;
+   unsigned long long cpu_delay_total;
+   unsigned long long blkio_delay_total;
+   unsigned long long swapin_delay_total;
+   float cpu_delay_percent;
+   float blkio_delay_percent;
+   float swapin_delay_percent;
+   #endif
 } LinuxProcess;
 
 #ifndef Process_isKernelThread
@@ -140,11 +155,11 @@ ProcessFieldData Process_fields[] = {
    [0] = { .name = "", .title = NULL, .description = NULL, .flags = 0, },
    [PID] = { .name = "PID", .title = "    PID ", .description = "Process/thread ID", .flags = 0, },
    [COMM] = { .name = "Command", .title = "Command ", .description = "Command line", .flags = 0, },
-   [STATE] = { .name = "STATE", .title = "S ", .description = "Process state (S sleeping, R running, D disk, Z zombie, T traced, W paging)", .flags = 0, },
+   [STATE] = { .name = "STATE", .title = "S ", .description = "Process state (S sleeping, R running, D disk, Z zombie, T traced, W paging, I idle)", .flags = 0, },
    [PPID] = { .name = "PPID", .title = "   PPID ", .description = "Parent process ID", .flags = 0, },
    [PGRP] = { .name = "PGRP", .title = "   PGRP ", .description = "Process group ID", .flags = 0, },
-   [SESSION] = { .name = "SESSION", .title = "   SESN ", .description = "Process's session ID", .flags = 0, },
-   [TTY_NR] = { .name = "TTY_NR", .title = "  TTY ", .description = "Controlling terminal", .flags = 0, },
+   [SESSION] = { .name = "SESSION", .title = "    SID ", .description = "Process's session ID", .flags = 0, },
+   [TTY_NR] = { .name = "TTY_NR", .title = "TTY      ", .description = "Controlling terminal", .flags = 0, },
    [TPGID] = { .name = "TPGID", .title = "  TPGID ", .description = "Process ID of the fg process group of the controlling terminal", .flags = 0, },
    [FLAGS] = { .name = "FLAGS", .title = NULL, .description = NULL, .flags = 0, },
    [MINFLT] = { .name = "MINFLT", .title = "     MINFLT ", .description = "Number of minor faults which have not required loading a memory page from disk", .flags = 0, },
@@ -214,6 +229,11 @@ ProcessFieldData Process_fields[] = {
 #endif
    [OOM] = { .name = "OOM", .title = "    OOM ", .description = "OOM (Out-of-Memory) killer score", .flags = PROCESS_FLAG_LINUX_OOM, },
    [IO_PRIORITY] = { .name = "IO_PRIORITY", .title = "IO ", .description = "I/O priority", .flags = PROCESS_FLAG_LINUX_IOPRIO, },
+#ifdef HAVE_DELAYACCT
+   [PERCENT_CPU_DELAY] = { .name = "PERCENT_CPU_DELAY", .title = "CPUD% ", .description = "CPU delay %", .flags = 0, },
+   [PERCENT_IO_DELAY] = { .name = "PERCENT_IO_DELAY", .title = "IOD% ", .description = "Block I/O delay %", .flags = 0, },
+   [PERCENT_SWAP_DELAY] = { .name = "PERCENT_SWAP_DELAY", .title = "SWAPD% ", .description = "Swapin delay %", .flags = 0, },
+#endif
    [LAST_PROCESSFIELD] = { .name = "*** report bug! ***", .title = NULL, .description = NULL, .flags = 0, },
 };
 
@@ -226,7 +246,7 @@ ProcessPidColumn Process_pidColumns[] = {
    { .id = TPGID, .label = "TPGID" },
    { .id = TGID, .label = "TGID" },
    { .id = PGRP, .label = "PGRP" },
-   { .id = SESSION, .label = "SESN" },
+   { .id = SESSION, .label = "SID" },
    { .id = OOM, .label = "OOM" },
    { .id = 0, .label = NULL },
 };
@@ -254,6 +274,7 @@ void Process_delete(Object* cast) {
 #ifdef HAVE_CGROUP
    free(this->cgroup);
 #endif
+   free(this->ttyDevice);
    free(this);
 }
 
@@ -285,6 +306,16 @@ bool LinuxProcess_setIOPriority(LinuxProcess* this, IOPriority ioprio) {
    return (LinuxProcess_updateIOPriority(this) == ioprio);
 }
 
+#ifdef HAVE_DELAYACCT
+void LinuxProcess_printDelay(float delay_percent, char* buffer, int n) {
+  if (delay_percent == -1LL) {
+    xSnprintf(buffer, n, " N/A  ");
+  } else {
+    xSnprintf(buffer, n, "%4.1f  ", delay_percent);
+  }
+}
+#endif
+
 void LinuxProcess_writeField(Process* this, RichString* str, ProcessField field) {
    LinuxProcess* lp = (LinuxProcess*) this;
    bool coloring = this->settings->highlightMegabytes;
@@ -292,6 +323,15 @@ void LinuxProcess_writeField(Process* this, RichString* str, ProcessField field)
    int attr = CRT_colors[DEFAULT_COLOR];
    int n = sizeof(buffer) - 1;
    switch ((int)field) {
+   case TTY_NR: {
+      if (lp->ttyDevice) {
+         xSnprintf(buffer, n, "%-9s", lp->ttyDevice + 5 /* skip "/dev/" */);
+      } else {
+         attr = CRT_colors[PROCESS_SHADOW];
+         xSnprintf(buffer, n, "?        ");
+      }
+      break;
+   }
    case CMINFLT: Process_colorNumber(str, lp->cminflt, coloring); return;
    case CMAJFLT: Process_colorNumber(str, lp->cmajflt, coloring); return;
    case M_DRS: Process_humanNumber(str, lp->m_drs * PAGE_SIZE_KB, coloring); return;
@@ -321,34 +361,39 @@ void LinuxProcess_writeField(Process* this, RichString* str, ProcessField field)
    }
    #endif
    #ifdef HAVE_OPENVZ
-   case CTID: snprintf(buffer, n, "%7u ", lp->ctid); break;
-   case VPID: snprintf(buffer, n, Process_pidFormat, lp->vpid); break;
+   case CTID: xSnprintf(buffer, n, "%7u ", lp->ctid); break;
+   case VPID: xSnprintf(buffer, n, Process_pidFormat, lp->vpid); break;
    #endif
    #ifdef HAVE_VSERVER
-   case VXID: snprintf(buffer, n, "%5u ", lp->vxid); break;
+   case VXID: xSnprintf(buffer, n, "%5u ", lp->vxid); break;
    #endif
    #ifdef HAVE_CGROUP
-   case CGROUP: snprintf(buffer, n, "%-10s ", lp->cgroup); break;
+   case CGROUP: xSnprintf(buffer, n, "%-10s ", lp->cgroup); break;
    #endif
-   case OOM: snprintf(buffer, n, Process_pidFormat, lp->oom); break;
+   case OOM: xSnprintf(buffer, n, Process_pidFormat, lp->oom); break;
    case IO_PRIORITY: {
       int klass = IOPriority_class(lp->ioPriority);
       if (klass == IOPRIO_CLASS_NONE) {
          // see note [1] above
-         snprintf(buffer, n, "B%1d ", (int) (this->nice + 20) / 5);
+         xSnprintf(buffer, n, "B%1d ", (int) (this->nice + 20) / 5);
       } else if (klass == IOPRIO_CLASS_BE) {
-         snprintf(buffer, n, "B%1d ", IOPriority_data(lp->ioPriority));
+         xSnprintf(buffer, n, "B%1d ", IOPriority_data(lp->ioPriority));
       } else if (klass == IOPRIO_CLASS_RT) {
          attr = CRT_colors[PROCESS_HIGH_PRIORITY];
-         snprintf(buffer, n, "R%1d ", IOPriority_data(lp->ioPriority));
-      } else if (lp->ioPriority == IOPriority_Idle) {
+         xSnprintf(buffer, n, "R%1d ", IOPriority_data(lp->ioPriority));
+      } else if (klass == IOPRIO_CLASS_IDLE) {
          attr = CRT_colors[PROCESS_LOW_PRIORITY]; 
-         snprintf(buffer, n, "id ");
+         xSnprintf(buffer, n, "id ");
       } else {
-         snprintf(buffer, n, "?? ");
+         xSnprintf(buffer, n, "?? ");
       }
       break;
    }
+   #ifdef HAVE_DELAYACCT
+   case PERCENT_CPU_DELAY: LinuxProcess_printDelay(lp->cpu_delay_percent, buffer, n); break;
+   case PERCENT_IO_DELAY: LinuxProcess_printDelay(lp->blkio_delay_percent, buffer, n); break;
+   case PERCENT_SWAP_DELAY: LinuxProcess_printDelay(lp->swapin_delay_percent, buffer, n); break;
+   #endif
    default:
       Process_writeField((Process*)this, str, field);
       return;
@@ -410,6 +455,14 @@ long LinuxProcess_compare(const void* v1, const void* v2) {
    #endif
    case OOM:
       return (p2->oom - p1->oom);
+   #ifdef HAVE_DELAYACCT
+   case PERCENT_CPU_DELAY:
+      return (p2->cpu_delay_percent > p1->cpu_delay_percent ? 1 : -1);
+   case PERCENT_IO_DELAY:
+      return (p2->blkio_delay_percent > p1->blkio_delay_percent ? 1 : -1);
+   case PERCENT_SWAP_DELAY:
+      return (p2->swapin_delay_percent > p1->swapin_delay_percent ? 1 : -1);
+   #endif
    case IO_PRIORITY:
       return LinuxProcess_effectiveIOPriority(p1) - LinuxProcess_effectiveIOPriority(p2);
    default:

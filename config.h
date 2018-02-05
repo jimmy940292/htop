@@ -5,7 +5,7 @@
 /* #undef CLOSEDIR_VOID */
 
 /* Copyright message. */
-#define COPYRIGHT "(C) 2004-2016 Hisham Muhammad"
+#define COPYRIGHT "(C) 2004-2018 Hisham Muhammad"
 
 /* Define if ancient vserver support enabled. */
 /* #undef HAVE_ANCIENT_VSERVER */
@@ -16,12 +16,12 @@
 /* Define to 1 if you have the <curses.h> header file. */
 /* #undef HAVE_CURSES_H */
 
+/* Define if delay accounting support should be enabled. */
+/* #undef HAVE_DELAYACCT */
+
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
 #define HAVE_DIRENT_H 1
-
-/* Define to 1 if you have the <dlfcn.h> header file. */
-#define HAVE_DLFCN_H 1
 
 /* Define to 1 if you have the <execinfo.h> header file. */
 #define HAVE_EXECINFO_H 1
@@ -76,6 +76,9 @@
 
 /* Define if using a Linux-compatible proc filesystem. */
 /* #undef HAVE_PROC */
+
+/* Define if setuid support should be enabled. */
+/* #undef HAVE_SETUID_ENABLED */
 
 /* Define to 1 if `stat' has the bug that it succeeds when given the
    zero-length file name argument. */
@@ -141,10 +144,6 @@
    slash. */
 #define LSTAT_FOLLOWS_SLASHED_SYMLINK 1
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#define LT_OBJDIR ".libs/"
-
 /* Name of package */
 #define PACKAGE "htop"
 
@@ -155,7 +154,7 @@
 #define PACKAGE_NAME "htop"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "htop 2.0.2"
+#define PACKAGE_STRING "htop 2.1.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "htop"
@@ -164,7 +163,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.0.2"
+#define PACKAGE_VERSION "2.1.0"
 
 /* Path of proc filesystem */
 #define PROCDIR "/proc"
@@ -198,7 +197,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.0.2"
+#define VERSION "2.1.0"
 
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */

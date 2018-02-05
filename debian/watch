@@ -1,4 +1,3 @@
 version=3
 opts=dversionmangle=s/\+svn(.*)// \
-http://hisham.hm/htop/releases/([\d\.]+)/htop-([\d\.]+)\.tar\.gz
-
+https://hisham.hm/htop/releases/([\d\.]+)/htop-([\d\.]+)\.tar\.gz

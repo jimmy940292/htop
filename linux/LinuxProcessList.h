@@ -9,6 +9,9 @@ Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
+#ifdef HAVE_DELAYACCT
+#endif
+
 
 #include "ProcessList.h"
 
@@ -40,11 +43,23 @@ typedef struct CPUData_ {
    unsigned long long int guestPeriod;
 } CPUData;
 
+typedef struct TtyDriver_ {
+   char* path;
+   unsigned int major;
+   unsigned int minorFrom;
+   unsigned int minorTo;
+} TtyDriver;
+
 typedef struct LinuxProcessList_ {
    ProcessList super;
-
+   
    CPUData* cpus;
-
+   TtyDriver* ttyDrivers;
+   
+   #ifdef HAVE_DELAYACCT
+   struct nl_sock *netlink_socket;
+   int netlink_family;
+   #endif
 } LinuxProcessList;
 
 #ifndef PROCDIR
@@ -59,6 +74,10 @@ typedef struct LinuxProcessList_ {
 #define PROCMEMINFOFILE PROCDIR "/meminfo"
 #endif
 
+#ifndef PROCTTYDRIVERSFILE
+#define PROCTTYDRIVERSFILE PROCDIR "/tty/drivers"
+#endif
+
 #ifndef PROC_LINE_LENGTH
 #define PROC_LINE_LENGTH 512
 #endif
@@ -67,7 +86,11 @@ typedef struct LinuxProcessList_ {
 #ifndef CLAMP
 #define CLAMP(x,low,high) (((x)>(high))?(high):(((x)<(low))?(low):(x)))
 #endif
-   
+
+#ifdef HAVE_DELAYACCT
+
+#endif
+
 ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* pidWhiteList, uid_t userId);
 
 void ProcessList_delete(ProcessList* pl);
@@ -86,6 +109,10 @@ void ProcessList_delete(ProcessList* pl);
 #endif
 
 #ifdef HAVE_VSERVER
+
+#endif
+
+#ifdef HAVE_DELAYACCT
 
 #endif
 

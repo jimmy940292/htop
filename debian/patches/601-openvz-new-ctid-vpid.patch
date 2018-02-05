@@ -18,7 +18,7 @@ As UUIDs are much longer than old numerical CTIDs, the UUID strings will get tru
  3 files changed, 30 insertions(+), 19 deletions(-)
 --- a/linux/LinuxProcess.c
 +++ b/linux/LinuxProcess.c
-@@ -114,7 +114,7 @@ typedef struct LinuxProcess_ {
+@@ -119,7 +119,7 @@
     double io_rate_write_bps;
     #endif
     #ifdef HAVE_OPENVZ
@@ -27,7 +27,7 @@ As UUIDs are much longer than old numerical CTIDs, the UUID strings will get tru
     unsigned int vpid;
     #endif
     #ifdef HAVE_VSERVER
-@@ -251,6 +251,9 @@ LinuxProcess* LinuxProcess_new(Settings*
+@@ -271,6 +271,9 @@
  void Process_delete(Object* cast) {
     LinuxProcess* this = (LinuxProcess*) cast;
     Process_done((Process*)cast);
@@ -37,16 +37,16 @@ As UUIDs are much longer than old numerical CTIDs, the UUID strings will get tru
  #ifdef HAVE_CGROUP
     free(this->cgroup);
  #endif
-@@ -321,7 +324,7 @@ void LinuxProcess_writeField(Process* th
+@@ -361,7 +364,7 @@
     }
     #endif
     #ifdef HAVE_OPENVZ
--   case CTID: snprintf(buffer, n, "%7u ", lp->ctid); break;
-+   case CTID: snprintf(buffer, n, "%8.8s ", lp->ctid); break;
-    case VPID: snprintf(buffer, n, Process_pidFormat, lp->vpid); break;
+-   case CTID: xSnprintf(buffer, n, "%7u ", lp->ctid); break;
++   case CTID: xSnprintf(buffer, n, "%8.8s ", lp->ctid); break;
+    case VPID: xSnprintf(buffer, n, Process_pidFormat, lp->vpid); break;
     #endif
     #ifdef HAVE_VSERVER
-@@ -396,7 +399,7 @@ long LinuxProcess_compare(const void* v1
+@@ -441,7 +444,7 @@
     #endif
     #ifdef HAVE_OPENVZ
     case CTID:
@@ -57,7 +57,7 @@ As UUIDs are much longer than old numerical CTIDs, the UUID strings will get tru
     #endif
 --- a/linux/LinuxProcess.h
 +++ b/linux/LinuxProcess.h
-@@ -106,7 +106,7 @@ typedef struct LinuxProcess_ {
+@@ -111,7 +111,7 @@
     double io_rate_write_bps;
     #endif
     #ifdef HAVE_OPENVZ
@@ -68,7 +68,7 @@ As UUIDs are much longer than old numerical CTIDs, the UUID strings will get tru
     #ifdef HAVE_VSERVER
 --- a/linux/LinuxProcessList.c
 +++ b/linux/LinuxProcessList.c
-@@ -336,27 +336,35 @@ static bool LinuxProcessList_readStatmFi
+@@ -480,27 +480,35 @@
  #ifdef HAVE_OPENVZ
  
  static void LinuxProcessList_readOpenVZData(LinuxProcess* process, const char* dirname, const char* name) {
@@ -82,8 +82,8 @@ As UUIDs are much longer than old numerical CTIDs, the UUID strings will get tru
        return;
 -   }
     char filename[MAX_NAME+1];
--   snprintf(filename, MAX_NAME, "%s/%s/stat", dirname, name);
-+   snprintf(filename, MAX_NAME, "%s/%s/status", dirname, name);
+-   xSnprintf(filename, MAX_NAME, "%s/%s/stat", dirname, name);
++   xSnprintf(filename, MAX_NAME, "%s/%s/status", dirname, name);
     FILE* file = fopen(filename, "r");
     if (!file)
        return;

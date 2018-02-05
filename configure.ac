@@ -2,8 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.65)
-LT_PREREQ([2.4.2])
-AC_INIT([htop],[2.0.2],[hisham@gobolinux.org])
+AC_INIT([htop],[2.1.0],[hisham@gobolinux.org])
 
 SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(date +%s)}"
 year=$(date -u -d "@$SOURCE_DATE_EPOCH" "+%Y" 2>/dev/null || date -u -r "$SOURCE_DATE_EPOCH" "+%Y" 2>/dev/null || date -u "+%Y")
@@ -26,8 +25,6 @@ AM_PROG_CC_C_O
 # Required by hwloc scripts
 AC_USE_SYSTEM_EXTENSIONS
 
-LT_INIT([disable-shared static])
-
 # Checks for platform.
 # ----------------------------------------------------------------------
 case "$target_os" in
@@ -39,6 +36,9 @@ freebsd*|kfreebsd*)
    ;;
 openbsd*)
    my_htop_platform=openbsd
+   ;;
+dragonfly*)
+   my_htop_platform=dragonflybsd
    ;;
 darwin*)
    my_htop_platform=darwin
@@ -186,14 +186,15 @@ m4_define([HTOP_CHECK_LIB],
 AC_ARG_ENABLE(unicode, [AS_HELP_STRING([--enable-unicode], [enable Unicode support])], ,enable_unicode="yes")
 if test "x$enable_unicode" = xyes; then
    HTOP_CHECK_SCRIPT([ncursesw6], [addnwstr], [HAVE_LIBNCURSESW], "ncursesw6-config",
-    HTOP_CHECK_SCRIPT([ncursesw], [addnwstr], [HAVE_LIBNCURSESW], "ncursesw5-config",
-     HTOP_CHECK_SCRIPT([ncurses], [addnwstr], [HAVE_LIBNCURSESW], "ncurses5-config",
-      HTOP_CHECK_LIB([ncursesw6], [addnwstr], [HAVE_LIBNCURSESW],
-       HTOP_CHECK_LIB([ncursesw], [addnwstr], [HAVE_LIBNCURSESW],
-        HTOP_CHECK_LIB([ncurses], [addnwstr], [HAVE_LIBNCURSESW],
-      missing_libraries="$missing_libraries libncursesw"
-      AC_MSG_ERROR([You may want to use --disable-unicode or install libncursesw.])
-   ))))))
+    HTOP_CHECK_SCRIPT([ncursesw], [addnwstr], [HAVE_LIBNCURSESW], "ncursesw6-config",
+     HTOP_CHECK_SCRIPT([ncursesw], [addnwstr], [HAVE_LIBNCURSESW], "ncursesw5-config",
+      HTOP_CHECK_SCRIPT([ncurses], [addnwstr], [HAVE_LIBNCURSESW], "ncurses5-config",
+       HTOP_CHECK_LIB([ncursesw6], [addnwstr], [HAVE_LIBNCURSESW],
+        HTOP_CHECK_LIB([ncursesw], [addnwstr], [HAVE_LIBNCURSESW],
+         HTOP_CHECK_LIB([ncurses], [addnwstr], [HAVE_LIBNCURSESW],
+       missing_libraries="$missing_libraries libncursesw"
+       AC_MSG_ERROR([You may want to use --disable-unicode or install libncursesw.])
+   )))))))
 
    AC_CHECK_HEADERS([ncursesw/curses.h],[:],
       [AC_CHECK_HEADERS([ncurses/ncurses.h],[:],
@@ -249,6 +250,23 @@ then
    AC_CHECK_HEADERS([hwloc.h],[:], [missing_headers="$missing_headers $ac_header"])
 fi
 
+AC_ARG_ENABLE(setuid, [AS_HELP_STRING([--enable-setuid], [enable setuid support for platforms that need it])],, enable_setuid="no")
+if test "x$enable_setuid" = xyes
+then
+   AC_DEFINE(HAVE_SETUID_ENABLED, 1, [Define if setuid support should be enabled.])
+fi
+
+AC_ARG_ENABLE(delayacct, [AS_HELP_STRING([--enable-delayacct], [enable linux delay accounting])],, enable_delayacct="no")
+if test "x$enable_delayacct" = xyes
+then
+   PKG_CHECK_MODULES(LIBNL3, libnl-3.0, [], [missing_libraries="$missing_libraries libnl-3"])
+   PKG_CHECK_MODULES(LIBNL3GENL, libnl-genl-3.0, [], [missing_libraries="$missing_libraries libnl-genl-3"])
+   CFLAGS+=" $LIBNL3_CFLAGS $LIBNL3GENL_CFLAGS"
+   LIBS+=" $LIBNL3_LIBS $LIBNL3GENL_LIBS"
+   AC_DEFINE(HAVE_DELAYACCT, 1, [Define if delay accounting support should be enabled.])
+fi
+
+
 # Bail out on errors.
 # ----------------------------------------------------------------------
 if test ! -z "$missing_libraries"; then
@@ -264,9 +282,24 @@ AC_DEFINE_UNQUOTED(COPYRIGHT, "(C) 2004-$year Hisham Muhammad", [Copyright messa
 # ----------------------------------------------------------------------
 AM_CONDITIONAL([HTOP_LINUX], [test "$my_htop_platform" = linux])
 AM_CONDITIONAL([HTOP_FREEBSD], [test "$my_htop_platform" = freebsd])
+AM_CONDITIONAL([HTOP_DRAGONFLYBSD], [test "$my_htop_platform" = dragonflybsd])
 AM_CONDITIONAL([HTOP_OPENBSD], [test "$my_htop_platform" = openbsd])
 AM_CONDITIONAL([HTOP_DARWIN], [test "$my_htop_platform" = darwin])
 AM_CONDITIONAL([HTOP_UNSUPPORTED], [test "$my_htop_platform" = unsupported])
 AC_SUBST(my_htop_platform)
 AC_CONFIG_FILES([Makefile htop.1])
 AC_OUTPUT
+
+if test "$my_htop_platform" = "unsupported"
+then
+   echo ""
+   echo "****************************************************************"
+   echo "WARNING! This platform is not currently supported by htop."
+   echo ""
+   echo "The code will build, but it will produce a dummy version of htop"
+   echo "which shows no processes, using the files from the unsupported/"
+   echo "directory. This is meant to be a skeleton, to be used as a"
+   echo "starting point if you are porting htop to a new platform."
+   echo "****************************************************************"
+   echo ""
+fi

@@ -9,7 +9,12 @@ Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
-#define ColorPair(i,j) COLOR_PAIR((7-i)*8+j)
+#if HAVE_SETUID_ENABLED
+#endif
+
+#define ColorIndex(i,j) ((7-i)*8+j)
+
+#define ColorPair(i,j) COLOR_PAIR(ColorIndex(i,j))
 
 #define Black COLOR_BLACK
 #define Red COLOR_RED
@@ -19,6 +24,8 @@ in the source distribution for its full text.
 #define Magenta COLOR_MAGENTA
 #define Cyan COLOR_CYAN
 #define White COLOR_WHITE
+
+#define ColorPairGrayBlack ColorPair(Magenta,Magenta)
 
 #define KEY_WHEELUP KEY_F(20)
 #define KEY_WHEELDOWN KEY_F(21)
@@ -149,6 +156,25 @@ char* CRT_termType;
 extern int CRT_colorScheme;
 
 void *backtraceArray[128];
+
+#if HAVE_SETUID_ENABLED
+
+#define DIE(msg) do { CRT_done(); fprintf(stderr, msg); exit(1); } while(0)
+
+void CRT_dropPrivileges();
+
+void CRT_restorePrivileges();
+
+#else
+
+/* Turn setuid operations into NOPs */
+
+#ifndef CRT_dropPrivileges
+#define CRT_dropPrivileges()
+#define CRT_restorePrivileges()
+#endif
+
+#endif
 
 // TODO: pass an instance of Settings instead.
 

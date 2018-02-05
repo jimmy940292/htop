@@ -29,7 +29,7 @@ typedef struct ColumnsPanel_ {
 
 }*/
 
-static const char* ColumnsFunctions[] = {"      ", "      ", "      ", "      ", "      ", "      ", "MoveUp", "MoveDn", "Remove", "Done  ", NULL};
+static const char* const ColumnsFunctions[] = {"      ", "      ", "      ", "      ", "      ", "      ", "MoveUp", "MoveDn", "Remove", "Done  ", NULL};
 
 static void ColumnsPanel_delete(Object* object) {
    Panel* super = (Panel*) object;
@@ -65,8 +65,8 @@ static HandlerResult ColumnsPanel_eventHandler(Panel* super, int ch) {
          if (!this->moving) {
             break;
          }
-         /* else fallthrough */
       }
+         /* else fallthrough */
       case KEY_F(7):
       case '[':
       case '-':
@@ -81,8 +81,8 @@ static HandlerResult ColumnsPanel_eventHandler(Panel* super, int ch) {
          if (!this->moving) {
             break;
          }
-         /* else fallthrough */
       }
+         /* else fallthrough */
       case KEY_F(8):
       case ']':
       case '+':
