@@ -1,3 +1,9 @@
+htop (2.1.0-2) unstable; urgency=medium
+
+  * Add missing build-dependency on pkg-config
+
+ -- Graham Inggs <ginggs@debian.org>  Mon, 05 Feb 2018 16:59:56 +0000
+
 htop (2.1.0-1) unstable; urgency=medium
 
   [ Graham Inggs ]
