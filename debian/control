@@ -1,7 +1,7 @@
 Source: htop
 Section: utils
 Priority: optional
-Maintainer: Daniel Lange <dl.ml1@usrlocal.de>
+Maintainer: Daniel Lange <DLange@debian.org>
 Uploaders: Eugene V. Lyubimkin <jackyf@debian.org>,
            Graham Inggs <ginggs@debian.org>
 Build-Depends: debhelper (>= 11),
