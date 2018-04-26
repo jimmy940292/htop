@@ -34,17 +34,26 @@
 /* Define to 1 if you have the `hwloc' library (-lhwloc). */
 #undef HAVE_LIBHWLOC
 
+/* Define to 1 if you have the `kstat' library (-lkstat). */
+#undef HAVE_LIBKSTAT
+
 /* Define to 1 if you have the `kvm' library (-lkvm). */
 #undef HAVE_LIBKVM
 
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 
+/* Define to 1 if you have the `malloc' library (-lmalloc). */
+#undef HAVE_LIBMALLOC
+
 /* The library is present. */
 #undef HAVE_LIBNCURSES
 
 /* The library is present. */
 #undef HAVE_LIBNCURSESW
+
+/* Define to 1 if you have the `proc' library (-lproc). */
+#undef HAVE_LIBPROC
 
 /* Define if Linux sched_setaffinity and sched_getaffinity are to be used. */
 #undef HAVE_LINUX_AFFINITY
@@ -142,6 +151,14 @@
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
 #undef LSTAT_FOLLOWS_SLASHED_SYMLINK
+
+/* Define to 1 if `major', `minor', and `makedev' are declared in <mkdev.h>.
+   */
+#undef MAJOR_IN_MKDEV
+
+/* Define to 1 if `major', `minor', and `makedev' are declared in
+   <sys/sysmacros.h>. */
+#undef MAJOR_IN_SYSMACROS
 
 /* Name of package */
 #undef PACKAGE

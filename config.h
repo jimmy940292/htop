@@ -35,17 +35,26 @@
 /* Define to 1 if you have the `hwloc' library (-lhwloc). */
 /* #undef HAVE_LIBHWLOC */
 
+/* Define to 1 if you have the `kstat' library (-lkstat). */
+/* #undef HAVE_LIBKSTAT */
+
 /* Define to 1 if you have the `kvm' library (-lkvm). */
 /* #undef HAVE_LIBKVM */
 
 /* Define to 1 if you have the `m' library (-lm). */
 #define HAVE_LIBM 1
 
+/* Define to 1 if you have the `malloc' library (-lmalloc). */
+/* #undef HAVE_LIBMALLOC */
+
 /* The library is present. */
 /* #undef HAVE_LIBNCURSES */
 
 /* The library is present. */
 #define HAVE_LIBNCURSESW 1
+
+/* Define to 1 if you have the `proc' library (-lproc). */
+/* #undef HAVE_LIBPROC */
 
 /* Define if Linux sched_setaffinity and sched_getaffinity are to be used. */
 #define HAVE_LINUX_AFFINITY 1
@@ -144,6 +153,14 @@
    slash. */
 #define LSTAT_FOLLOWS_SLASHED_SYMLINK 1
 
+/* Define to 1 if `major', `minor', and `makedev' are declared in <mkdev.h>.
+   */
+/* #undef MAJOR_IN_MKDEV */
+
+/* Define to 1 if `major', `minor', and `makedev' are declared in
+   <sys/sysmacros.h>. */
+/* #undef MAJOR_IN_SYSMACROS */
+
 /* Name of package */
 #define PACKAGE "htop"
 
@@ -154,7 +171,7 @@
 #define PACKAGE_NAME "htop"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "htop 2.1.0"
+#define PACKAGE_STRING "htop 2.2.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "htop"
@@ -163,7 +180,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.1.0"
+#define PACKAGE_VERSION "2.2.0"
 
 /* Path of proc filesystem */
 #define PROCDIR "/proc"
@@ -197,7 +214,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.1.0"
+#define VERSION "2.2.0"
 
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */

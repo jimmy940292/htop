@@ -9,6 +9,11 @@ Released under the GNU GPL, see the COPYING file
 in the source distribution for its full text.
 */
 
+#ifdef MAJOR_IN_MKDEV
+#elif defined(MAJOR_IN_SYSMACROS) || \
+   (defined(HAVE_SYS_SYSMACROS_H) && HAVE_SYS_SYSMACROS_H)
+#endif
+
 #ifdef __ANDROID__
 #define SYS_ioprio_get __NR_ioprio_get
 #define SYS_ioprio_set __NR_ioprio_set
@@ -151,6 +156,8 @@ typedef struct ProcessClass_ {
 
 #define As_Process(this_)              ((ProcessClass*)((this_)->super.klass))
 
+#define Process_getParentPid(process_)    (process_->tgid == process_->pid ? process_->ppid : process_->tgid)
+
 #define Process_isChildOf(process_, pid_) (process_->tgid == pid_ || (process_->tgid == process_->pid && process_->ppid == pid_))
 
 #define Process_sortState(state) ((state) == 'I' ? 0x100 : (state))
@@ -190,9 +197,9 @@ void Process_toggleTag(Process* this);
 
 bool Process_setPriority(Process* this, int priority);
 
-bool Process_changePriorityBy(Process* this, size_t delta);
+bool Process_changePriorityBy(Process* this, int delta);
 
-void Process_sendSignal(Process* this, size_t sgn);
+void Process_sendSignal(Process* this, int sgn);
 
 long Process_pidCompare(const void* v1, const void* v2);
 

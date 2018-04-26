@@ -28,6 +28,12 @@ in the source distribution for its full text.
 #include <time.h>
 #include <assert.h>
 #include <math.h>
+#ifdef MAJOR_IN_MKDEV
+#include <sys/mkdev.h>
+#elif defined(MAJOR_IN_SYSMACROS) || \
+   (defined(HAVE_SYS_SYSMACROS_H) && HAVE_SYS_SYSMACROS_H)
+#include <sys/sysmacros.h>
+#endif
 
 #ifdef __ANDROID__
 #define SYS_ioprio_get __NR_ioprio_get
@@ -171,6 +177,8 @@ typedef struct ProcessClass_ {
 } ProcessClass;
 
 #define As_Process(this_)              ((ProcessClass*)((this_)->super.klass))
+
+#define Process_getParentPid(process_)    (process_->tgid == process_->pid ? process_->ppid : process_->tgid)
 
 #define Process_isChildOf(process_, pid_) (process_->tgid == pid_ || (process_->tgid == process_->pid && process_->ppid == pid_))
 
@@ -536,11 +544,11 @@ bool Process_setPriority(Process* this, int priority) {
    return (err == 0);
 }
 
-bool Process_changePriorityBy(Process* this, size_t delta) {
+bool Process_changePriorityBy(Process* this, int delta) {
    return Process_setPriority(this, this->nice + delta);
 }
 
-void Process_sendSignal(Process* this, size_t sgn) {
+void Process_sendSignal(Process* this, int sgn) {
    CRT_dropPrivileges();
    kill(this->pid, (int) sgn);
    CRT_restorePrivileges();

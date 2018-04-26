@@ -172,7 +172,8 @@ static bool Settings_read(Settings* this, const char* fileName) {
    if (!fd)
       return false;
    
-   bool readMeters = false;
+   bool didReadMeters = false;
+   bool didReadFields = false;
    for (;;) {
       char* line = String_readLine(fd);
       if (!line) {
@@ -187,6 +188,7 @@ static bool Settings_read(Settings* this, const char* fileName) {
       }
       if (String_eq(option[0], "fields")) {
          readFields(this->fields, &(this->flags), option[1]);
+         didReadFields = true;
       } else if (String_eq(option[0], "sort_key")) {
          // This "+1" is for compatibility with the older enum format.
          this->sortKey = atoi(option[1]) + 1;
@@ -232,24 +234,24 @@ static bool Settings_read(Settings* this, const char* fileName) {
          if (this->colorScheme < 0 || this->colorScheme >= LAST_COLORSCHEME) this->colorScheme = 0;
       } else if (String_eq(option[0], "left_meters")) {
          Settings_readMeters(this, option[1], 0);
-         readMeters = true;
+         didReadMeters = true;
       } else if (String_eq(option[0], "right_meters")) {
          Settings_readMeters(this, option[1], 1);
-         readMeters = true;
+         didReadMeters = true;
       } else if (String_eq(option[0], "left_meter_modes")) {
          Settings_readMeterModes(this, option[1], 0);
-         readMeters = true;
+         didReadMeters = true;
       } else if (String_eq(option[0], "right_meter_modes")) {
          Settings_readMeterModes(this, option[1], 1);
-         readMeters = true;
+         didReadMeters = true;
       }
       String_freeArray(option);
    }
    fclose(fd);
-   if (!readMeters) {
+   if (!didReadMeters) {
       Settings_defaultMeters(this);
    }
-   return true;
+   return didReadFields;
 }
 
 static void writeFields(FILE* fd, ProcessField* fields, const char* name) {
@@ -380,10 +382,8 @@ Settings* Settings_new(int cpuCount) {
       free(htopDir);
       free(configDir);
       struct stat st;
-      if (lstat(legacyDotfile, &st) != 0) {
-         st.st_mode = 0;
-      }
-      if (access(legacyDotfile, R_OK) != 0 || S_ISLNK(st.st_mode)) {
+      int err = lstat(legacyDotfile, &st);
+      if (err || S_ISLNK(st.st_mode)) {
          free(legacyDotfile);
          legacyDotfile = NULL;
       }
@@ -392,28 +392,33 @@ Settings* Settings_new(int cpuCount) {
    this->colorScheme = 0;
    this->changed = false;
    this->delay = DEFAULT_DELAY;
-   bool ok = Settings_read(this, legacyDotfile ? legacyDotfile : this->filename);
-   if (ok) {
-      if (legacyDotfile) {
+   bool ok = false;
+   if (legacyDotfile) {
+      ok = Settings_read(this, legacyDotfile);
+      if (ok) {
          // Transition to new location and delete old configuration file
          if (Settings_write(this))
             unlink(legacyDotfile);
       }
-   } else {
+      free(legacyDotfile);
+   }
+   if (!ok) {
+      ok = Settings_read(this, this->filename);
+   }
+   if (!ok) {
       this->changed = true;
       // TODO: how to get SYSCONFDIR correctly through Autoconf?
       char* systemSettings = String_cat(SYSCONFDIR, "/htoprc");
       ok = Settings_read(this, systemSettings);
       free(systemSettings);
-      if (!ok) {
-         Settings_defaultMeters(this);
-         this->hideKernelThreads = true;
-         this->highlightMegabytes = true;
-         this->highlightThreads = true;
-         this->headerMargin = true;
-      }
    }
-   free(legacyDotfile);
+   if (!ok) {
+      Settings_defaultMeters(this);
+      this->hideKernelThreads = true;
+      this->highlightMegabytes = true;
+      this->highlightThreads = true;
+      this->headerMargin = true;
+   }
    return this;
 }
 

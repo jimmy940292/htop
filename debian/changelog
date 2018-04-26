@@ -1,3 +1,16 @@
+htop (2.2.0-1) unstable; urgency=medium
+
+  * New upstream release 2.2.0
+  * Update uscan to v4 and add gpg verification of upstream tarball
+  * Drop patches that were merged upstream
+  * Remove OpenVZ patch that wasn't merged upstream
+    (for now, upstream issue 464)
+  * Add upstream issue 780 patch
+  * Fix compile issue with regenerated header files (patch)
+  * Update policy to 4.1.4 (no changes required)
+
+ -- Daniel Lange <DLange@debian.org>  Thu, 26 Apr 2018 21:10:00 +0200
+
 htop (2.1.0-3) unstable; urgency=medium
 
   * Fix case of dyscalculia in changelog entry for 2.1.0-1

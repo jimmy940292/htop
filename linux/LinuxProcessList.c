@@ -26,6 +26,12 @@ in the source distribution for its full text.
 #include <assert.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#ifdef MAJOR_IN_MKDEV
+#include <sys/mkdev.h>
+#elif defined(MAJOR_IN_SYSMACROS) || \
+   (defined(HAVE_SYS_SYSMACROS_H) && HAVE_SYS_SYSMACROS_H)
+#include <sys/sysmacros.h>
+#endif
 
 #ifdef HAVE_DELAYACCT
 #include <netlink/attr.h>
@@ -436,7 +442,7 @@ static void LinuxProcessList_readIoFile(LinuxProcess* process, const char* dirna
          }
          break;
       case 's':
-         if (line[5] == 'r' && strncmp(line+1, "yscr: ", 6) == 0) {
+         if (line[4] == 'r' && strncmp(line+1, "yscr: ", 6) == 0) {
             process->io_syscr = strtoull(line+7, NULL, 10);
          } else if (strncmp(line+1, "yscw: ", 6) == 0) {
             process->io_syscw = strtoull(line+7, NULL, 10);
@@ -595,36 +601,36 @@ static void LinuxProcessList_readOomData(LinuxProcess* process, const char* dirn
 
 static int handleNetlinkMsg(struct nl_msg *nlmsg, void *linuxProcess) {
    struct nlmsghdr *nlhdr;
-  	struct nlattr *nlattrs[TASKSTATS_TYPE_MAX + 1];
-  	struct nlattr *nlattr;
-	struct taskstats *stats;
-	int rem;
-	unsigned long long int timeDelta;
-	LinuxProcess* lp = (LinuxProcess*) linuxProcess;
+   struct nlattr *nlattrs[TASKSTATS_TYPE_MAX + 1];
+   struct nlattr *nlattr;
+   struct taskstats *stats;
+   int rem;
+   unsigned long long int timeDelta;
+   LinuxProcess* lp = (LinuxProcess*) linuxProcess;
 
-	nlhdr = nlmsg_hdr(nlmsg);
+   nlhdr = nlmsg_hdr(nlmsg);
 
    if (genlmsg_parse(nlhdr, 0, nlattrs, TASKSTATS_TYPE_MAX, NULL) < 0) {
       return NL_SKIP;
-	}
+   }
 
-	if ((nlattr = nlattrs[TASKSTATS_TYPE_AGGR_PID]) || (nlattr = nlattrs[TASKSTATS_TYPE_NULL])) {
-		stats = nla_data(nla_next(nla_data(nlattr), &rem));
-		assert(lp->super.pid == stats->ac_pid);
-		timeDelta = (stats->ac_etime*1000 - lp->delay_read_time);
-		#define BOUNDS(x) isnan(x) ? 0.0 : (x > 100) ? 100.0 : x;
-		#define DELTAPERC(x,y) BOUNDS((float) (x - y) / timeDelta * 100);
-		lp->cpu_delay_percent = DELTAPERC(stats->cpu_delay_total, lp->cpu_delay_total);
-		lp->blkio_delay_percent = DELTAPERC(stats->blkio_delay_total, lp->blkio_delay_total);
-		lp->swapin_delay_percent = DELTAPERC(stats->swapin_delay_total, lp->swapin_delay_total);
-		#undef DELTAPERC
-		#undef BOUNDS
-		lp->swapin_delay_total = stats->swapin_delay_total;
-		lp->blkio_delay_total = stats->blkio_delay_total;
-		lp->cpu_delay_total = stats->cpu_delay_total;
-		lp->delay_read_time = stats->ac_etime*1000;
-	}
-  	return NL_OK;
+   if ((nlattr = nlattrs[TASKSTATS_TYPE_AGGR_PID]) || (nlattr = nlattrs[TASKSTATS_TYPE_NULL])) {
+      stats = nla_data(nla_next(nla_data(nlattr), &rem));
+      assert(lp->super.pid == stats->ac_pid);
+      timeDelta = (stats->ac_etime*1000 - lp->delay_read_time);
+      #define BOUNDS(x) isnan(x) ? 0.0 : (x > 100) ? 100.0 : x;
+      #define DELTAPERC(x,y) BOUNDS((float) (x - y) / timeDelta * 100);
+      lp->cpu_delay_percent = DELTAPERC(stats->cpu_delay_total, lp->cpu_delay_total);
+      lp->blkio_delay_percent = DELTAPERC(stats->blkio_delay_total, lp->blkio_delay_total);
+      lp->swapin_delay_percent = DELTAPERC(stats->swapin_delay_total, lp->swapin_delay_total);
+      #undef DELTAPERC
+      #undef BOUNDS
+      lp->swapin_delay_total = stats->swapin_delay_total;
+      lp->blkio_delay_total = stats->blkio_delay_total;
+      lp->cpu_delay_total = stats->cpu_delay_total;
+      lp->delay_read_time = stats->ac_etime*1000;
+   }
+   return NL_OK;
 }
 
 static void LinuxProcessList_readDelayAcctData(LinuxProcessList* this, LinuxProcess* process) {
@@ -671,9 +677,6 @@ static void setCommand(Process* process, const char* command, int len) {
 }
 
 static bool LinuxProcessList_readCmdlineFile(Process* process, const char* dirname, const char* name) {
-   if (Process_isKernelThread(process))
-      return true;
-
    char filename[MAX_NAME+1];
    xSnprintf(filename, MAX_NAME, "%s/%s/cmdline", dirname, name);
    int fd = open(filename, O_RDONLY);
@@ -685,7 +688,10 @@ static bool LinuxProcessList_readCmdlineFile(Process* process, const char* dirna
    close(fd);
    int tokenEnd = 0; 
    int lastChar = 0;
-   if (amtRead <= 0) {
+   if (amtRead == 0) {
+      ((LinuxProcess*)process)->isKernelThread = true;
+      return true;
+   } else if (amtRead < 0) {
       return false;
    }
    for (int i = 0; i < amtRead; i++) {
