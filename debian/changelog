@@ -1,3 +1,13 @@
+htop (2.2.0-2) unstable; urgency=medium
+
+  * Switch to debhelper 12
+  * Set Rules-Requires-Root: no
+  * Run MakeHeader.py in Python 3
+  * Drop trailing whitespace in debian/changelog
+  * Bump Standards-Version to 4.4.0, no changes
+
+ -- Graham Inggs <ginggs@debian.org>  Sun, 21 Jul 2019 23:06:13 +0000
+
 htop (2.2.0-1) unstable; urgency=medium
 
   * New upstream release 2.2.0
@@ -529,4 +539,3 @@ htop (0.2-1) unstable; urgency=low
   * Initial Release.
 
  -- Bartosz Fenski <fenio@o2.pl>  Fri, 14 May 2004 10:37:04 +0200
-
