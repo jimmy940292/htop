@@ -1,3 +1,9 @@
+htop (2.2.0-2build1) focal; urgency=medium
+
+  * Rebuild against new lhwloc 15.
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Wed, 04 Dec 2019 12:06:28 +0100
+
 htop (2.2.0-2) unstable; urgency=medium
 
   * Switch to debhelper 12
