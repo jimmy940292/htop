@@ -2,7 +2,7 @@ Package: htop
 Version: 2.2.0-2build1
 Architecture: amd64
 Maintainer: Daniel Lange <DLange@debian.org>
-Installed-Size: 222
+Installed-Size: 220
 Depends: libc6 (>= 2.15), libncursesw6 (>= 6), libtinfo6 (>= 6)
 Suggests: lsof, strace
 Section: utils
