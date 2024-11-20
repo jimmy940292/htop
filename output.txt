@@ -1,15 +1,34 @@
-ccw@ccw-computer:~/Downloads/canonical$ sudo dpkg -i htop_1.0-1_amd64.deb 
+ccw@ccw-computer:~/Downloads$ wget https://launchpad.net/~chihchunwu0517/+archive/ubuntu/ccwhtop/+build/29284565/+files/htop_1.1-1_amd64.deb
+Will not apply HSTS. The HSTS database must be a regular and non-world-writable file.
+ERROR: could not open HSTS store at '/home/ccw/.wget-hsts'. HSTS will be disabled.
+--2024-11-20 19:13:24--  https://launchpad.net/~chihchunwu0517/+archive/ubuntu/ccwhtop/+build/29284565/+files/htop_1.1-1_amd64.deb
+Resolving launchpad.net (launchpad.net)... 185.125.189.222, 185.125.189.223, 2620:2d:4000:1009::3ba, ...
+Connecting to launchpad.net (launchpad.net)|185.125.189.222|:443... connected.
+HTTP request sent, awaiting response... 303 See Other
+Location: https://launchpadlibrarian.net/759552183/htop_1.1-1_amd64.deb [following]
+--2024-11-20 19:13:25--  https://launchpadlibrarian.net/759552183/htop_1.1-1_amd64.deb
+Resolving launchpadlibrarian.net (launchpadlibrarian.net)... 185.125.189.229, 185.125.189.228, 2620:2d:4000:1009::13e, ...
+Connecting to launchpadlibrarian.net (launchpadlibrarian.net)|185.125.189.229|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 78220 (76K) [application/x-debian-package]
+Saving to: ‘htop_1.1-1_amd64.deb’
+
+htop_1.1-1_amd64.deb    100%[============================>]  76.39K   153KB/s    in 0.5s    
+
+2024-11-20 19:13:27 (153 KB/s) - ‘htop_1.1-1_amd64.deb’ saved [78220/78220]
+
+ccw@ccw-computer:~/Downloads$ sudo dpkg -i htop_1.1-1_amd64.deb 
 Selecting previously unselected package htop.
 (Reading database ... 620639 files and directories currently installed.)
-Preparing to unpack htop_1.0-1_amd64.deb ...
-Unpacking htop (1.0-1) ...
-Setting up htop (1.0-1) ...
+Preparing to unpack htop_1.1-1_amd64.deb ...
+Unpacking htop (1.1-1) ...
+Setting up htop (1.1-1) ...
 this is a test from CHIH CHUN WU
 Processing triggers for gnome-menus (3.36.0-1ubuntu1) ...
 Processing triggers for desktop-file-utils (0.24-1ubuntu3) ...
 Processing triggers for mime-support (3.64ubuntu1) ...
 Processing triggers for man-db (2.9.1-1) ...
-ccw@ccw-computer:~/Downloads/canonical$ sudo dpkg -S testing.sh;testing.sh
+ccw@ccw-computer:~/Downloads$ sudo dpkg -S testing.sh; testing.sh
 htop: /usr/bin/testing.sh
 this is a test from CHIH CHUN WU
-ccw@ccw-computer:~/Downloads/canonical$ 
+ccw@ccw-computer:~/Downloads$ 
