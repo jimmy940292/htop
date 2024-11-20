@@ -1,13 +1,12 @@
 Package: htop
-Version: 2.2.0-2build1
+Version: 1.0
 Architecture: amd64
-Maintainer: Daniel Lange <DLange@debian.org>
-Installed-Size: 220
+Maintainer: chihchunwu <chihchunwu0517@gmail.com>
+Installed-Size: 215
 Depends: libc6 (>= 2.15), libncursesw6 (>= 6), libtinfo6 (>= 6)
 Suggests: lsof, strace
 Section: utils
 Priority: optional
-Homepage: https://hisham.hm/htop/
 Description: interactive processes viewer
  Htop is an ncursed-based process viewer similar to top, but it
  allows one to scroll the list vertically and horizontally to see

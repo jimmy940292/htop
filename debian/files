@@ -1,3 +1,3 @@
-htop-dbgsym_2.2.0-2build1_amd64.ddeb debug optional automatic=yes
-htop_2.2.0-2build1_amd64.buildinfo utils optional
-htop_2.2.0-2build1_amd64.deb utils optional
+htop-dbgsym_1.0_amd64.ddeb debug optional automatic=yes
+htop_1.0_amd64.buildinfo utils optional
+htop_1.0_amd64.deb utils optional

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 import os, sys, string, io
 try:
    from StringIO import StringIO

@@ -42,7 +42,6 @@ ac1c8490cf320346639da96c81d4ed12  ./README_old
 ade6d09f3053d98a7a60371a6ddbed01  ./UsersTable.c
 c3ed7d655bd5906d23a25cf1a37f1f56  ./SwapMeter.c
 c51a3fcea87c2bb0b59c8f19f4683b9d  ./InfoScreen.c
-23a4a2ad10ec0f61a5337dc8d9c8bb4c  ./Makefile.in
 25ea46167b986f4c16e41e03bf27c995  ./solaris/SolarisCRT.c
 ef04a3ceca10a45348b124352dd3d910  ./solaris/Battery.c
 f4c178185e22a0581150baa35a1bb377  ./solaris/Platform.c

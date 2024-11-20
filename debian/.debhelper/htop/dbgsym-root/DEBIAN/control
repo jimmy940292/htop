@@ -1,13 +1,13 @@
 Package: htop-dbgsym
 Package-Type: ddeb
 Source: htop
-Version: 2.2.0-2build1
+Version: 1.0
 Auto-Built-Package: debug-symbols
 Architecture: amd64
-Maintainer: Daniel Lange <DLange@debian.org>
+Maintainer: chihchunwu <chihchunwu0517@gmail.com>
 Installed-Size: 224
-Depends: htop (= 2.2.0-2build1)
+Depends: htop (= 1.0)
 Section: debug
 Priority: optional
 Description: debug symbols for htop
-Build-Ids: b0bd18757014f8b501024c3768c86cb49523eac7
+Build-Ids: 4a901cc4accee706893564bf270260845ae0de90
