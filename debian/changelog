@@ -1,5 +1,5 @@
-htop (1.0) unstable; urgency=low
+htop (1.0-1) trusty; urgency=medium
 
-  * First version.
+  * First release
 
- -- chihchunwu <chihchunwu0517@gmail.com> 
+ -- chihchunwu <chihchunwu0517@gmail.com>  Wed, 20 Nov 2024 14:48:11 +0800
