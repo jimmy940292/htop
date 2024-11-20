@@ -1,5 +1,12 @@
+htop (1.1-1) focal; urgency=medium
+
+  * Second release
+
+ -- chihchunwu <chihchunwu0517@gmail.com>  Wed, 20 Nov 2024 14:48:11 +0800
+
 htop (1.0-1) focal; urgency=medium
 
   * First release
 
  -- chihchunwu <chihchunwu0517@gmail.com>  Wed, 20 Nov 2024 14:48:11 +0800
+
